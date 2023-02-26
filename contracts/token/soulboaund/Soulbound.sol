@@ -26,7 +26,6 @@ contract SBT is
     Counters.Counter private _tokenIdTracker;
 
     string public _baseTokenURI;
-    string public _DefaultURI;
 
     bool public isTransfable = false;
     /**
@@ -56,11 +55,7 @@ contract SBT is
 
     function tokenURI(uint256 tokenId) public view virtual override(ERC721) returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
-        if(bytes(_baseTokenURI).length > 0){
-            return string(abi.encodePacked(_baseURI(), tokenId.toString(), ".json"));
-        } else if(bytes(_DefaultURI).length > 0){
-            return _DefaultURI;
-        }
+        return string(abi.encodePacked(_baseURI(), tokenId.toString(), ".json"));
     }
 
     function _baseURI() internal view virtual override(ERC721) returns (string memory) {
