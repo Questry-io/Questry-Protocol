@@ -45,8 +45,8 @@
 - [Contract・Struct・Event・関数・変数・などの命名規則](https://github.com/0xcert/solidity-style-guide)
 
 ## 開発環境設定ファイル
-- [.env](https://drive.google.com/file/d/1WdAYVfVRAQFti2WHsYIBN_o6gUfC4FIa/view?usp=sharing)
-- [.env.example](https://drive.google.com/file/d/1CF2Jdu5YP-iK2ydXz5M8_diOpDY7WAek/view?usp=sharing)
+- .env
+- .env.example
 ダウンロード後は、「.env.txt」 -> 「.env」に変更する必要
 
 ## チェックリスト
