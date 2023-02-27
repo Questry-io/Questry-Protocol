@@ -10,20 +10,76 @@ pragma solidity ^0.8.9;
 /**
  * @dev Model data related with Order
  */
-library OrderDomain {
-  // ORIGIN_KIND
-  bytes4 private constant NANAKUSA_ORIGIN_KIND = bytes4(keccak256("NANAKUSA"));
-  bytes4 private constant PARTNER_ORIGIN_KIND = bytes4(keccak256("PARTNER"));
+library PlatformDomain {
 
-  // PAYMENT_MODE
-  bytes4 public constant NATIVE_PAYMENT_MODE = bytes4(keccak256("NATIVE"));
-  bytes4 public constant ERC20_PAYMENT_MODE = bytes4(keccak256("ERC20"));
-  bytes4 private constant CREDIT_CARD_PAYMENT_MODE =
-    bytes4(keccak256("CREDIT_CARD"));
-  bytes4 private constant OTHER_BLOCKCHAIN_PAYMENT_MODE =
-    bytes4(keccak256("OTHER_BLOCKCHAIN"));
+  /**
+   * @dev
+   * Define the MODE of the currency to allocate
+   * This MODE will change the allocation in the contents of the EXEC execution function
+   */
+  bytes4 public constant NATIVE_ALLOVATE_MODE = bytes4(keccak256("NATIVE"));
+  bytes4 public constant ERC20_ALLOCATE_MODE = bytes4(keccak256("ERC20"));
 
-  struct Asset {
+  /**
+   * @dev
+   * This defines the bytes32 code for various roles of the platform
+   * Organize the various roles below
+   * 
+   * ・PJ_MANAGEMENT_ROLE・・・PJ-MANAGEMENT-CONTRACT State data management
+   * ・ALLOCATE_RIGHT_ROLL・・・PJ-Treasully-Pool Token Allocate RIGHT
+   * ・KANAME_PLATFORM_ROLE・・・PROTOCOL Rights Data Management Role
+   * ・BOARD_REGISTER_ROLE・・・A role that passes BOARDMEMBER registration rights for each PJ
+   * ・BUSINESS_OWNER_ROLE・・・temporary roll(I might turn it off later)
+   */
+  bytes32 public constant PJ_MANAGEMENT_ROLE = keccak256("PJ_MANAGEMENT_ROLE");
+  bytes32 public constant PJ_MANAGEMENT_ROLE = keccak256("ALLOCATE_RIGHT_ROLE");
+  bytes32 public constant KANAME_PLATFORM_ROLE = keccak256("KANAME_PLATFORM_ROLE");
+  bytes32 public constant BOARD_REGISTER_ROLE = keccak256("BOARD_REGISTER_ROLE");
+  bytes32 public constant BUSINESS_OWNER_ROLE = keccak256("BUSINESS_OWNER_ROLE");
+
+  struct InitializerArgs {
+    address daoTreasuryAddress;
+    address moneyAddress;
+    address payable[] businessOwners;
+    uint16[] businessOwnersShares;
+    uint16 boardingMemberProportion;
+    string projectName;
+    string projectSymbol;
+  }
+
+  struct Board {
+    uint32 categoryId;
+    uint256 tokenId;
+  }
+
+  struct BoardDefinition {
+    uint32 categoryId;
+    uint256 categoryShare;
+    string name;
+    string description;
+    string baseImageURL;
+    string attributesJSON;
+    address contributionLogicSummarizer;
+  }
+
+  /**
+   * @dev
+   * Structure definition for board member registration
+   * Signature is basically designed to verify the signature 
+   * with the nonce obtained on the on-chain side and the nonce 
+   * passed from the off-chain side.
+   * Since ETH is an account-oriented state machine, 
+   * reply attacks can be controlled with nonce
+   */
+  struct RegistBoard {
+    address[] BoardMember;    //EOAs of boardmember for regist
+    address PJManagerCA;      //exec project management contract
+    uint256 boardCategoryId;  //board category ID
+    uint256[] nextTokenIds;   //SBT Next TokenIds
+    uint32 nonce;             //Exec Struct infomation nonce 
+  }
+
+  /*struct Asset {
     bytes4 originKind;
     address token;
     uint256 tokenId;
@@ -53,7 +109,7 @@ library OrderDomain {
     address payable buyer;
     address payable payer; // If no payer means buyer is the payer
     Payment paymentDetails;
-  }
+  }*/
 
   /**
    * @dev Checks if it's a Secondary Sale
