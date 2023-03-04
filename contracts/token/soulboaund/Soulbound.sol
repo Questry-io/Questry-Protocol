@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-//こちらのコントラクトを改造してプロトコルのコントラクトにしていく
-
-
 import { ERC721, IERC721, Context } from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol";
 import { Counters } from "@openzeppelin/contracts/utils/Counters.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-
 
 contract SBT is 
     ERC721,
@@ -26,8 +22,10 @@ contract SBT is
     Counters.Counter private _tokenIdTracker;
 
     string public _baseTokenURI;
+    string public _DefaultURI;
 
     bool public isTransfable = false;
+
     /**
      * @dev Grants `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE` and `PAUSER_ROLE` to the
      * account that deploys the contract.
@@ -55,7 +53,8 @@ contract SBT is
 
     function tokenURI(uint256 tokenId) public view virtual override(ERC721) returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
-        return string(abi.encodePacked(_baseURI(), tokenId.toString(), ".json"));
+        string memory baseURI = _baseURI();
+        return bytes(baseURI).length > 0 ? string(abi.encodePacked(_baseURI(), tokenId.toString(), ".json")) : _DefaultURI;
     }
 
     function _baseURI() internal view virtual override(ERC721) returns (string memory) {

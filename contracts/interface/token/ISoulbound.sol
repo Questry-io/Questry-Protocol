@@ -25,12 +25,12 @@ interface ISoulbaundToken is IERC165Upgradeable {
      *
      * - the caller must have the `MINTER_ROLE`.
      */
-    function mint(address to) public;
+    function mint(address to) external;
 
-    function Bulkmint(address[] calldata tos) public;
+    function Bulkmint(address[] calldata tos) external;
 
-    function burn(uint256 tokenId) public;
+    function burn(uint256 tokenId) external;
 
-    function Bulkburn(uint256[] calldata tokenIds) public;
+    function Bulkburn(uint256[] calldata tokenIds) external;
 
 }
