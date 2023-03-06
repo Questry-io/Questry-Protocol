@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-//こちらのコントラクトを改造してプロトコルのコントラクトにしていく
+import { SBT, AccessControl } from "../token/soulbound/SBT.sol";
 
-import { SBT, AccessControl } from "../token/soulboaund/Soulbound.sol";
-
-contract Factory is AccessControl {
+contract SBTFactory is AccessControl {
 
     event SBTCreated(address contractAddress, string name, string symbol, address indexed admin);
     
@@ -27,7 +25,7 @@ contract Factory is AccessControl {
         string memory _defaultURI,
         address _admin
         ) external returns (address basicERC721) {
-        require(getSBTaddress[_name][_symbol] == address(0), "Factory: must use another name and symbol");
+        require(getSBTaddress[_name][_symbol] == address(0), "SBTFactory: must use another name and symbol");
 
         bytes32 _salt = keccak256(abi.encodePacked(_name, _symbol));
         address sbt = address(new SBT{salt: _salt}(_name, _symbol, _defaultURI, _admin, _TrustedForwarder));
@@ -41,7 +39,7 @@ contract Factory is AccessControl {
     }
 
     function setChildTrustedforwarder(address ForwarderAddress) public {
-        require(hasRole(REGISTER_ROLE,_msgSender()),"Factory: must have register role to Regiter");
+        require(hasRole(REGISTER_ROLE,_msgSender()),"SBTFactory: must have register role to Regiter");
         _setChildTrusedForwarder(ForwarderAddress);
     }
 

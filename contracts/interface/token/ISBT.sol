@@ -2,12 +2,10 @@
 
 pragma solidity ^0.8.9;
 
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
-
 /**
  * @title  SBINFT market non-native asset transfer protocol
  */
-interface ISoulbaundToken is IERC165Upgradeable {
+interface ISBT {
     
 
     /** event などを定義 */

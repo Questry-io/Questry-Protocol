@@ -31,7 +31,7 @@ describe("SBT", function () {
     [ SuperAdmin, NotMinter, NotBurner, address3] =
       await ethers.getSigners();
 
-    const cfFactoryContract = await ethers.getContractFactory("Factory");
+    const cfFactoryContract = await ethers.getContractFactory("SBTFactory");
 
     cFactoryMock = await cfFactoryContract.deploy(SuperAdmin.address);
 

@@ -6,8 +6,10 @@ import { AccessControl } from "@openzeppelin/contracts/access/AccessControl.sol"
 import { Counters } from "@openzeppelin/contracts/utils/Counters.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import { ISBT } from "../../interface/token/ISBT.sol";
 
-contract SBT is 
+contract SBT is
+    ISBT,
     ERC721,
     AccessControl,
     ERC2771Context
