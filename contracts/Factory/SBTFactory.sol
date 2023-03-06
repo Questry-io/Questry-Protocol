@@ -7,12 +7,13 @@ contract SBTFactory is AccessControl {
 
     event SBTCreated(address contractAddress, string name, string symbol, address indexed admin);
     
-    bytes32 public constant REGISTER_ROLE = keccak256("REGISTER_ROLE");
+    bytes32 public constant SET_FORWARDER_ROLE = keccak256("SET_FORWARDER_ROLE");
 
     constructor(
         address admin
     ) {
         _setupRole(DEFAULT_ADMIN_ROLE, admin);
+        _setupRole(SET_FORWARDER_ROLE, admin);
     }
     // Mapping from name and symbol to basic ERC721 address
     mapping(string => mapping(string => address)) public getSBTaddress;
@@ -39,7 +40,7 @@ contract SBTFactory is AccessControl {
     }
 
     function setChildTrustedforwarder(address ForwarderAddress) public {
-        require(hasRole(REGISTER_ROLE,_msgSender()),"SBTFactory: must have register role to Regiter");
+        require(hasRole(SET_FORWARDER_ROLE, _msgSender()), "SBTFactory: must have SET_FORWARDER_ROLE");
         _setChildTrusedForwarder(ForwarderAddress);
     }
 
