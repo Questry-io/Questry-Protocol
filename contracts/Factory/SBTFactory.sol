@@ -24,14 +24,14 @@ contract SBTFactory is AccessControl {
         string calldata _symbol,
         string memory _defaultURI,
         address _admin
-        ) external returns (address basicERC721) {
+    ) external returns (address sbt) {
         require(getSBTaddress[_name][_symbol] == address(0), "SBTFactory: must use another name and symbol");
 
         bytes32 _salt = keccak256(abi.encodePacked(_name, _symbol));
-        address sbt = address(new SBT{salt: _salt}(_name, _symbol, _defaultURI, _admin, _TrustedForwarder));
+        sbt = address(new SBT{salt: _salt}(_name, _symbol, _defaultURI, _admin, _TrustedForwarder));
 
         getSBTaddress[_name][_symbol] = sbt;
-        emit SBTCreated(basicERC721, _name, _symbol, _admin);
+        emit SBTCreated(sbt, _name, _symbol, _admin);
     }
     //Same _name & _symbol let be override
     function getContractAddress(string calldata _name,string calldata _symbol) public view returns (address) {

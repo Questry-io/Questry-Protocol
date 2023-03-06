@@ -4,6 +4,7 @@ import { Contract, utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { ContractReceipt } from "ethers";
+import { SBTFactory } from "../../typechain";
 
 describe("SBT", function () {
   let deployer: SignerWithAddress;
@@ -11,7 +12,7 @@ describe("SBT", function () {
   let NotMinter: SignerWithAddress;
   let NotBurner: SignerWithAddress;
   let address3: SignerWithAddress;
-  let cFactoryMock: Contract;
+  let cFactoryMock: SBTFactory;
 
   const TokenexistsError = "ERC721Metadata: URI query for nonexistent token";
   const URIUpdaterError = "SBT: must have URI updater role to update URI";
@@ -46,8 +47,11 @@ describe("SBT", function () {
 
   describe("createSBT", function () {
     it("[S] Create SBT", async function () {
-      await cFactoryMock.createSBT(name,symbol,defaultURI,address3.address)
-      console.log(await cFactoryMock.getContractAddress(name,symbol))
+      const tx = await cFactoryMock.createSBT(name,symbol,defaultURI,address3.address)
+      const rc = await tx.wait();
+      const event = rc.events?.find((e) => e.event === "SBTCreated");
+      const sbt = await cFactoryMock.getContractAddress(name, symbol);
+      expect(event!.args!.slice(0, 4)).to.deep.equal([sbt,name,symbol,address3.address]);
     });
   });
 
