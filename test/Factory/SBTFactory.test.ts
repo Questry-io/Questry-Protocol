@@ -17,8 +17,9 @@ describe("SBTFactory", function () {
 
   const name = "SugaiYuuka";
   const symbol = "SY";
-  const defaultURI = "https://sample.com";
+  const baseURI = "https://sample.com/";
 
+  const dummyPJManager = "0xc17B0deAa8D31149f242B53fed73054Aeb0B4bce";
   const dummyContract = "0x00E9C198af8F6a8692d83d1702e691A03F2cdc63";
   const zeroaddress = "0x0000000000000000000000000000000000000000";
   const Adminhash = "0x0000000000000000000000000000000000000000000000000000000000000000";
@@ -40,23 +41,23 @@ describe("SBTFactory", function () {
 
   describe("createSBT", function () {
     it("[S] check SBT address stored", async function () {
-      await cFactoryMock.createSBT(name, symbol, defaultURI, SBTCreator.address);
+      await cFactoryMock.createSBT(name, symbol, baseURI, dummyPJManager, SBTCreator.address);
       const sbt = await cFactoryMock.getContractAddress(name, symbol);
       expect(sbt).not.equal(zeroaddress);
     });
 
     it("[S] check event emitted", async function () {
-      const tx = await cFactoryMock.createSBT(name, symbol, defaultURI, SBTCreator.address);
+      const tx = await cFactoryMock.createSBT(name, symbol, baseURI, dummyPJManager, SBTCreator.address);
       const sbt = await cFactoryMock.getContractAddress(name, symbol);
       expect(tx)
         .to.emit(cFactoryMock, "SBTCreated")
-        .withArgs([sbt, name, symbol, SBTCreator.address]);
+        .withArgs([sbt, name, symbol, dummyPJManager, SBTCreator.address]);
     });
 
     it("[R] check SBT exists error", async function () {
-      await cFactoryMock.createSBT(name, symbol, defaultURI, SBTCreator.address);
+      await cFactoryMock.createSBT(name, symbol, baseURI, dummyPJManager, SBTCreator.address);
       await cFactoryMock.getContractAddress(name, symbol);
-      await expect(cFactoryMock.createSBT(name, symbol, defaultURI, SBTCreator.address))
+      await expect(cFactoryMock.createSBT(name, symbol, baseURI, dummyPJManager, SBTCreator.address))
         .to.be.revertedWith(SBTExistsError);
     });
   });

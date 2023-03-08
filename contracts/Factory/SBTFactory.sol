@@ -4,8 +4,7 @@ pragma solidity ^0.8.9;
 import { SBT, AccessControl } from "../token/soulbound/SBT.sol";
 
 contract SBTFactory is AccessControl {
-
-    event SBTCreated(address contractAddress, string name, string symbol, address indexed admin);
+    event SBTCreated(address contractAddress, string name, string symbol, address indexed pjmanagerContract, address indexed admin);
     
     bytes32 public constant SET_FORWARDER_ROLE = keccak256("SET_FORWARDER_ROLE");
 
@@ -23,16 +22,17 @@ contract SBTFactory is AccessControl {
     function createSBT(
         string calldata _name, 
         string calldata _symbol,
-        string memory _defaultURI,
+        string memory _baseTokenURI,
+        address _pjmanagerContract,
         address _admin
     ) external returns (address sbt) {
         require(getSBTaddress[_name][_symbol] == address(0), "SBTFactory: must use another name and symbol");
 
         bytes32 _salt = keccak256(abi.encodePacked(_name, _symbol));
-        sbt = address(new SBT{salt: _salt}(_name, _symbol, _defaultURI, _admin, _TrustedForwarder));
+        sbt = address(new SBT{salt: _salt}(_name, _symbol, _baseTokenURI, _pjmanagerContract, _admin, _TrustedForwarder));
 
         getSBTaddress[_name][_symbol] = sbt;
-        emit SBTCreated(sbt, _name, _symbol, _admin);
+        emit SBTCreated(sbt, _name, _symbol, _pjmanagerContract, _admin);
     }
     //Same _name & _symbol let be override
     function getContractAddress(string calldata _name,string calldata _symbol) public view returns (address) {

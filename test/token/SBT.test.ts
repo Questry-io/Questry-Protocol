@@ -1,9 +1,8 @@
 /* eslint-disable node/no-missing-import */
-import { ethers } from "hardhat";
-import { utils } from "ethers";
+import { ethers, network } from "hardhat";
+import { Contract, utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { SBT } from "../../typechain";
 
 describe("SBT", function () {
   let Deployer: SignerWithAddress;
@@ -11,7 +10,8 @@ describe("SBT", function () {
   let NotMinter: SignerWithAddress;
   let NotBurner: SignerWithAddress;
   let address3: SignerWithAddress;
-  let cSBTMock: SBT;
+  let cPJManagerMock: Contract;
+  let cSBTMock: Contract;
 
   const TokenExistsError = "ERC721Metadata: URI query for nonexistent token";
   const URIUpdaterError = "SBT: must have URI updater role to update URI";
@@ -21,15 +21,24 @@ describe("SBT", function () {
 
   const name = "SugaiYuuka";
   const symbol = "SY";
-  const defaultURI = "https://sample.com";
+  const baseURI = "https://sample.com/";
 
   const dummyContract = "0x00E9C198af8F6a8692d83d1702e691A03F2cdc63";
   const Adminhash = "0x0000000000000000000000000000000000000000000000000000000000000000";
 
   beforeEach(async function () {
     [Deployer, SuperAdmin, NotMinter, NotBurner, address3] = await ethers.getSigners();
+    const cfPJManagerContract = await ethers.getContractFactory("PJManagerMock");
+    cPJManagerMock = await cfPJManagerContract.deploy();
     const cfSBTContract = await ethers.getContractFactory("SBT");
-    cSBTMock = await cfSBTContract.deploy(name, symbol, defaultURI, SuperAdmin.address, dummyContract);
+    cSBTMock = await cfSBTContract.deploy(
+      name,
+      symbol,
+      baseURI,
+      cPJManagerMock.address,
+      SuperAdmin.address,
+      dummyContract
+    );
   });
 
   describe("Post deployment checks", function () {
@@ -65,28 +74,53 @@ describe("SBT", function () {
     });
   });
 
+  describe("did", function () {
+    it("[S] check DID schema", async function () {
+      expect(await cSBTMock.didSchema()).to.equal("did:kaname");
+    });
+
+    it("[S] check DID namespace", async function () {
+      const chainId = network.config.chainId;
+      const pjmanager = cPJManagerMock.address.toLowerCase();
+      expect(await cSBTMock.didNamespace()).to.equal(`eip155:${chainId}:${pjmanager}`);
+    });
+
+    it("[S] check DID member", async function () {
+      const chainId = network.config.chainId;
+      const member = address3.address.toLowerCase();
+      expect(await cSBTMock.didMember(address3.address)).to.equal(`eip155:${chainId}:${member}`);
+    });
+
+    it("[S] check DID", async function () {
+      await cSBTMock.connect(SuperAdmin).mint(address3.address);
+      const chainId = network.config.chainId;
+      const pjmanager = cPJManagerMock.address.toLowerCase();
+      const member = address3.address.toLowerCase();
+      const expected = `did:kaname:eip155:${chainId}:${pjmanager}:eip155:${chainId}:${member}:1`;
+      expect(await cSBTMock.did(1)).to.equal(expected);
+    });
+
+    it("[R] can not resolve DID before mint", async function () {
+      await expect(cSBTMock.did(1)).to.be.revertedWith("ERC721: owner query for nonexistent token");
+    });
+  });
+
   describe("tokenURI", function () {
     it("[R] err check tokenURI", async function () {
       await expect(cSBTMock.tokenURI(1)).to.be.revertedWith(TokenExistsError);
     });
 
-    it("[S] check tokenURI for defaultURI", async function () {
-      await cSBTMock.connect(SuperAdmin).mint(address3.address);
-      expect(await cSBTMock.tokenURI(1)).to.equal(defaultURI);
-    });
-
     it("[S] check tokenURI for baseURI", async function () {
       await cSBTMock.connect(SuperAdmin).mint(address3.address);
-      await cSBTMock.connect(SuperAdmin).updateBaseTokenURI(defaultURI + "/");
-      expect(await cSBTMock.tokenURI(1)).to.equal(defaultURI + "/1.json");
+      const chainId = network.config.chainId;
+      const pjmanager = cPJManagerMock.address.toLowerCase();
+      const member = address3.address.toLowerCase();
+      const did = `did:kaname:eip155:${chainId}:${pjmanager}:eip155:${chainId}:${member}:1`;
+      expect(await cSBTMock.tokenURI(1)).to.equal(`${baseURI}${did}`);
     });
 
     it("[R] err check updateBaseTokenURI", async function () {
-      await expect(cSBTMock.connect(address3).updateBaseTokenURI(defaultURI)).to.be.revertedWith(URIUpdaterError);
-    });
-
-    it("[R] err check updateDefaultURI", async function () {
-      await expect(cSBTMock.connect(address3).updateDefaultURI(defaultURI)).to.be.revertedWith(URIUpdaterError);
+      await expect(cSBTMock.connect(address3).updateBaseTokenURI(baseURI)).to.be.revertedWith(URIUpdaterError);
     });
   });
 
@@ -95,6 +129,7 @@ describe("SBT", function () {
       await cSBTMock.connect(SuperAdmin).mint(address3.address);
       expect(await cSBTMock.balanceOf(address3.address)).to.equal(1);
       expect(await cSBTMock.ownerOf(1)).to.equal(address3.address);
+      expect(await cPJManagerMock.resolveBoardId(cSBTMock.address, 1)).to.equal(1);
     });
 
     it("[S] Bulk mint check", async function () {

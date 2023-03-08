@@ -31,4 +31,23 @@ interface ISBT {
 
     function Bulkburn(uint256[] calldata tokenIds) external;
 
+    /**
+     * @dev Resolve Kaname Protocol DID from the board which tokenId is `tokenId`.
+     */
+    function did(uint256 tokenId) external view returns (string memory);
+
+    /**
+     * @dev Returns Kaname Protocol DID spec's schema.
+     */
+    function didSchema() external pure returns (string memory);
+
+    /**
+     * @dev Returns Kaname Protocol DID spec's namespace corresponding to the boards.
+     */
+    function didNamespace() external view returns (string memory);
+
+    /**
+     * @dev Returns Kaname Protocol DID spec's member.
+     */
+    function didMember(address member) external view returns (string memory);
 }
