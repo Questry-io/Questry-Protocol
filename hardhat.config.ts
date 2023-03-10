@@ -1,6 +1,7 @@
 import * as dotenv from "dotenv";
 
-import { HardhatUserConfig, task } from "hardhat/config";
+import { HardhatUserConfig, task, subtask } from "hardhat/config";
+import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from "hardhat/builtin-tasks/task-names";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
@@ -9,11 +10,7 @@ import "solidity-coverage";
 import "@nomiclabs/hardhat-ethers";
 import "@openzeppelin/hardhat-upgrades";
 
-import "./scripts/sign/verify.ts";
 import "./scripts/verify/verify.ts";
-
-import "./scripts/upgradable/v1/verify.ts";
-import "./scripts/upgradable/v2/verify.ts";
 
 dotenv.config();
 
@@ -27,11 +24,34 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+subtask(
+  TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS,
+  async (_, { config: HardhatUserConfig }, runSuper) => {
+    const paths = await runSuper();
+    return paths.filter((solidityFilePath: string) => {
+      const filename = solidityFilePath.split("/").slice(-1)[0];
+      // compileから除外するコントラクトを指定
+      return ![
+        "tokenControl.sol",
+        "platformDomain.sol",
+      ].includes(filename);
+    });
+  }
+);
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.9",
+  solidity: {
+    version: "0.8.17",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 1000,
+      },
+    },
+  },
   networks: {
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
