@@ -9,6 +9,11 @@ interface IContributionPool {
   event SetContribution(address indexed member, uint120 value);
   event BulkSetContribution(address[] members, uint120[] values);
 
+  enum PriviledgeMode {
+    AdditionOnly,
+    FullPriviledge
+  }
+
   /**
    * @dev Adds `contribution` to `member`.
    *

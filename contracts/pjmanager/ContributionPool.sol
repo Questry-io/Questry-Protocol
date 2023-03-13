@@ -8,9 +8,13 @@ contract ContributionPool is IContributionPool, AccessControl {
   bytes32 public constant CONTRIBUTION_UPDATER_ROLE = keccak256("CONTRIBUTION_UPDATER_ROLE");
 
   address public admin;
+  address public contributionUpdater;
   mapping (uint64 => mapping (address => uint120)) public contributions; // globalTerm => member => value
 
-  constructor(address _admin) {
+  constructor(address _contributionUpdater, address _admin) {
+    contributionUpdater = _contributionUpdater;
+    _setupRole(CONTRIBUTION_UPDATER_ROLE, contributionUpdater);
+
     admin = _admin;
     _setupRole(DEFAULT_ADMIN_ROLE, admin);
     _setupRole(CONTRIBUTION_UPDATER_ROLE, admin);
