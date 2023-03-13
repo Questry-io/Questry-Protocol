@@ -3,7 +3,11 @@ pragma solidity ^0.8.9;
 
 interface IContributionPool {
   event AddContribution(address indexed member, uint120 value);
+  event BulkAddContribution(address[] members, uint120[] values);
+  event SubtractContribution(address indexed member, uint120 value);
+  event BulkSubtractContribution(address[] members, uint120[] values);
   event SetContribution(address indexed member, uint120 value);
+  event BulkSetContribution(address[] members, uint120[] values);
 
   /**
    * @dev Adds `contribution` to `member`.
@@ -11,6 +15,41 @@ interface IContributionPool {
    * Emits {AddContribution}
    */
   function addContribution(address member, uint120 value) external;
+
+  /**
+   * @dev Bulk adds `contributions` to `members`.
+   *
+   * Emits {BulkAddContribution}
+   */
+  function bulkAddContribution(address[] calldata members, uint120[] calldata values) external;
+
+  /**
+   * @dev Subtracts `contribution` from `member`.
+   *
+   * Emits {SubtractContribution}
+   */
+  function subtractContribution(address member, uint120 value) external;
+
+  /**
+   * @dev Bulk subtracts `contributions` from `members`.
+   *
+   * Emits {BulkSubtractContribution}
+   */
+  function bulkSubtractContribution(address[] calldata members, uint120[] calldata values) external;
+
+  /**
+   * @dev Sets `contribution` to `member`.
+   *
+   * Emits {SetContribution}
+   */
+  function setContribution(address member, uint120 value) external;
+
+  /**
+   * @dev Bulk sets `contributions` to `members`.
+   *
+   * Emits {BulkSetContribution}
+   */
+  function bulkSetContribution(address[] calldata members, uint120[] calldata values) external;
 
   /**
    * @dev Gets contribution of `member`.
