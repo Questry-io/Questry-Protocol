@@ -1,7 +1,9 @@
 import * as dotenv from "dotenv";
+import chai from "chai";
 
 import { HardhatUserConfig, task, subtask } from "hardhat/config";
 import { TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS } from "hardhat/builtin-tasks/task-names";
+import { solidity } from "ethereum-waffle";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
@@ -13,6 +15,7 @@ import "@openzeppelin/hardhat-upgrades";
 import "./scripts/verify/verify.ts";
 
 dotenv.config();
+chai.use(solidity);
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
