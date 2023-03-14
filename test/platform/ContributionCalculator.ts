@@ -18,8 +18,8 @@ describe("ContributionCalculator", function () {
     [superAdmin, notAdmin, poolUpdater, member1, member2] = await ethers.getSigners();
     const cfPool = await ethers.getContractFactory("ContributionPool");
 
-    cPool1 = await cfPool.deploy(poolUpdater.address, superAdmin.address);
-    cPool2 = await cfPool.deploy(poolUpdater.address, superAdmin.address);
+    cPool1 = await cfPool.deploy(0, poolUpdater.address, superAdmin.address);
+    cPool2 = await cfPool.deploy(0, poolUpdater.address, superAdmin.address);
 
     const cfCalculator = await ethers.getContractFactory(
       "ContributionCalculator",

@@ -9,9 +9,13 @@ interface IContributionPool {
   event SetContribution(address indexed member, uint120 value);
   event BulkSetContribution(address[] members, uint120[] values);
 
-  enum PriviledgeMode {
-    AdditionOnly,
-    FullPriviledge
+  /**
+   * @dev Restrictions for contribution state mutations.
+   * Anyone can never subtract boarding members' contributions if mode is AddOnlyAccess.
+   */
+  enum MutationMode {
+    AddOnlyAccess,  // Only `addContribution`, `bulkAddContribution` operations allowed.
+    FullControl     // All operations allowed.
   }
 
   /**

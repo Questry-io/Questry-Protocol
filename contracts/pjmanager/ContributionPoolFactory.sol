@@ -11,6 +11,7 @@ contract ContributionPoolFactory {
   event PoolCreated(
     address indexed businessOwner,
     address pool,
+    IContributionPool.MutationMode mode,
     address indexed contributionUpdater,
     address indexed admin
   );
@@ -23,13 +24,17 @@ contract ContributionPoolFactory {
    *
    * Emits a {PoolCreated} event
    */
-  function createPool(address contributionUpdater, address admin)
+  function createPool(
+    IContributionPool.MutationMode mode,
+    address contributionUpdater,
+    address admin
+  )
     external
     returns (IContributionPool pool)
   {
-    pool = new ContributionPool(contributionUpdater, admin);
+    pool = new ContributionPool(mode, contributionUpdater, admin);
     poolsByBusinessOwners[msg.sender].push(pool);
-    emit PoolCreated(msg.sender, address(pool), contributionUpdater, admin);
+    emit PoolCreated(msg.sender, address(pool), mode, contributionUpdater, admin);
   }
 
   /**

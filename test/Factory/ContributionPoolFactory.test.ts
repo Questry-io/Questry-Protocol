@@ -19,7 +19,9 @@ describe("ContributionPoolFactory", function () {
 
   describe("createPool", function () {
     it("[S] check ContributionPool address stored", async function () {
-      await cPoolFactory.connect(businessOwner).createPool(updater.address, superAdmin.address);
+      await cPoolFactory
+        .connect(businessOwner)
+        .createPool(0, updater.address, superAdmin.address);
       const pools = await cPoolFactory.getPools(businessOwner.address);
       expect(pools.length).equals(1);
       expect(pools[0]).not.equals(ethers.constants.AddressZero);
@@ -28,17 +30,27 @@ describe("ContributionPoolFactory", function () {
     it("[S] check event emitted", async function () {
       const tx = await cPoolFactory
         .connect(businessOwner)
-        .createPool(updater.address, superAdmin.address);
+        .createPool(1, updater.address, superAdmin.address);
       const pools = await cPoolFactory.getPools(businessOwner.address);
       expect(tx)
         .to.emit(cPoolFactory, "PoolCreated")
-        .withArgs(businessOwner.address, pools[0], updater.address, superAdmin.address);
+        .withArgs(
+          businessOwner.address,
+          pools[0],
+          1,
+          updater.address,
+          superAdmin.address
+        );
     });
   });
 
   describe("getPools", function () {
     it("[S] can getPools if businessOwner has no pool", async function () {
-      expect(await cPoolFactory.connect(businessOwner).getPools(businessOwner.address)).deep.equals([]);
+      expect(
+        await cPoolFactory
+          .connect(businessOwner)
+          .getPools(businessOwner.address)
+      ).deep.equals([]);
     });
   });
 });

@@ -7,11 +7,15 @@ import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 contract ContributionPool is IContributionPool, AccessControl {
   bytes32 public constant CONTRIBUTION_UPDATER_ROLE = keccak256("CONTRIBUTION_UPDATER_ROLE");
 
+  IContributionPool.MutationMode immutable public mode;
+
   address public admin;
   address public contributionUpdater;
   mapping (uint64 => mapping (address => uint120)) public contributions; // globalTerm => member => value
 
-  constructor(address _contributionUpdater, address _admin) {
+  constructor(IContributionPool.MutationMode _mode, address _contributionUpdater, address _admin) {
+    mode = _mode;
+
     contributionUpdater = _contributionUpdater;
     _setupRole(CONTRIBUTION_UPDATER_ROLE, contributionUpdater);
 
@@ -45,6 +49,7 @@ contract ContributionPool is IContributionPool, AccessControl {
     external
     onlyRole(CONTRIBUTION_UPDATER_ROLE)
   {
+    require (mode == IContributionPool.MutationMode.FullControl, "ContributionPool: operation not allowed");
     _subtractContribution(member, value);
     emit SubtractContribution(member, value);
   }
@@ -54,6 +59,7 @@ contract ContributionPool is IContributionPool, AccessControl {
     external
     onlyRole(CONTRIBUTION_UPDATER_ROLE)
   {
+    require (mode == IContributionPool.MutationMode.FullControl, "ContributionPool: operation not allowed");
     for (uint i = 0; i < members.length; i++) {
       _subtractContribution(members[i], values[i]);
     }
@@ -65,6 +71,7 @@ contract ContributionPool is IContributionPool, AccessControl {
     external
     onlyRole(CONTRIBUTION_UPDATER_ROLE)
   {
+    require (mode == IContributionPool.MutationMode.FullControl, "ContributionPool: operation not allowed");
     _setContribution(member, value);
     emit SetContribution(member, value);
   }
@@ -74,6 +81,7 @@ contract ContributionPool is IContributionPool, AccessControl {
     external
     onlyRole(CONTRIBUTION_UPDATER_ROLE)
   {
+    require (mode == IContributionPool.MutationMode.FullControl, "ContributionPool: operation not allowed");
     for (uint i = 0; i < members.length; i++) {
       _setContribution(members[i], values[i]);
     }
