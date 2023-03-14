@@ -50,7 +50,7 @@ describe("ContributionCalculator", function () {
     });
   });
 
-  describe("getContribution", function () {
+  describe("calculateSharesWithLinear", function () {
     it("[S] check member1 has no contribution", async function () {
       const result = await cCalculator.calculateSharesWithLinear({
         pools: [cPool1.address, cPool2.address],
