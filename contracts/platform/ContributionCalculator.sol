@@ -17,11 +17,6 @@ contract ContributionCalculator is
   OwnableUpgradeable,
   UUPSUpgradeable
 {
-  bytes32 public constant CONTRACT_UPGRADER_ROLE = keccak256("CONTRACT_UPGRADER_ROLE");
-
-  address public admin;
-  address public contractUpgrader;
-
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
