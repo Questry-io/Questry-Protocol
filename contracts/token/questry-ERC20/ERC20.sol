@@ -10,16 +10,21 @@ import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import "@openzeppelin/contracts/metatx/MinimalForwarder.sol";
 
 contract QuestryERC20 is ERC20, ERC20Burnable, Pausable, AccessControl, ERC2771Context {
-    constructor(MinimalForwarder forwarder) ERC20("QST", "QuestryERC20") ERC2771Context(address(forwarder)) {
+    bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
 
+    constructor(MinimalForwarder forwarder, address admin, address issuer) ERC20("QST", "QuestryERC20") ERC2771Context(address(forwarder)) {
+        _grantRole(DEFAULT_ADMIN_ROLE, admin);
+        _grantRole(ISSUER_ROLE, issuer);
     }
 
-    function mint()public {
-
+    function mint(address to, uint256 amount)public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _mint(to, amount);
     }
-    function burn()public {
 
+    function burn(uint256 amount)public override onlyRole(DEFAULT_ADMIN_ROLE){
+        burn(amount);
     }
+
     function _msgSender() internal view override (Context, ERC2771Context) returns (address sender) {
         sender = ERC2771Context._msgSender();
     }
@@ -31,10 +36,20 @@ contract QuestryERC20 is ERC20, ERC20Burnable, Pausable, AccessControl, ERC2771C
     function isTrustedForwarder(address forwarder) public view override returns (bool) {
         return ERC2771Context.isTrustedForwarder(forwarder);
     }
-    function pause()public {
 
+    function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _pause();
     }
-    function unpause()public{
 
+    function unpause() public onlyRole(DEFAULT_ADMIN_ROLE) {
+        _unpause();
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount)
+        internal
+        whenNotPaused
+        override
+    {
+        super._beforeTokenTransfer(from, to, amount);
     }
 }
