@@ -11,17 +11,28 @@ import "@openzeppelin/contracts/metatx/MinimalForwarder.sol";
 
 contract QuestryERC20 is ERC20, ERC20Burnable, Pausable, AccessControl, ERC2771Context {
     bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
+    uint256 public mintTime;
 
     constructor(MinimalForwarder forwarder, address admin, address issuer) ERC20("QST", "QuestryERC20") ERC2771Context(address(forwarder)) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(ISSUER_ROLE, issuer);
     }
 
-    function mint(address to, uint256 amount)public onlyRole(DEFAULT_ADMIN_ROLE) {
-        _mint(to, amount);
+    modifier isBurnable(){
+        require(isExpired() && (hasRole(DEFAULT_ADMIN_ROLE, _msgSender()) || hasRole(ISSUER_ROLE, _msgSender())), "token not expired or invalid role");
+        _;
     }
 
-    function burn(uint256 amount)public override{
+    function isExpired() internal view returns(bool){
+        return block.timestamp > (mintTime + 180 days);
+    }
+
+    function mint(address to, uint256 amount)public onlyRole(ISSUER_ROLE) {
+        _mint(to, amount);
+        mintTime = block.timestamp;
+    }
+
+    function burn(uint256 amount)public override isBurnable() {
         burn(amount);
     }
 
