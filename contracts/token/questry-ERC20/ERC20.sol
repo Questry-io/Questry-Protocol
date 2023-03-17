@@ -21,7 +21,7 @@ contract QuestryERC20 is ERC20, ERC20Burnable, Pausable, AccessControl, ERC2771C
         _mint(to, amount);
     }
 
-    function burn(uint256 amount)public override onlyRole(DEFAULT_ADMIN_ROLE){
+    function burn(uint256 amount)public override{
         burn(amount);
     }
 
