@@ -119,4 +119,4 @@ After downloading, it is necessary to change to ".env.txt" -> ".env"
 
 # deploy & Upgrade Rule
 
-![スマートコントラクトデプロイのルール]( "")
+![スマートコントラクトデプロイのルール](https://github.com/QuestryInc/KANAME-Protocol-V1.0/blob/fix-readme-dev/image/Contract-development-covernance.png "")
