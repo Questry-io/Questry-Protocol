@@ -1,44 +1,107 @@
-# Contract-Develop-template
+# KANAME-Protocol-V1.0
 
-プロとコル専用に書き直します
-
-スマートコントラクトの開発リポジトリ 
-
-スマートコントラクトのDeployに関してのルールは以下の通り
-
-## Deployルール 
-
-①Native Token , ERC20が絡むスマートコントラクトはメインネットデプロイ前に最低1人以上のコントラクトレビュー後
-
-デプロイ行為を行うこととする
-
-*エスクロー取引,マッチング取引等は特に重要チェックとする
-
-②ERC721のNFTに関しては
-サービスの求める仕様と合致しているかの確認を行い仕様書と実装の動作差分がないと判断できればデプロイとする
-
-## これは一回のみ
+## this is only once　for local machine
 - `nvm` をインストールする(nodeバージョン管理用) [Link](https://github.com/nvm-sh/nvm)
 - `nvm use` でプロジェクトで設定したnodeバージョンを利用する
 - `npm install --global yarn` で`yarn`を利用する
 
-## 本プロジェクトをコピーペーストした後は
+## Run after project clone
 - `yarn` で依存modulesをインストールする
-- `NewProject/contracts/Greeter.sol` を削除する
-- `NewProject/contracts/` に新規スマートコントラクトを書く
-- `NewProject/test/index.ts` を削除する
-- `NewProject/test/` ここにテストコードを書く
 
-## コマンド一覧
-|コマンド|説明|
+## derectry Structure
+derectry構成のtreeをこちらに記述する
+<pre>
+.
+├── README.md
+├── contracts
+│   ├── Factory
+│   │   ├── PJ-Manager-Factory.sol
+│   │   ├── Qestry-ERC721-factry.sol
+│   │   └── Soulbound-Factory.sol
+│   ├── interface
+│   │   ├── pjmanager
+│   │   │   ├── IContributionLogic.sol
+│   │   │   ├── IPJ-Manager.sol
+│   │   │   ├── IPJ-tresully-pool.sol
+│   │   │   └── ISignVerifi.sol
+│   │   ├── platform
+│   │   │   ├── IContributionLogicSammalizer.sol
+│   │   │   └── Ikaname-platform.sol
+│   │   ├── token
+│   │   │   ├── INFT.sol
+│   │   │   └── ISoulbound.sol
+│   │   └── tokenControl
+│   │       └── ItokenControl.sol
+│   ├── library
+│   │   └── platformDomain.sol
+│   ├── mock
+│   │   ├── NFTPartnerA.sol
+│   │   ├── NFTPartnerB.sol
+│   │   ├── NFTRandom.sol
+│   │   ├── RandomERC1155.sol
+│   │   └── RandomERC20.sol
+│   ├── pjmanager
+│   │   ├── ContributionLogic.sol
+│   │   ├── PJ-Manager.sol
+│   │   ├── PJ-tresully-pool.sol
+│   │   └── SignVerifi.sol
+│   ├── platform
+│   │   ├── ContributionLogicSammalizer.sol
+│   │   └── kaname-platform.sol
+│   ├── token
+│   │   ├── questry-ERC721
+│   │   │   └──  NFT.sol
+│   │   └── soulboaund
+│   │       └── Soulbound.sol
+│   └── token-control-proxy
+│       └── tokenControl.sol
+├── hardhat.config.ts
+├── package.json
+├── scripts
+│   └── verify
+│       ├── deploy.ts
+│       └── verify.ts
+├── test
+│   ├── Factory
+│   │   ├── NFT-factory.test.ts
+│   │   ├── PJ-Manager-Factory.test.ts
+│   │   └── sbt-factory.test.ts
+│   └── token
+│       ├── NFT.test.ts
+│       └── soulbound.test.ts
+├── tsconfig.json
+└── yarn.lock
+</pre>
+
+- Description of each contracts directory
+   + `contracts/Factory`   List of contracts for factory generation of KANAME-Protocol
+   + `contracts/interface` Contract list of Interface of each contract of KANAME-protocol
+   + `contracts/library`   Library contract list for each contract of KANAME-protocol
+   + `contracts/mock`      Mock contract for test verification of KANAME-protocol 
+   + `contracts/pjmanager` Project logic and state management contract of KANAME-protocol 
+   + `contracts/token`     Token-related contract directory of KANAME-protocol
+   + `contracts/token-controll-proxy` Contract for proxy transfer of various Tokens of KANAME-protocol
+
+- Description of each derectry of KANAME Protocol
+   + `test`    Test code writing directory of KANAME-Protocol
+   + `scripts` Contract operation script of KANAME-protocol
+
+- Description of each file of KANAME Protocol
+   + `hardhat.config.ts`  hardhat config file
+   + `package.json`       Management files for dependent modules and CLI commands    
+
+
+
+## Command List
+|Command|Explanation|
 |-|-|
-|`yarn run clean`|`deploy`関係のファイルを削除する|
-|`yarn run lint`|lintルールを守っているかチェック|
-|`yarn run lint:fix`|自動でlint修正|
-|`yarn run coverage`|テストコード書いてない範囲をチェック|
-|`yarn run test`|テストを実行する|
-|`yarn run gas-report`|ガス代計算|
-|`yarn run prepare`|`deploy`前の準備|
+|`yarn run clean`|`deploy` Delete related files|
+|`yarn run lint`|Check if lint rules are followed|
+|`yarn run lint:fix`|automatic lint fix|
+|`yarn run coverage`|Check the range where test code is not written|
+|`yarn run test`|run the test|
+|`yarn run gas-report`|gas bill calculator|
+|`yarn run prepare`|`deploy` previous preparation|
 |`yarn run deploy`|:boom:|
 
 ## 一般的
@@ -47,9 +110,13 @@
 ## 開発環境設定ファイル
 - .env
 - .env.example
-ダウンロード後は、「.env.txt」 -> 「.env」に変更する必要
+After downloading, it is necessary to change to ".env.txt" -> ".env"
 
-## チェックリスト
-- アドレスがEOAかコントラクトかのチェック
+## Checklist for testing
+-  Account Stakeholder Perspective Testing
+-  Evaluating Signature Message Reusability
+-  Transaction attack case management
 
-# KANAME-Protocol-V1.0
+# deploy & Upgrade Rule
+
+![スマートコントラクトデプロイのルール]( "")
