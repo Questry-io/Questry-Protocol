@@ -65,7 +65,7 @@ contract QuestryERC20 is
     emit Migrated(_to, _amount);
   }
 
-  function withdraw(address _to, uint256 _amount) public {
+  function withdraw(address _to, uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
     IERC20(this).safeTransfer(_to, _amount);
     emit Withdrawn(_to, _amount);
   }
