@@ -45,9 +45,10 @@ contract QuestryERC20 is
   }
 
   function selfMint(uint256 _amount) public onlyRole(ISSUER_ROLE) {
-    if(_isExpired()){
-        require(balanceOf(address(this)) == 0, "must burn all before self mint");
-        _reset();
+    if (_isExpired()) {
+      require(balanceOf(address(this)) == 0, "must burn all before self mint");
+      _reset();
+      _burn(msg.sender, balanceOf(address(this)));
     }
     require(remintableCount > 0, "you cannot issue token anymore");
     remintableCount -= 1;
