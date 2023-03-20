@@ -22,34 +22,21 @@ contract QuestryERC20 is
   uint256 public expiryTime;
   // remintable count for 180 days term
   uint256 public remintableCount = 2;
-  // ERC20 token that can be depositted
-  IERC20 private _deposittedToken;
-  // the amount of _deposittedToken that user depositted
-  mapping(address => uint256) private _deposits;
 
-  event Deposited(address indexed payee, uint256 amount);
   event Withdrawn(address indexed payee, uint256 amount);
   event Migrated(address indexed to, uint256 amount);
 
   constructor(
     MinimalForwarder _forwarder,
     address _admin,
-    address _issuer,
-    address _token
+    address _issuer
   ) ERC20("QST", "QuestryERC20") ERC2771Context(address(_forwarder)) {
     _grantRole(DEFAULT_ADMIN_ROLE, _admin);
     _grantRole(ISSUER_ROLE, _issuer);
-    _deposittedToken = IERC20(_token);
   }
 
   function _isExpired() internal view returns (bool) {
     return block.timestamp > expiryTime;
-  }
-
-  function mint(address _to, uint256 _amount) public onlyRole(ISSUER_ROLE) {
-    require(remintableCount > 0, "you cannot issue token anymore");
-    remintableCount -= 1;
-    _mint(_to, _amount);
   }
 
   function _reset() private {
@@ -57,10 +44,13 @@ contract QuestryERC20 is
     remintableCount = 2;
   }
 
-  function selfMint(uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    require(_isExpired(), "Token migration not allowed yet.");
-    require(balanceOf(address(this)) == 0, "must burn all before self mint");
-    _reset();
+  function selfMint(uint256 _amount) public onlyRole(ISSUER_ROLE) {
+    if(_isExpired()){
+        require(balanceOf(address(this)) == 0, "must burn all before self mint");
+        _reset();
+    }
+    require(remintableCount > 0, "you cannot issue token anymore");
+    remintableCount -= 1;
     _mint(address(this), _amount);
   }
 
@@ -70,18 +60,12 @@ contract QuestryERC20 is
   {
     require(_isExpired(), "Token migration not allowed yet.");
     _burn(_to, _amount);
-    _withdraw(_to, _deposits[_to]);
+    withdraw(_to, _amount);
     emit Migrated(_to, _amount);
   }
 
-  function deposit(uint256 _amount) public {
-    _deposits[_msgSender()] += _amount;
-    _deposittedToken.safeTransferFrom(_msgSender(), address(this), _amount);
-    emit Deposited(_msgSender(), _amount);
-  }
-
-  function _withdraw(address _to, uint256 _amount) private {
-    _deposittedToken.safeTransferFrom(address(this), _to, _amount);
+  function withdraw(address _to, uint256 _amount) public {
+    IERC20(this).safeTransfer(_to, _amount);
     emit Withdrawn(_to, _amount);
   }
 
@@ -126,9 +110,5 @@ contract QuestryERC20 is
     uint256 _amount
   ) internal override whenNotPaused {
     super._beforeTokenTransfer(_from, _to, _amount);
-  }
-
-  function depositsOf(address _payee) public view returns (uint256) {
-    return _deposits[_payee];
   }
 }
