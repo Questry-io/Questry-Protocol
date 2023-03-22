@@ -21,7 +21,7 @@ contract QuestryERC20 is
   bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
   uint256 public expiryTime;
   // remintable count for 180 days term
-  uint256 public remintableCount = 2;
+  uint256 public mintableCount = 3;
 
   event Withdrawn(address indexed payee, uint256 amount);
   event Migrated(address indexed to, uint256 amount);
@@ -41,17 +41,16 @@ contract QuestryERC20 is
 
   function _reset() private {
     expiryTime = block.timestamp + 180 days;
-    remintableCount = 2;
+    mintableCount = 3;
   }
 
   function selfMint(uint256 _amount) public onlyRole(ISSUER_ROLE) {
     if (_isExpired()) {
-      require(balanceOf(address(this)) == 0, "must burn all before self mint");
       _reset();
-      _burn(msg.sender, balanceOf(address(this)));
+      _burn(address(this), balanceOf(address(this)));
     }
-    require(remintableCount > 0, "you cannot issue token anymore");
-    remintableCount -= 1;
+    require(mintableCount > 0, "you cannot issue token anymore");
+    mintableCount -= 1;
     _mint(address(this), _amount);
   }
 
