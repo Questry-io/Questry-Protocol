@@ -27,7 +27,7 @@ async function getMetaTransaction(
   nonce: string,
   data: string,
   value: string = "0",
-  gas: string = "10000"
+  gas: string = "10000000"
 ) {
   const domainSeparator = await getEIP712DomainSeparator(
     name,
@@ -132,27 +132,24 @@ describe("QuestryERC20", function () {
       await forwarderContract.verify(metaTransaction.message, signature)
     ).to.equal(true);
     // Relay meta-transaction
-    await forwarderContract.execute(
-      metaTransaction.message,
-      signature
-    );
+    await forwarderContract.execute(metaTransaction.message, signature);
     // // Check if the meta-transaction was processed successfully
     expect(await forwarderContract.getNonce(from)).to.equal(nonce + 1);
   });
 
-  it("should process transfer via meta tx", async function () {
+  it("should process approve via meta tx", async function () {
     await contract.connect(issuer).selfMint(1000);
     await contract.connect(admin).withdraw(user.address, 500);
     // Prepare meta-transaction
     const from = user.address;
     const nonce: string = (await forwarderContract.getNonce(from)).toString();
     const to = contract.address;
-    let data = contract.interface.encodeFunctionData("approve", [
+    const data = contract.interface.encodeFunctionData("approve", [
       issuer.address,
       250,
     ]);
     // create typedData for sign meta tx
-    let metaTransaction = await getMetaTransaction(
+    const metaTransaction = await getMetaTransaction(
       this.name,
       this.chainId,
       forwarderContract.address,
@@ -162,7 +159,7 @@ describe("QuestryERC20", function () {
       data
     );
     // sign meta tx
-    let signature = await ethers.provider.send("eth_signTypedData_v4", [
+    const signature = await ethers.provider.send("eth_signTypedData_v4", [
       from,
       JSON.stringify(metaTransaction),
     ]);
@@ -172,28 +169,71 @@ describe("QuestryERC20", function () {
     // Relay meta-transaction
     await forwarderContract.execute(metaTransaction.message, signature);
     expect(await contract.allowance(from, issuer.address)).to.equal(250);
+  });
 
-    data = contract.interface.encodeFunctionData("transferFrom", [
-      from,
+  it("should process transfer via meta tx", async function () {
+    await contract.connect(issuer).selfMint(1000);
+    await contract.connect(admin).withdraw(user.address, 500);
+    // Prepare meta-transaction
+    contract.connect(user).approve(issuer.address, 250);
+    const from = user.address;
+    const nonce: string = (await forwarderContract.getNonce(from)).toString();
+    const to = contract.address;
+    const data = contract.interface.encodeFunctionData("transfer", [
       issuer.address,
       250,
     ]);
-    metaTransaction = await getMetaTransaction(
+    const metaTransaction = await getMetaTransaction(
       this.name,
       this.chainId,
       forwarderContract.address,
       from,
       to,
-      nonce + 1,
+      nonce,
       data
     );
-    signature = await ethers.provider.send("eth_signTypedData_v4", [
+    const signature = await ethers.provider.send("eth_signTypedData_v4", [
       from,
       JSON.stringify(metaTransaction),
     ]);
     // // Check if the meta-transaction was processed successfully
-    await forwarderContract.execute(metaTransaction.message, signature);
+    await forwarderContract
+      .connect(user)
+      .execute(metaTransaction.message, signature);
     expect(await contract.balanceOf(issuer.address)).to.equal(250);
+  });
+
+  it("should process transferFrom via meta tx", async function () {
+    await contract.connect(issuer).selfMint(1000);
+    await contract.connect(admin).withdraw(user.address, 500);
+    // Prepare meta-transaction
+    contract.connect(user).approve(issuer.address, 250);
+    const from = issuer.address;
+    const nonce: string = (await forwarderContract.getNonce(from)).toString();
+    const to = contract.address;
+    const data = contract.interface.encodeFunctionData("transferFrom", [
+      user.address,
+      from,
+      250,
+    ]);
+    const metaTransaction = await getMetaTransaction(
+      this.name,
+      this.chainId,
+      forwarderContract.address,
+      from,
+      to,
+      nonce,
+      data
+    );
+    const signature = await ethers.provider.send("eth_signTypedData_v4", [
+      from,
+      JSON.stringify(metaTransaction),
+    ]);
+    // // Check if the meta-transaction was processed successfully
+    await forwarderContract
+      .connect(issuer)
+      .execute(metaTransaction.message, signature);
+    expect(await contract.balanceOf(from)).to.equal(250);
   });
 
   it("should revert when the signature is invalid", async function () {
