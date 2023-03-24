@@ -1,8 +1,10 @@
 /* eslint-disable node/no-missing-import */
 import { ethers, upgrades } from "hardhat";
-import { Contract, utils } from "ethers";
+import { Contract } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { TestUtils } from "../testUtils";
+import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 
 describe("ContributionCalculator", function () {
   let superAdmin: SignerWithAddress;
@@ -13,10 +15,6 @@ describe("ContributionCalculator", function () {
   let cPool1: Contract;
   let cPool2: Contract;
   let cCalculator: Contract;
-
-  const linearAlgorithm = utils
-    .keccak256(utils.toUtf8Bytes("LINEAR"))
-    .slice(0, 10);
 
   beforeEach(async function () {
     [superAdmin, notAdmin, poolUpdater, member1, member2] =
@@ -59,7 +57,7 @@ describe("ContributionCalculator", function () {
     it("[R] reverts if invalid arguments", async function () {
       await expect(
         cCalculator.calculateDispatch([member1.address], {
-          algorithm: linearAlgorithm,
+          algorithm: TestUtils.linearAlgorithm,
           args: ethers.constants.HashZero,
         })
       ).to.be.revertedWith(""); // expects abi.decode error
@@ -68,7 +66,7 @@ describe("ContributionCalculator", function () {
     it("[R] reverts if unknown algorithm", async function () {
       await expect(
         cCalculator.calculateDispatch([member1.address], {
-          algorithm: utils.keccak256(utils.toUtf8Bytes("UNKNOWN")).slice(0, 10),
+          algorithm: keccak256(toUtf8Bytes("UNKNOWN")).slice(0, 10),
           args: ethers.constants.HashZero,
         })
       ).to.be.revertedWith("Calculator: unknown algorithm");
@@ -76,24 +74,10 @@ describe("ContributionCalculator", function () {
   });
 
   describe("calculateSharesWithLinear", function () {
-    type SharesWithLinear = {
-      pools: string[];
-      coefs: number[];
-    };
-    function createArgsWithLinear(args: SharesWithLinear) {
-      return {
-        algorithm: linearAlgorithm,
-        args: utils.defaultAbiCoder.encode(
-          ["(address[] pools,uint120[] coefs)"],
-          [args]
-        ),
-      };
-    }
-
     it("[S] check member1 has no contribution", async function () {
       const result = await cCalculator.calculateDispatch(
         [member1.address],
-        createArgsWithLinear({
+        TestUtils.createArgsWithLinear({
           pools: [cPool1.address, cPool2.address],
           coefs: [2, 3],
         })
@@ -107,7 +91,7 @@ describe("ContributionCalculator", function () {
       await cPool1.connect(superAdmin).addContribution(member1.address, 2);
       const result = await cCalculator.calculateDispatch(
         [member1.address],
-        createArgsWithLinear({
+        TestUtils.createArgsWithLinear({
           pools: [cPool1.address, cPool2.address],
           coefs: [2, 3],
         })
@@ -122,7 +106,7 @@ describe("ContributionCalculator", function () {
       await cPool2.connect(superAdmin).addContribution(member1.address, 3);
       const result = await cCalculator.calculateDispatch(
         [member1.address],
-        createArgsWithLinear({
+        TestUtils.createArgsWithLinear({
           pools: [cPool1.address, cPool2.address],
           coefs: [2, 3],
         })
@@ -138,7 +122,7 @@ describe("ContributionCalculator", function () {
       await cPool2.connect(superAdmin).addContribution(member2.address, 3);
       const result = await cCalculator.calculateDispatch(
         [member1.address, member2.address],
-        createArgsWithLinear({
+        TestUtils.createArgsWithLinear({
           pools: [cPool1.address, cPool2.address],
           coefs: [2, 3],
         })

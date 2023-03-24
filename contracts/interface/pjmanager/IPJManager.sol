@@ -2,7 +2,9 @@
 
 pragma solidity ^0.8.9;
 
-interface IPJManager {
+import {IPJTreasuryPool} from "./IPJTreasuryPool.sol";
+
+interface IPJManager is IPJTreasuryPool {
   /**
    * @dev Register a new board which is identified by `sbt` and `tokenId` pair.
    */
