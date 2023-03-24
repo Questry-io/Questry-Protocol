@@ -138,346 +138,370 @@ describe("QuestryERC20", function () {
     ).to.equal(true);
   });
 
-  it("should process the meta-transaction correctly", async function () {
-    // Prepare meta-transaction
-    const data = contract.interface.encodeFunctionData("selfMint", [1000]);
-    const from = user.address;
-    const nonce: string = (await forwarderContract.getNonce(from)).toString();
-    const to = contract.address;
-    // get proper gas to execute meta tx
-    const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
-      this.name,
-      this.chainId,
-      forwarderContract.address,
-      from,
-      to,
-      nonce,
-      data,
-      this.value,
-      this.gas
-    );
-    const estimatedGas: string = (
-      await forwarderContract.estimateGas.execute(
-        metaTxForGas.message,
-        signForGas
-      )
-    ).toString();
-    // create typedData for sign meta tx
-    const metaTx = await getMetaTx(
-      this.name,
-      this.chainId,
-      forwarderContract.address,
-      from,
-      to,
-      nonce,
-      data,
-      this.value,
-      estimatedGas
-    );
-    // sign meta tx
-    const signature = await ethers.provider.send("eth_signTypedData_v4", [
-      from,
-      JSON.stringify(metaTx),
-    ]);
-    expect(
-      await forwarderContract.verify(metaTx.message, signature)
-    ).to.equal(true);
-    // Relay meta-transaction
-    await forwarderContract.execute(metaTx.message, signature);
-    // // Check if the meta-transaction was processed successfully
-    expect(await forwarderContract.getNonce(from)).to.equal(nonce + 1);
+  describe("execute", function () {
+    it("[S] should process the meta-transaction correctly", async function () {
+      // Prepare meta-transaction
+      const data = contract.interface.encodeFunctionData("selfMint", [1000]);
+      const from = user.address;
+      const nonce: string = (await forwarderContract.getNonce(from)).toString();
+      const to = contract.address;
+      // get proper gas to execute meta tx
+      const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
+        this.name,
+        this.chainId,
+        forwarderContract.address,
+        from,
+        to,
+        nonce,
+        data,
+        this.value,
+        this.gas
+      );
+      const estimatedGas: string = (
+        await forwarderContract.estimateGas.execute(
+          metaTxForGas.message,
+          signForGas
+        )
+      ).toString();
+      // create typedData for sign meta tx
+      const metaTx = await getMetaTx(
+        this.name,
+        this.chainId,
+        forwarderContract.address,
+        from,
+        to,
+        nonce,
+        data,
+        this.value,
+        estimatedGas
+      );
+      // sign meta tx
+      const signature = await ethers.provider.send("eth_signTypedData_v4", [
+        from,
+        JSON.stringify(metaTx),
+      ]);
+      expect(
+        await forwarderContract.verify(metaTx.message, signature)
+      ).to.equal(true);
+      // Relay meta-transaction
+      await forwarderContract.execute(metaTx.message, signature);
+      // // Check if the meta-transaction was processed successfully
+      expect(await forwarderContract.getNonce(from)).to.equal(nonce + 1);
+    });
+
+    it("[R] should revert when the signature is invalid", async function () {
+      const data = contract.interface.encodeFunctionData("selfMint", [1000]);
+      const nonce = (
+        await forwarderContract.getNonce(issuer.address)
+      ).toString();
+      const from = user.address;
+      const to = contract.address;
+      // get proper gas to execute meta tx
+      const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
+        this.name,
+        this.chainId,
+        forwarderContract.address,
+        from,
+        to,
+        nonce,
+        data,
+        this.value,
+        this.gas
+      );
+      const estimatedGas: string = (
+        await forwarderContract.estimateGas.execute(
+          metaTxForGas.message,
+          signForGas
+        )
+      ).toString();
+      // create typedData for sign meta tx
+      const metaTx = await getMetaTx(
+        this.name,
+        this.chainId,
+        forwarderContract.address,
+        from,
+        to,
+        nonce,
+        data,
+        this.value,
+        estimatedGas
+      );
+      const signature = await ethers.provider.send("eth_signTypedData_v4", [
+        metaTx.message.from,
+        JSON.stringify(metaTx),
+      ]);
+
+      // Sign meta-transaction with incorrect nonce
+      // Relay meta-transaction
+      await expect(
+        forwarderContract
+          .connect(issuer)
+          .execute({ ...metaTx.message, nonce: 10 }, signature)
+      ).to.be.revertedWith(
+        "MinimalForwarder: signature does not match request"
+      );
+    });
+
+    describe("approve", function () {
+      it("[S] should process approve via meta tx", async function () {
+        await contract.connect(issuer).selfMint(1000);
+        await contract.connect(admin).withdraw(user.address, 500);
+        // Prepare meta-transaction
+        const from = user.address;
+        const nonce: string = (
+          await forwarderContract.getNonce(from)
+        ).toString();
+        const to = contract.address;
+        const data = contract.interface.encodeFunctionData("approve", [
+          issuer.address,
+          250,
+        ]);
+        // get proper gas to execute meta tx
+        const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
+          this.name,
+          this.chainId,
+          forwarderContract.address,
+          from,
+          to,
+          nonce,
+          data,
+          this.value,
+          this.gas
+        );
+        const estimatedGas: string = (
+          await forwarderContract.estimateGas.execute(
+            metaTxForGas.message,
+            signForGas
+          )
+        ).toString();
+        // create typedData for sign meta tx
+        const metaTx = await getMetaTx(
+          this.name,
+          this.chainId,
+          forwarderContract.address,
+          from,
+          to,
+          nonce,
+          data,
+          this.value,
+          estimatedGas
+        );
+        // sign meta tx
+        const signature = await ethers.provider.send("eth_signTypedData_v4", [
+          from,
+          JSON.stringify(metaTx),
+        ]);
+        expect(
+          await forwarderContract.verify(metaTx.message, signature)
+        ).to.equal(true);
+        // Relay meta-transaction
+        await forwarderContract.execute(metaTx.message, signature);
+        expect(await contract.allowance(from, issuer.address)).to.equal(250);
+      });
+    });
+
+    describe("transfer", function () {
+      it("[S] should process transfer via meta tx", async function () {
+        await contract.connect(issuer).selfMint(1000);
+        await contract.connect(admin).withdraw(user.address, 500);
+        // Prepare meta-transaction
+        contract.connect(user).approve(issuer.address, 250);
+        const from = user.address;
+        const nonce: string = (
+          await forwarderContract.getNonce(from)
+        ).toString();
+        const to = contract.address;
+        const data = contract.interface.encodeFunctionData("transfer", [
+          issuer.address,
+          250,
+        ]);
+        // get proper gas to execute meta tx
+        const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
+          this.name,
+          this.chainId,
+          forwarderContract.address,
+          from,
+          to,
+          nonce,
+          data,
+          this.value,
+          this.gas
+        );
+        const estimatedGas: string = (
+          await forwarderContract.estimateGas.execute(
+            metaTxForGas.message,
+            signForGas
+          )
+        ).toString();
+        // create typedData for sign meta tx
+        const metaTx = await getMetaTx(
+          this.name,
+          this.chainId,
+          forwarderContract.address,
+          from,
+          to,
+          nonce,
+          data,
+          this.value,
+          estimatedGas
+        );
+        const signature = await ethers.provider.send("eth_signTypedData_v4", [
+          from,
+          JSON.stringify(metaTx),
+        ]);
+        // // Check if the meta-transaction was processed successfully
+        await forwarderContract
+          .connect(user)
+          .execute(metaTx.message, signature);
+        expect(await contract.balanceOf(issuer.address)).to.equal(250);
+      });
+    });
+
+    describe("transferFrom", function () {
+      it("[S] should process transferFrom via meta tx", async function () {
+        await contract.connect(issuer).selfMint(1000);
+        await contract.connect(admin).withdraw(user.address, 500);
+        // Prepare meta-transaction
+        contract.connect(user).approve(issuer.address, 250);
+        const from = issuer.address;
+        const nonce: string = (
+          await forwarderContract.getNonce(from)
+        ).toString();
+        const to = contract.address;
+        const data = contract.interface.encodeFunctionData("transferFrom", [
+          user.address,
+          from,
+          250,
+        ]);
+        // get proper gas to execute meta tx
+        const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
+          this.name,
+          this.chainId,
+          forwarderContract.address,
+          from,
+          to,
+          nonce,
+          data,
+          this.value,
+          this.gas
+        );
+        const estimatedGas: string = (
+          await forwarderContract.estimateGas.execute(
+            metaTxForGas.message,
+            signForGas
+          )
+        ).toString();
+        // create typedData for sign meta tx
+        const metaTx = await getMetaTx(
+          this.name,
+          this.chainId,
+          forwarderContract.address,
+          from,
+          to,
+          nonce,
+          data,
+          this.value,
+          estimatedGas
+        );
+        const signature = await ethers.provider.send("eth_signTypedData_v4", [
+          from,
+          JSON.stringify(metaTx),
+        ]);
+        // // Check if the meta-transaction was processed successfully
+        await forwarderContract
+          .connect(issuer)
+          .execute(metaTx.message, signature);
+        expect(await contract.balanceOf(from)).to.equal(250);
+      });
+    });
   });
 
-  it("should process approve via meta tx", async function () {
-    await contract.connect(issuer).selfMint(1000);
-    await contract.connect(admin).withdraw(user.address, 500);
-    // Prepare meta-transaction
-    const from = user.address;
-    const nonce: string = (await forwarderContract.getNonce(from)).toString();
-    const to = contract.address;
-    const data = contract.interface.encodeFunctionData("approve", [
-      issuer.address,
-      250,
-    ]);
-    // get proper gas to execute meta tx
-    const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
-      this.name,
-      this.chainId,
-      forwarderContract.address,
-      from,
-      to,
-      nonce,
-      data,
-      this.value,
-      this.gas
-    );
-    const estimatedGas: string = (
-      await forwarderContract.estimateGas.execute(
-        metaTxForGas.message,
-        signForGas
-      )
-    ).toString();
-    // create typedData for sign meta tx
-    const metaTx = await getMetaTx(
-      this.name,
-      this.chainId,
-      forwarderContract.address,
-      from,
-      to,
-      nonce,
-      data,
-      this.value,
-      estimatedGas
-    );
-    // sign meta tx
-    const signature = await ethers.provider.send("eth_signTypedData_v4", [
-      from,
-      JSON.stringify(metaTx),
-    ]);
-    expect(
-      await forwarderContract.verify(metaTx.message, signature)
-    ).to.equal(true);
-    // Relay meta-transaction
-    await forwarderContract.execute(metaTx.message, signature);
-    expect(await contract.allowance(from, issuer.address)).to.equal(250);
-  });
-
-  it("should process transfer via meta tx", async function () {
-    await contract.connect(issuer).selfMint(1000);
-    await contract.connect(admin).withdraw(user.address, 500);
-    // Prepare meta-transaction
-    contract.connect(user).approve(issuer.address, 250);
-    const from = user.address;
-    const nonce: string = (await forwarderContract.getNonce(from)).toString();
-    const to = contract.address;
-    const data = contract.interface.encodeFunctionData("transfer", [
-      issuer.address,
-      250,
-    ]);
-    // get proper gas to execute meta tx
-    const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
-      this.name,
-      this.chainId,
-      forwarderContract.address,
-      from,
-      to,
-      nonce,
-      data,
-      this.value,
-      this.gas
-    );
-    const estimatedGas: string = (
-      await forwarderContract.estimateGas.execute(
-        metaTxForGas.message,
-        signForGas
-      )
-    ).toString();
-    // create typedData for sign meta tx
-    const metaTx = await getMetaTx(
-      this.name,
-      this.chainId,
-      forwarderContract.address,
-      from,
-      to,
-      nonce,
-      data,
-      this.value,
-      estimatedGas
-    );
-    const signature = await ethers.provider.send("eth_signTypedData_v4", [
-      from,
-      JSON.stringify(metaTx),
-    ]);
-    // // Check if the meta-transaction was processed successfully
-    await forwarderContract
-      .connect(user)
-      .execute(metaTx.message, signature);
-    expect(await contract.balanceOf(issuer.address)).to.equal(250);
-  });
-
-  it("should process transferFrom via meta tx", async function () {
-    await contract.connect(issuer).selfMint(1000);
-    await contract.connect(admin).withdraw(user.address, 500);
-    // Prepare meta-transaction
-    contract.connect(user).approve(issuer.address, 250);
-    const from = issuer.address;
-    const nonce: string = (await forwarderContract.getNonce(from)).toString();
-    const to = contract.address;
-    const data = contract.interface.encodeFunctionData("transferFrom", [
-      user.address,
-      from,
-      250,
-    ]);
-    // get proper gas to execute meta tx
-    const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
-      this.name,
-      this.chainId,
-      forwarderContract.address,
-      from,
-      to,
-      nonce,
-      data,
-      this.value,
-      this.gas
-    );
-    const estimatedGas: string = (
-      await forwarderContract.estimateGas.execute(
-        metaTxForGas.message,
-        signForGas
-      )
-    ).toString();
-    // create typedData for sign meta tx
-    const metaTx = await getMetaTx(
-      this.name,
-      this.chainId,
-      forwarderContract.address,
-      from,
-      to,
-      nonce,
-      data,
-      this.value,
-      estimatedGas
-    );
-    const signature = await ethers.provider.send("eth_signTypedData_v4", [
-      from,
-      JSON.stringify(metaTx),
-    ]);
-    // // Check if the meta-transaction was processed successfully
-    await forwarderContract
-      .connect(issuer)
-      .execute(metaTx.message, signature);
-    expect(await contract.balanceOf(from)).to.equal(250);
-  });
-
-  it("should revert when the signature is invalid", async function () {
-    const data = contract.interface.encodeFunctionData("selfMint", [1000]);
-    const nonce = (await forwarderContract.getNonce(issuer.address)).toString();
-    const from = user.address;
-    const to = contract.address;
-    // get proper gas to execute meta tx
-    const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
-      this.name,
-      this.chainId,
-      forwarderContract.address,
-      from,
-      to,
-      nonce,
-      data,
-      this.value,
-      this.gas
-    );
-    const estimatedGas: string = (
-      await forwarderContract.estimateGas.execute(
-        metaTxForGas.message,
-        signForGas
-      )
-    ).toString();
-    // create typedData for sign meta tx
-    const metaTx = await getMetaTx(
-      this.name,
-      this.chainId,
-      forwarderContract.address,
-      from,
-      to,
-      nonce,
-      data,
-      this.value,
-      estimatedGas
-    );
-    const signature = await ethers.provider.send("eth_signTypedData_v4", [
-      metaTx.message.from,
-      JSON.stringify(metaTx),
-    ]);
-
-    // Sign meta-transaction with incorrect nonce
-    // Relay meta-transaction
-    await expect(
-      forwarderContract
-        .connect(issuer)
-        .execute({ ...metaTx.message, nonce: 10 }, signature)
-    ).to.be.revertedWith("MinimalForwarder: signature does not match request");
-  });
-
-  it("should allow self mint by issuer", async function () {
-    await contract.connect(issuer).selfMint(1000);
-    expect(await contract.balanceOf(contract.address)).to.equal(1000);
-  });
-
-  it("should not allow self mint by non-issuer", async function () {
-    await expect(contract.connect(admin).selfMint(1000)).to.be.revertedWith(
-      `AccessControl: account ${admin.address.toLowerCase()} is missing role ${await contract.ISSUER_ROLE()}`
-    );
-  });
-
-  it("should not allow self mint if mintable count is 0", async function () {
-    // can mint 3 times until the expiryTime
-    for (let i = 0; i < 3; i++) {
+  describe("selfMint", function () {
+    it("[S] should allow self mint by issuer", async function () {
       await contract.connect(issuer).selfMint(1000);
-    }
-    await expect(contract.connect(issuer).selfMint(1000)).to.be.revertedWith(
-      "you cannot issue token anymore"
-    );
+      expect(await contract.balanceOf(contract.address)).to.equal(1000);
+    });
+
+    it("[R] should not allow self mint by non-issuer", async function () {
+      await expect(contract.connect(admin).selfMint(1000)).to.be.revertedWith(
+        `AccessControl: account ${admin.address.toLowerCase()} is missing role ${await contract.ISSUER_ROLE()}`
+      );
+    });
+
+    it("[R] should not allow self mint if mintable count is 0", async function () {
+      // can mint 3 times until the expiryTime
+      for (let i = 0; i < 3; i++) {
+        await contract.connect(issuer).selfMint(1000);
+      }
+      await expect(contract.connect(issuer).selfMint(1000)).to.be.revertedWith(
+        "you cannot issue token anymore"
+      );
+    });
   });
 
-  it("should allow migration when expired", async function () {
-    // Fast-forward to expiry time.
-    await contract.connect(issuer).selfMint(1000);
-    await contract.connect(admin).withdraw(user.address, 500);
+  describe("migrate", function () {
+    it("[S] should allow migration when expired", async function () {
+      // Fast-forward to expiry time.
+      await contract.connect(issuer).selfMint(1000);
+      await contract.connect(admin).withdraw(user.address, 500);
 
-    // increase time
-    await ethers.provider.send("evm_increaseTime", [180 * 24 * 60 * 60]);
-    await ethers.provider.send("evm_mine", []);
+      // increase time
+      await ethers.provider.send("evm_increaseTime", [180 * 24 * 60 * 60]);
+      await ethers.provider.send("evm_mine", []);
 
-    // Perform migration
-    await contract.connect(admin).migrate(user.address, 500);
-    expect(await contract.balanceOf(user.address)).to.equal(500);
+      // Perform migration
+      await contract.connect(admin).migrate(user.address, 500);
+      expect(await contract.balanceOf(user.address)).to.equal(500);
+    });
+
+    it("[R] should not allow migration when not expired", async function () {
+      await contract.connect(issuer).selfMint(1000);
+      await expect(
+        contract.connect(admin).migrate(user.address, 500)
+      ).to.be.revertedWith("Token migration not allowed yet.");
+    });
+
+    it("[R] should not allow migration by non-admin", async function () {
+      await contract.connect(issuer).selfMint(1000);
+      await expect(
+        contract.connect(user).migrate(user.address, 500)
+      ).to.be.revertedWith(
+        `AccessControl: account ${user.address.toLowerCase()} is missing role ${await contract.DEFAULT_ADMIN_ROLE()}`
+      );
+    });
   });
 
-  it("should not allow migration when not expired", async function () {
-    await contract.connect(issuer).selfMint(1000);
-    await expect(
-      contract.connect(admin).migrate(user.address, 500)
-    ).to.be.revertedWith("Token migration not allowed yet.");
-  });
+  describe("pause & unpause", function () {
+    it("[S] should allow admin to pause and unpause", async function () {
+      expect(await contract.paused()).to.equal(false);
+      await contract.connect(admin).pause();
+      expect(await contract.paused()).to.equal(true);
+      await contract.connect(admin).unpause();
+      expect(await contract.paused()).to.equal(false);
+    });
 
-  it("should not allow migration by non-admin", async function () {
-    await contract.connect(issuer).selfMint(1000);
-    await expect(
-      contract.connect(user).migrate(user.address, 500)
-    ).to.be.revertedWith(
-      `AccessControl: account ${user.address.toLowerCase()} is missing role ${await contract.DEFAULT_ADMIN_ROLE()}`
-    );
-  });
+    it("[R] should not allow non-admin to pause and unpause", async function () {
+      await expect(contract.connect(user).pause()).to.be.revertedWith(
+        `AccessControl: account ${user.address.toLowerCase()} is missing role ${await contract.DEFAULT_ADMIN_ROLE()}`
+      );
+      await expect(contract.connect(user).unpause()).to.be.revertedWith(
+        `AccessControl: account ${user.address.toLowerCase()} is missing role ${await contract.DEFAULT_ADMIN_ROLE()}`
+      );
+    });
 
-  it("should allow admin to pause and unpause", async function () {
-    expect(await contract.paused()).to.equal(false);
-    await contract.connect(admin).pause();
-    expect(await contract.paused()).to.equal(true);
-    await contract.connect(admin).unpause();
-    expect(await contract.paused()).to.equal(false);
-  });
+    it("[R] should not allow token transfer when paused", async function () {
+      await contract.connect(admin).pause();
+      await expect(contract.connect(issuer).selfMint(1000)).to.be.revertedWith(
+        "Pausable: paused"
+      );
+    });
 
-  it("should not allow non-admin to pause and unpause", async function () {
-    await expect(contract.connect(user).pause()).to.be.revertedWith(
-      `AccessControl: account ${user.address.toLowerCase()} is missing role ${await contract.DEFAULT_ADMIN_ROLE()}`
-    );
-    await expect(contract.connect(user).unpause()).to.be.revertedWith(
-      `AccessControl: account ${user.address.toLowerCase()} is missing role ${await contract.DEFAULT_ADMIN_ROLE()}`
-    );
-  });
-
-  it("should not allow token transfer when paused", async function () {
-    await contract.connect(admin).pause();
-    await expect(contract.connect(issuer).selfMint(1000)).to.be.revertedWith(
-      "Pausable: paused"
-    );
-  });
-
-  it("should allow token transfer when not paused", async function () {
-    await contract.connect(admin).pause();
-    await contract.connect(admin).unpause();
-    await contract.connect(issuer).selfMint(1000);
-    await contract.connect(admin).withdraw(user.address, 500);
-    expect(await contract.balanceOf(user.address)).to.equal(500);
+    it("[S] should allow token transfer when not paused", async function () {
+      await contract.connect(admin).pause();
+      await contract.connect(admin).unpause();
+      await contract.connect(issuer).selfMint(1000);
+      await contract.connect(admin).withdraw(user.address, 500);
+      expect(await contract.balanceOf(user.address)).to.equal(500);
+    });
   });
 });
