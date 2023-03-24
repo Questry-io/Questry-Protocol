@@ -51,7 +51,7 @@ describe("SBTFactory", function () {
       const sbt = await cFactoryMock.getContractAddress(name, symbol);
       expect(tx)
         .to.emit(cFactoryMock, "SBTCreated")
-        .withArgs([sbt, name, symbol, dummyPJManager, SBTCreator.address]);
+        .withArgs(sbt, name, symbol, dummyPJManager, SBTCreator.address);
     });
 
     it("[R] check SBT exists error", async function () {
