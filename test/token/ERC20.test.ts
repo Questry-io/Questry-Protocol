@@ -125,7 +125,7 @@ describe("QuestryERC20", function () {
     this.gas = (await ethers.provider.getBlock("latest")).gasLimit.toString();
   });
 
-  it("should have correct initial values", async function () {
+  it("[S] should have correct initial values", async function () {
     expect(await contract.name()).to.equal("QST");
     expect(await contract.symbol()).to.equal("QuestryERC20");
     expect(await contract.decimals()).to.equal(18);
