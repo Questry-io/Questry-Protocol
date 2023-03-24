@@ -18,7 +18,7 @@ async function getEIP712DomainSeparator(
   };
 }
 
-async function getMetaTransaction(
+async function getMetaTx(
   name: string,
   chainId: number,
   verifyingContract: string,
@@ -27,7 +27,7 @@ async function getMetaTransaction(
   nonce: string,
   data: string,
   value: string = "0",
-  gas: string = "10000000"
+  gas: string = "30000000"
 ) {
   const domainSeparator = await getEIP712DomainSeparator(
     name,
@@ -66,6 +66,35 @@ async function getMetaTransaction(
   };
 }
 
+async function getMetaTxAndSignForGas(
+  name: string,
+  chainId: number,
+  verifyingContract: string,
+  from: string,
+  to: string,
+  nonce: string,
+  data: string,
+  value: string,
+  gas: string
+) {
+  const metaTxForGas = await getMetaTx(
+    name,
+    chainId,
+    verifyingContract,
+    from,
+    to,
+    nonce,
+    data,
+    value,
+    gas
+  );
+  const signForGas = await ethers.provider.send("eth_signTypedData_v4", [
+    from,
+    JSON.stringify(metaTxForGas),
+  ]);
+  return { metaTxForGas, signForGas };
+}
+
 describe("QuestryERC20", function () {
   let admin: SignerWithAddress;
   let issuer: SignerWithAddress;
@@ -92,6 +121,8 @@ describe("QuestryERC20", function () {
 
     this.name = "MinimalForwarder";
     this.chainId = (await ethers.provider.getNetwork()).chainId;
+    this.value = "0";
+    this.gas = (await ethers.provider.getBlock("latest")).gasLimit.toString();
   });
 
   it("should have correct initial values", async function () {
@@ -113,26 +144,46 @@ describe("QuestryERC20", function () {
     const from = user.address;
     const nonce: string = (await forwarderContract.getNonce(from)).toString();
     const to = contract.address;
-    // create typedData for sign meta tx
-    const metaTransaction = await getMetaTransaction(
+    // get proper gas to execute meta tx
+    const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
       this.name,
       this.chainId,
       forwarderContract.address,
       from,
       to,
       nonce,
-      data
+      data,
+      this.value,
+      this.gas
+    );
+    const estimatedGas: string = (
+      await forwarderContract.estimateGas.execute(
+        metaTxForGas.message,
+        signForGas
+      )
+    ).toString();
+    // create typedData for sign meta tx
+    const metaTx = await getMetaTx(
+      this.name,
+      this.chainId,
+      forwarderContract.address,
+      from,
+      to,
+      nonce,
+      data,
+      this.value,
+      estimatedGas
     );
     // sign meta tx
     const signature = await ethers.provider.send("eth_signTypedData_v4", [
       from,
-      JSON.stringify(metaTransaction),
+      JSON.stringify(metaTx),
     ]);
     expect(
-      await forwarderContract.verify(metaTransaction.message, signature)
+      await forwarderContract.verify(metaTx.message, signature)
     ).to.equal(true);
     // Relay meta-transaction
-    await forwarderContract.execute(metaTransaction.message, signature);
+    await forwarderContract.execute(metaTx.message, signature);
     // // Check if the meta-transaction was processed successfully
     expect(await forwarderContract.getNonce(from)).to.equal(nonce + 1);
   });
@@ -148,26 +199,46 @@ describe("QuestryERC20", function () {
       issuer.address,
       250,
     ]);
-    // create typedData for sign meta tx
-    const metaTransaction = await getMetaTransaction(
+    // get proper gas to execute meta tx
+    const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
       this.name,
       this.chainId,
       forwarderContract.address,
       from,
       to,
       nonce,
-      data
+      data,
+      this.value,
+      this.gas
+    );
+    const estimatedGas: string = (
+      await forwarderContract.estimateGas.execute(
+        metaTxForGas.message,
+        signForGas
+      )
+    ).toString();
+    // create typedData for sign meta tx
+    const metaTx = await getMetaTx(
+      this.name,
+      this.chainId,
+      forwarderContract.address,
+      from,
+      to,
+      nonce,
+      data,
+      this.value,
+      estimatedGas
     );
     // sign meta tx
     const signature = await ethers.provider.send("eth_signTypedData_v4", [
       from,
-      JSON.stringify(metaTransaction),
+      JSON.stringify(metaTx),
     ]);
     expect(
-      await forwarderContract.verify(metaTransaction.message, signature)
+      await forwarderContract.verify(metaTx.message, signature)
     ).to.equal(true);
     // Relay meta-transaction
-    await forwarderContract.execute(metaTransaction.message, signature);
+    await forwarderContract.execute(metaTx.message, signature);
     expect(await contract.allowance(from, issuer.address)).to.equal(250);
   });
 
@@ -183,23 +254,44 @@ describe("QuestryERC20", function () {
       issuer.address,
       250,
     ]);
-    const metaTransaction = await getMetaTransaction(
+    // get proper gas to execute meta tx
+    const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
       this.name,
       this.chainId,
       forwarderContract.address,
       from,
       to,
       nonce,
-      data
+      data,
+      this.value,
+      this.gas
+    );
+    const estimatedGas: string = (
+      await forwarderContract.estimateGas.execute(
+        metaTxForGas.message,
+        signForGas
+      )
+    ).toString();
+    // create typedData for sign meta tx
+    const metaTx = await getMetaTx(
+      this.name,
+      this.chainId,
+      forwarderContract.address,
+      from,
+      to,
+      nonce,
+      data,
+      this.value,
+      estimatedGas
     );
     const signature = await ethers.provider.send("eth_signTypedData_v4", [
       from,
-      JSON.stringify(metaTransaction),
+      JSON.stringify(metaTx),
     ]);
     // // Check if the meta-transaction was processed successfully
     await forwarderContract
       .connect(user)
-      .execute(metaTransaction.message, signature);
+      .execute(metaTx.message, signature);
     expect(await contract.balanceOf(issuer.address)).to.equal(250);
   });
 
@@ -216,48 +308,93 @@ describe("QuestryERC20", function () {
       from,
       250,
     ]);
-    const metaTransaction = await getMetaTransaction(
+    // get proper gas to execute meta tx
+    const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
       this.name,
       this.chainId,
       forwarderContract.address,
       from,
       to,
       nonce,
-      data
+      data,
+      this.value,
+      this.gas
+    );
+    const estimatedGas: string = (
+      await forwarderContract.estimateGas.execute(
+        metaTxForGas.message,
+        signForGas
+      )
+    ).toString();
+    // create typedData for sign meta tx
+    const metaTx = await getMetaTx(
+      this.name,
+      this.chainId,
+      forwarderContract.address,
+      from,
+      to,
+      nonce,
+      data,
+      this.value,
+      estimatedGas
     );
     const signature = await ethers.provider.send("eth_signTypedData_v4", [
       from,
-      JSON.stringify(metaTransaction),
+      JSON.stringify(metaTx),
     ]);
     // // Check if the meta-transaction was processed successfully
     await forwarderContract
       .connect(issuer)
-      .execute(metaTransaction.message, signature);
+      .execute(metaTx.message, signature);
     expect(await contract.balanceOf(from)).to.equal(250);
   });
 
   it("should revert when the signature is invalid", async function () {
     const data = contract.interface.encodeFunctionData("selfMint", [1000]);
     const nonce = (await forwarderContract.getNonce(issuer.address)).toString();
-    const metaTransaction = await getMetaTransaction(
+    const from = user.address;
+    const to = contract.address;
+    // get proper gas to execute meta tx
+    const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
       this.name,
       this.chainId,
       forwarderContract.address,
-      user.address,
-      contract.address,
+      from,
+      to,
       nonce,
-      data
+      data,
+      this.value,
+      this.gas
+    );
+    const estimatedGas: string = (
+      await forwarderContract.estimateGas.execute(
+        metaTxForGas.message,
+        signForGas
+      )
+    ).toString();
+    // create typedData for sign meta tx
+    const metaTx = await getMetaTx(
+      this.name,
+      this.chainId,
+      forwarderContract.address,
+      from,
+      to,
+      nonce,
+      data,
+      this.value,
+      estimatedGas
     );
     const signature = await ethers.provider.send("eth_signTypedData_v4", [
-      metaTransaction.message.from,
-      JSON.stringify(metaTransaction),
+      metaTx.message.from,
+      JSON.stringify(metaTx),
     ]);
+
     // Sign meta-transaction with incorrect nonce
     // Relay meta-transaction
     await expect(
       forwarderContract
         .connect(issuer)
-        .execute({ ...metaTransaction.message, nonce: 10 }, signature)
+        .execute({ ...metaTx.message, nonce: 10 }, signature)
     ).to.be.revertedWith("MinimalForwarder: signature does not match request");
   });
 
