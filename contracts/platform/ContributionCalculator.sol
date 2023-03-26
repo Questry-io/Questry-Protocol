@@ -17,6 +17,8 @@ contract ContributionCalculator is
   OwnableUpgradeable,
   UUPSUpgradeable
 {
+  bytes4 public constant LINEAR_ALGORITHM = bytes4(keccak256("LINEAR"));
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
@@ -30,19 +32,40 @@ contract ContributionCalculator is
   /// @inheritdoc UUPSUpgradeable
   function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
-  function calculateSharesWithLinear(
-    IContributionCalculator.SharesWithLinearArgs calldata args
+  /// @inheritdoc IContributionCalculator
+  function calculateDispatch(
+    address[] memory members,
+    CalculateDispatchArgs memory calculateArgs
   )
     external
+    view
+    returns (SharesResult memory result)
+  {
+    if (calculateArgs.algorithm == LINEAR_ALGORITHM) {
+      result = calculateSharesWithLinear(
+        members,
+        abi.decode(calculateArgs.args, (IContributionCalculator.SharesWithLinearArgs))
+      );
+    } else {
+      revert ("Calculator: unknown algorithm");
+    }
+  }
+
+  /// @inheritdoc IContributionCalculator
+  function calculateSharesWithLinear(
+    address[] memory members,
+    IContributionCalculator.SharesWithLinearArgs memory args
+  )
+    public
     view
     virtual
     returns (IContributionCalculator.SharesResult memory result)
   {
-    result.shares = new uint120[](args.members.length);
-    for (uint memberIdx = 0; memberIdx < args.members.length; memberIdx++) {
+    result.shares = new uint120[](members.length);
+    for (uint memberIdx = 0; memberIdx < members.length; memberIdx++) {
       for (uint poolIdx = 0; poolIdx < args.pools.length; poolIdx++) {
         IContributionPool c = IContributionPool(args.pools[poolIdx]);
-        uint120 value = args.coefs[poolIdx] * c.getContribution(args.members[memberIdx]);
+        uint120 value = args.coefs[poolIdx] * c.getContribution(members[memberIdx]);
         result.shares[memberIdx] += value;
         result.totalShare += value;
       }
