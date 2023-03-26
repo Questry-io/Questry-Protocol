@@ -126,20 +126,25 @@ describe("SBT", function () {
 
   describe("mint test", function () {
     it("[S] mint check", async function () {
+      expect(await cSBTMock.boardingMembersExist()).to.be.false;
+
       await cSBTMock.connect(SuperAdmin).mint(address3.address);
+
       expect(await cSBTMock.balanceOf(address3.address)).to.equal(1);
       expect(await cSBTMock.ownerOf(1)).to.equal(address3.address);
+      expect(await cSBTMock.boardingMembersExist()).to.be.true;
+      expect(await cSBTMock.boardingMembers()).deep.equal([address3.address]);
       expect(await cPJManagerMock.resolveBoardId(cSBTMock.address, 1)).to.equal(1);
     });
 
     it("[S] Bulk mint check", async function () {
-      const recipents = [
+      const recipients = [
         NotMinter.address,
         NotBurner.address,
         address3.address,
       ];
 
-      await cSBTMock.connect(SuperAdmin).Bulkmint(recipents);
+      await cSBTMock.connect(SuperAdmin).Bulkmint(recipients);
       // check Not Minter address recipient
       expect(await cSBTMock.balanceOf(NotMinter.address)).to.equal(1);
       expect(await cSBTMock.ownerOf(1)).to.equal(NotMinter.address);
@@ -149,6 +154,9 @@ describe("SBT", function () {
       // check address3 address recipient
       expect(await cSBTMock.balanceOf(address3.address)).to.equal(1);
       expect(await cSBTMock.ownerOf(3)).to.equal(address3.address);
+
+      expect(await cSBTMock.boardingMembersExist()).to.be.true;
+      expect(await cSBTMock.boardingMembers()).deep.equal(recipients);
     });
 
     it("[R] can not Mint by NotMinter not have role", async function () {
