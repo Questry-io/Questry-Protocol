@@ -7,7 +7,7 @@ import { Counters } from "@openzeppelin/contracts/utils/Counters.sol";
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import { ISBT } from "../../interface/token/ISBT.sol";
-import { IPJManager } from "../../interface/pjmanager/IPJ-Manager.sol";
+import { IPJManager } from "../../interface/pjmanager/IPJManager.sol";
 
 contract SBT is
     ISBT,

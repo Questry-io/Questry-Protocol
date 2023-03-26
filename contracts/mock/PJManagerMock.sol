@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
-import {IPJManager} from "../interface/pjmanager/IPJ-Manager.sol";
+import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 
 contract PJManagerMock is IPJManager {
   using Counters for Counters.Counter;
