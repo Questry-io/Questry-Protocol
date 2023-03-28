@@ -60,7 +60,7 @@ describe("ContributionCalculator", function () {
           algorithm: TestUtils.linearAlgorithm,
           args: ethers.constants.HashZero,
         })
-      ).to.be.revertedWith(""); // expects abi.decode error
+      ).to.be.reverted; // expects abi.decode error
     });
 
     it("[R] reverts if unknown algorithm", async function () {
