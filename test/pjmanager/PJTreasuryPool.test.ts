@@ -484,7 +484,7 @@ describe("PJTreasuryPool", function () {
     it("[R] should not disallow if the whitelist is empty", async function () {
       await expect(
         cTreasuryPool.connect(whitelistController).disallowERC20(cERC20.address)
-      ).revertedWith("");
+      ).revertedWith("PJTreasuryPool: not whitelisted");
     });
 
     it("[R] should not disallow by others", async function () {
@@ -510,7 +510,9 @@ describe("PJTreasuryPool", function () {
           to: cTreasuryPool.address,
           value: 2,
         })
-      ).revertedWith("");
+      ).revertedWith(
+        "function selector was not recognized and there's no fallback nor receive function"
+      );
     });
 
     it("[S] should deposit native tokens by depositer", async function () {
