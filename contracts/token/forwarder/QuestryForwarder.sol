@@ -61,7 +61,6 @@ contract QuestryForwarder is
   function execute(
     address to,
     uint256 value,
-    uint256 totalGasAmount,
     bytes calldata data
   )
     public
@@ -70,11 +69,19 @@ contract QuestryForwarder is
     whenNotPaused
     returns (bool, bytes memory)
   {
-    withdraw(msg.sender, totalGasAmount);
+    uint256 startGas = gasleft();
+
     (bool success, bytes memory returnData) = to.call{value: value}(data);
     if (!success) {
       revert("QuestryForwarder: execute reverted");
     }
+
+    uint256 gasUsed = startGas - gasleft();
+    uint256 gasPrice = tx.gasprice;
+    uint256 refundAmount = gasUsed * gasPrice;
+
+    withdraw(msg.sender, refundAmount);
+
     return (success, returnData);
   }
 
