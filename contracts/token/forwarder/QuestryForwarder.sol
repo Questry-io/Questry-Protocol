@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/metatx/MinimalForwarderUpgradeable.sol";
 
-contract QuestryForwader is
+contract QuestryForwarder is
   Initializable,
   PausableUpgradeable,
   AccessControlUpgradeable,
@@ -44,7 +44,6 @@ contract QuestryForwader is
 
   function withdraw(address _executor, uint256 _amount)
     public
-    payable
     onlyRole(EXECUTOR_ROLE)
   {
     require(
