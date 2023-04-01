@@ -24,14 +24,14 @@ contract QuestryForwarder is
     _disableInitializers();
   }
 
-  function initialize() public initializer {
+  function initialize(address admin, address executor) public initializer {
     __Pausable_init();
     __AccessControl_init();
     __UUPSUpgradeable_init();
     __MinimalForwarder_init();
 
-    _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-    _grantRole(EXECUTOR_ROLE, msg.sender);
+    _grantRole(DEFAULT_ADMIN_ROLE, admin);
+    _grantRole(EXECUTOR_ROLE, executor);
   }
 
   function deposit() public payable onlyRole(EXECUTOR_ROLE) {
@@ -61,7 +61,7 @@ contract QuestryForwarder is
   function execute(
     address to,
     uint256 value,
-    uint256 gasPrice,
+    uint256 totalGasAmount,
     bytes calldata data
   )
     public
@@ -70,7 +70,7 @@ contract QuestryForwarder is
     whenNotPaused
     returns (bool, bytes memory)
   {
-    withdraw(msg.sender, gasPrice);
+    withdraw(msg.sender, totalGasAmount);
     (bool success, bytes memory returnData) = to.call{value: value}(data);
     if (!success) {
       revert("QuestryForwarder: execute reverted");
