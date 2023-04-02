@@ -419,6 +419,7 @@ describe("PJTreasuryPool", function () {
         cERC20.address,
         dummyContract,
       ]);
+      expect(await cTreasuryPool.isWhitelisted(dummyContract)).true;
     });
 
     it("[S] should allow by admin", async function () {
@@ -426,6 +427,7 @@ describe("PJTreasuryPool", function () {
       expect(await cTreasuryPool.getTokenWhitelists()).deep.equals([
         cERC20.address,
       ]);
+      expect(await cTreasuryPool.isWhitelisted(cERC20.address)).true;
     });
 
     it("[R] should not allow by others", async function () {
@@ -460,6 +462,7 @@ describe("PJTreasuryPool", function () {
         .connect(whitelistController)
         .disallowERC20(cERC20.address);
       expect(await cTreasuryPool.getTokenWhitelists()).deep.equals([]);
+      expect(await cTreasuryPool.isWhitelisted(cERC20.address)).false;
     });
 
     it("[S] should disallow by admin", async function () {
@@ -468,6 +471,7 @@ describe("PJTreasuryPool", function () {
         .allowERC20(cERC20.address);
       await cTreasuryPool.connect(admin).disallowERC20(cERC20.address);
       expect(await cTreasuryPool.getTokenWhitelists()).deep.equals([]);
+      expect(await cTreasuryPool.isWhitelisted(cERC20.address)).false;
     });
 
     it("[S] should disallow even if not allowed the most recently", async function () {
@@ -487,6 +491,7 @@ describe("PJTreasuryPool", function () {
       expect(await cTreasuryPool.getTokenWhitelists()).deep.equals([
         dummyContract,
       ]);
+      expect(await cTreasuryPool.isWhitelisted(cERC20.address)).false;
     });
 
     it("[R] should not disallow if the whitelist is empty", async function () {
