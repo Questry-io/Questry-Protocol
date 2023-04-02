@@ -399,9 +399,12 @@ describe("PJTreasuryPool", function () {
   describe("allowERC20", function () {
     let cTreasuryPool: PJTreasuryPool;
     let cERC20: RandomERC20;
+    let cDummyERC20: RandomERC20;
 
     beforeEach(async function () {
       ({ cTreasuryPool, cERC20 } = await deployDummyPool());
+      // deploy additional mock ERC20
+      cDummyERC20 = await new RandomERC20__factory(deployer).deploy();
     });
 
     it("[S] should allow by whitelistController", async function () {
@@ -414,12 +417,12 @@ describe("PJTreasuryPool", function () {
 
       await cTreasuryPool
         .connect(whitelistController)
-        .allowERC20(dummyContract);
+        .allowERC20(cDummyERC20.address);
       expect(await cTreasuryPool.getTokenWhitelists()).deep.equals([
         cERC20.address,
-        dummyContract,
+        cDummyERC20.address,
       ]);
-      expect(await cTreasuryPool.isWhitelisted(dummyContract)).true;
+      expect(await cTreasuryPool.isWhitelisted(cDummyERC20.address)).true;
     });
 
     it("[S] should allow by admin", async function () {
@@ -436,6 +439,14 @@ describe("PJTreasuryPool", function () {
       ).revertedWith(missingRoleError(user.address, whitelistRoleHash));
     });
 
+    it("[R] should not allow if token is not a contract", async function () {
+      await expect(
+        cTreasuryPool
+          .connect(whitelistController)
+          .allowERC20(ethers.Wallet.createRandom().address)
+      ).revertedWith("PJTreasuryPool: token is not a contract");
+    });
+
     it("[R] should not allow if token is already whitelisted", async function () {
       await cTreasuryPool
         .connect(whitelistController)
@@ -449,9 +460,12 @@ describe("PJTreasuryPool", function () {
   describe("disallowERC20", function () {
     let cTreasuryPool: PJTreasuryPool;
     let cERC20: RandomERC20;
+    let cDummyERC20: RandomERC20;
 
     beforeEach(async function () {
       ({ cTreasuryPool, cERC20 } = await deployDummyPool());
+      // deploy additional mock ERC20
+      cDummyERC20 = await new RandomERC20__factory(deployer).deploy();
     });
 
     it("[S] should disallow by whitelistController", async function () {
@@ -480,16 +494,16 @@ describe("PJTreasuryPool", function () {
         .allowERC20(cERC20.address);
       await cTreasuryPool
         .connect(whitelistController)
-        .allowERC20(dummyContract);
+        .allowERC20(cDummyERC20.address);
       expect(await cTreasuryPool.getTokenWhitelists()).deep.equals([
         cERC20.address,
-        dummyContract,
+        cDummyERC20.address,
       ]);
       await cTreasuryPool
         .connect(whitelistController)
         .disallowERC20(cERC20.address);
       expect(await cTreasuryPool.getTokenWhitelists()).deep.equals([
-        dummyContract,
+        cDummyERC20.address,
       ]);
       expect(await cTreasuryPool.isWhitelisted(cERC20.address)).false;
     });

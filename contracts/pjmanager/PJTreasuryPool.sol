@@ -134,6 +134,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
 
   /// @inheritdoc IPJTreasuryPool
   function allowERC20(IERC20 token) external onlyRole(PJ_WHITELIST_ROLE) {
+    require(Address.isContract(address(token)), "PJTreasuryPool: token is not a contract");
     require(!isWhitelisted(token), "PJTreasuryPool: already whitelisted");
     tokenWhitelists.push(token);
     _isTokenWhitelisted[token] = true;
