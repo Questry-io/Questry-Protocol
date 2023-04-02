@@ -78,6 +78,11 @@ interface IPJTreasuryPool {
   function allocate(IKanamePlatform.AllocateArgs calldata _args) external;
 
   /**
+   * @dev Returns businessOwners.
+   */
+  function getBusinessOwners() external view returns (AllocationShare[] memory);
+
+  /**
    * @dev Returns token whitelists.
    */
   function getTokenWhitelists() external view returns (IERC20[] memory);

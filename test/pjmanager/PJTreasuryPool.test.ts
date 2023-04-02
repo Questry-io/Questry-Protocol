@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 /* eslint-disable node/no-missing-import */
 import { ethers } from "hardhat";
-import { utils } from "ethers";
+import { BigNumber, utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
@@ -225,19 +225,23 @@ describe("PJTreasuryPool", function () {
       expect(tx)
         .to.emit(cTreasuryPool, "AddBusinessOwner")
         .withArgs(arg.recipient, arg.share);
-      expect((await cTreasuryPool.businessOwners(2)).recipient).equals(
-        arg.recipient
-      );
-      expect((await cTreasuryPool.businessOwners(2)).share).equals(arg.share);
+      const got = await cTreasuryPool.getBusinessOwners();
+      expect(got.length).equals(3);
+      expect(got[0].recipient).equals(businessOwners[0].address);
+      expect(got[0].share).equals(1);
+      expect(got[1].recipient).equals(businessOwners[1].address);
+      expect(got[1].share).equals(2);
+      expect(got[2].recipient).equals(arg.recipient);
+      expect(got[2].share).equals(arg.share);
     });
 
     it("[S] should addBusinessOwner by admin", async function () {
       const arg = { recipient: dummyAddress, share: 3 };
       await cTreasuryPool.connect(admin).addBusinessOwner(arg);
-      expect((await cTreasuryPool.businessOwners(2)).recipient).equals(
-        arg.recipient
-      );
-      expect((await cTreasuryPool.businessOwners(2)).share).equals(arg.share);
+      const got = await cTreasuryPool.getBusinessOwners();
+      expect(got.length).equals(3);
+      expect(got[2].recipient).equals(arg.recipient);
+      expect(got[2].share).equals(arg.share);
     });
 
     it("[R] should not addBusinessOwner by others", async function () {
@@ -285,10 +289,10 @@ describe("PJTreasuryPool", function () {
       expect(tx)
         .to.emit(cTreasuryPool, "RemoveBusinessOwner")
         .withArgs(businessOwners[0].address);
-      expect((await cTreasuryPool.businessOwners(0)).recipient).equals(
-        businessOwners[1].address
-      );
-      expect((await cTreasuryPool.businessOwners(0)).share).equals(2);
+      const got = await cTreasuryPool.getBusinessOwners();
+      expect(got.length).equals(1);
+      expect(got[0].recipient).equals(businessOwners[1].address);
+      expect(got[0].share).equals(BigNumber.from(2));
     });
 
     it("[S] should removeBusinessOwner by admin", async function () {
@@ -299,10 +303,10 @@ describe("PJTreasuryPool", function () {
       await cTreasuryPool
         .connect(admin)
         .removeBusinessOwner(businessOwners[0].address);
-      expect((await cTreasuryPool.businessOwners(0)).recipient).equals(
-        businessOwners[1].address
-      );
-      expect((await cTreasuryPool.businessOwners(0)).share).equals(2);
+      const got = await cTreasuryPool.getBusinessOwners();
+      expect(got.length).equals(1);
+      expect(got[0].recipient).equals(businessOwners[1].address);
+      expect(got[0].share).equals(BigNumber.from(2));
     });
 
     it("[R] should not removeBusinessOwner by others", async function () {
@@ -346,19 +350,23 @@ describe("PJTreasuryPool", function () {
     it("[S] should updateBusinessOwner by stateManager", async function () {
       const arg = { recipient: businessOwners[0].address, share: 123 };
       await cTreasuryPool.connect(stateManager).updateBusinessOwner(arg);
-      expect((await cTreasuryPool.businessOwners(0)).recipient).equals(
-        arg.recipient
-      );
-      expect((await cTreasuryPool.businessOwners(0)).share).equals(arg.share);
+      const got = await cTreasuryPool.getBusinessOwners();
+      expect(got.length).equals(2);
+      expect(got[0].recipient).equals(businessOwners[0].address);
+      expect(got[0].share).equals(arg.share);
+      expect(got[1].recipient).equals(businessOwners[1].address);
+      expect(got[1].share).equals(2);
     });
 
     it("[S] should updateBusinessOwner by admin", async function () {
       const arg = { recipient: businessOwners[0].address, share: 123 };
       await cTreasuryPool.connect(admin).updateBusinessOwner(arg);
-      expect((await cTreasuryPool.businessOwners(0)).recipient).equals(
-        arg.recipient
-      );
-      expect((await cTreasuryPool.businessOwners(0)).share).equals(arg.share);
+      const got = await cTreasuryPool.getBusinessOwners();
+      expect(got.length).equals(2);
+      expect(got[0].recipient).equals(businessOwners[0].address);
+      expect(got[0].share).equals(arg.share);
+      expect(got[1].recipient).equals(businessOwners[1].address);
+      expect(got[1].share).equals(2);
     });
 
     it("[R] should not updateBusinessOwner by others", async function () {

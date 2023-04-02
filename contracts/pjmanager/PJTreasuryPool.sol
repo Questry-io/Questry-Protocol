@@ -216,6 +216,11 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   // --------------------------------------------------
 
   /// @inheritdoc IPJTreasuryPool
+  function getBusinessOwners() external view returns (AllocationShare[] memory) {
+    return businessOwners;
+  }
+
+  /// @inheritdoc IPJTreasuryPool
   function getTokenWhitelists() external view returns (IERC20[] memory) {
     return tokenWhitelists;
   }

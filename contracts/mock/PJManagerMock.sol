@@ -67,6 +67,10 @@ contract PJManagerMock is IPJManager {
     revert("Not implemented.");
   }
 
+  function getBusinessOwners() external view returns (AllocationShare[] memory) {
+    revert("Not implemented.");
+  }
+
   function getTokenWhitelists() external view returns (IERC20[] memory) {
     revert("Not implemented.");
   }
