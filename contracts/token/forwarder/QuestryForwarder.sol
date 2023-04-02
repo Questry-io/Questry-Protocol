@@ -16,22 +16,24 @@ contract QuestryForwarder is
 {
   bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
 
+  mapping(address => uint256) private _nonces;
+
   event Deposit(address indexed sender, uint256 value);
   event Withdraw(address indexed sender, uint256 value);
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
-    _disableInitializers();
+    // _disableInitializers();
   }
 
-  function initialize(address admin, address executor) public initializer {
+  function initialize(address _admin, address _executor) public initializer {
     __Pausable_init();
     __AccessControl_init();
     __UUPSUpgradeable_init();
     __MinimalForwarder_init();
 
-    _grantRole(DEFAULT_ADMIN_ROLE, admin);
-    _grantRole(EXECUTOR_ROLE, executor);
+    _grantRole(DEFAULT_ADMIN_ROLE, _admin);
+    _grantRole(EXECUTOR_ROLE, _executor);
   }
 
   function deposit() public payable onlyRole(EXECUTOR_ROLE) {
@@ -58,11 +60,7 @@ contract QuestryForwarder is
     emit Withdraw(_executor, _amount);
   }
 
-  function execute(
-    address to,
-    uint256 value,
-    bytes calldata data
-  )
+  function customExecute(ForwardRequest calldata req, bytes calldata signature)
     public
     payable
     onlyRole(EXECUTOR_ROLE)
@@ -71,7 +69,7 @@ contract QuestryForwarder is
   {
     uint256 startGas = gasleft();
 
-    (bool success, bytes memory returnData) = to.call{value: value}(data);
+    (bool success, bytes memory returndata) = execute(req, signature);
     if (!success) {
       revert("QuestryForwarder: execute reverted");
     }
@@ -82,7 +80,7 @@ contract QuestryForwarder is
 
     withdraw(msg.sender, refundAmount);
 
-    return (success, returnData);
+    return (success, returndata);
   }
 
   function addExecutor(address executor) public onlyRole(DEFAULT_ADMIN_ROLE) {

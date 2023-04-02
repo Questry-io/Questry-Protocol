@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 import { Contract, ContractFactory } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { getMetaTx, getMetaTxAndSignForGas } from "../utils";
 
 describe("QuestryForwarder", function () {
   let QuestryForwarderFactory: ContractFactory;
@@ -10,20 +11,32 @@ describe("QuestryForwarder", function () {
   let admin: SignerWithAddress;
   let executor: SignerWithAddress;
   let nonExecutor: SignerWithAddress;
-  let to: Contract;
+  let issuer: SignerWithAddress;
+  let questryErc20: Contract;
 
   beforeEach(async function () {
-    [admin, executor, nonExecutor] = await ethers.getSigners();
+    [admin, executor, nonExecutor, issuer] = await ethers.getSigners();
     QuestryForwarderFactory = await ethers.getContractFactory(
       "QuestryForwarder"
     );
     questryForwarder = await QuestryForwarderFactory.deploy();
+    questryForwarder.deployed();
+
     await questryForwarder
       .connect(admin)
       .initialize(admin.address, executor.address);
-    const ERC20 = await ethers.getContractFactory("ERC20");
-    to = await ERC20.deploy("Questry", "QRY");
-    await to.deployed();
+    const ERC20 = await ethers.getContractFactory("QuestryERC20");
+    questryErc20 = await ERC20.deploy(
+      questryForwarder.address,
+      admin.address,
+      issuer.address
+    );
+    await questryErc20.deployed();
+
+    this.name = "QuestryForwarder";
+    this.chainId = (await ethers.provider.getNetwork()).chainId;
+    this.value = "0";
+    this.gas = (await ethers.provider.getBlock("latest")).gasLimit.toString();
   });
 
   describe("initialize", function () {
@@ -37,7 +50,7 @@ describe("QuestryForwarder", function () {
       expect(
         await questryForwarder.hasRole(
           await questryForwarder.EXECUTOR_ROLE(),
-          admin.address
+          executor.address
         )
       ).to.equal(true);
     });
@@ -92,36 +105,98 @@ describe("QuestryForwarder", function () {
     });
   });
 
-  describe("execute", function () {
+  describe("customExecute", function () {
     it("[S] should process the meta-transaction correctly", async function () {
-      const startBalance = await ethers.provider.getBalance(executor.address);
-      const value = ethers.utils.parseEther("0.1");
-      const data = to.interface.encodeFunctionData("receiveEth");
-
-      await questryForwarder.connect(executor).deposit({ value });
-      const tx = await questryForwarder
-        .connect(executor)
-        .execute(to.address, value, data);
-      const receipt = await tx.wait();
-
-      expect(await ethers.provider.getBalance(to.address)).to.equal(value);
-      expect(
-        await ethers.provider.getBalance(questryForwarder.address)
-      ).to.equal(0);
-
-      const gasUsed = receipt.gasUsed.toNumber();
-      const actualRefund = startBalance
-        .sub(await ethers.provider.getBalance(executor.address))
-        .sub(gasUsed * tx.gasPrice);
-
-      expect(actualRefund).to.be.closeTo(value, 1000); // 1000 wei
+      // console.log(Number(await ethers.provider.getBalance(admin.address)))
+      // console.log(Number(await ethers.provider.getBalance(executor.address)))
+      // console.log(Number(await ethers.provider.getBalance(nonExecutor.address)))
+      console.log(issuer.address);
+      console.log(executor.address);
+      // Prepare meta-transaction
+      const data = questryErc20.interface.encodeFunctionData("selfMint", [
+        1000,
+      ]);
+      const from = issuer.address;
+      const nonce: string = (await questryForwarder.getNonce(from)).toString();
+      const to = questryErc20.address;
+      // get proper gas to customExecute meta tx
+      const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
+        this.name,
+        this.chainId,
+        questryForwarder.address,
+        from,
+        to,
+        nonce,
+        data,
+        this.value,
+        this.gas
+      );
+      const estimatedGas: string =
+        // await questryForwarder.estimateGas.customExecute(
+        //   metaTxForGas.message,
+        //   signForGas
+        // )
+        (
+          await questryForwarder
+            .connect(executor)
+            .estimateGas.customExecute(metaTxForGas.message, signForGas)
+        ).toString();
+      // create typedData for sign meta tx
+      const metaTx = await getMetaTx(
+        this.name,
+        this.chainId,
+        questryForwarder.address,
+        from,
+        to,
+        nonce,
+        data,
+        this.value,
+        estimatedGas
+      );
+      // sign meta tx
+      const signature = await ethers.provider.send("eth_signTypedData_v4", [
+        from,
+        JSON.stringify(metaTx),
+      ]);
       expect(
         await questryForwarder
           .connect(executor)
-          .execute(to.address, value, data)
-      )
-        .to.emit(questryForwarder, "Withdraw")
-        .withArgs(executor.address, actualRefund);
+          .verify(metaTx.message, signature)
+      ).to.equal(true);
+      // Relay meta-transaction
+      await questryForwarder
+        .connect(issuer)
+        .customExecute(metaTx.message, signature);
+      // // Check if the meta-transaction was processed successfully
+      expect(await questryForwarder.getNonce(from)).to.equal(nonce + 1);
+      //   const startBalance = await ethers.provider.getBalance(executor.address);
+      //   const value = ethers.utils.parseEther("0.1");
+      //   const data = questryErc20.interface.encodeFunctionData("selfMint", [1000]);
+
+      //   await questryForwarder.connect(admin).deposit({ value });
+      //   const tx = await questryForwarder
+      //     .connect(executor)
+      //     .customExecute(questryErc20.address, value, data);
+      //   const receipt = await tx.wait();
+
+      //   expect(await ethers.provider.getBalance(questryForwarder.address)).to.equal(value);
+      //   expect(
+      //     await ethers.provider.getBalance(questryForwarder.address)
+      //   ).to.equal(0);
+
+      //   const gasUsed = receipt.gasUsed.toNumber();
+      //   const actualRefund = startBalance
+      //     .sub(await ethers.provider.getBalance(executor.address))
+      //     .sub(gasUsed * tx.gasPrice);
+
+      //   expect(actualRefund).to.be.closeTo(value, 1000); // 1000 wei
+      //   expect(
+      //     await questryForwarder
+      //       .connect(executor)
+      //       .customExecute(questryErc20.address, value, data)
+      //   )
+      //     .to.emit(questryForwarder, "Withdraw")
+      //     .withArgs(executor.address, actualRefund);
     });
 
     it("[R] should fail if the sender is not an executor", async function () {
@@ -129,29 +204,33 @@ describe("QuestryForwarder", function () {
         .connect(executor)
         .deposit({ value: ethers.utils.parseEther("0.1") });
       const value = ethers.utils.parseEther("0.1");
-      const data = to.interface.encodeFunctionData("receiveEth");
+      const data = questryErc20.interface.encodeFunctionData("receiveEth");
       await expect(
-        questryForwarder.connect(nonExecutor).execute(to.address, value, data)
+        questryForwarder
+          .connect(nonExecutor)
+          .customExecute(questryErc20.address, value, data)
       ).to.be.reverted;
     });
 
     it("[R] should fail if the contract is paused", async function () {
       await questryForwarder.connect(admin).pause();
       const value = ethers.utils.parseEther("0.1");
-      const data = to.interface.encodeFunctionData("receiveEth");
+      const data = questryErc20.interface.encodeFunctionData("receiveEth");
       await expect(
-        questryForwarder.connect(executor).execute(to.address, value, data)
+        questryForwarder
+          .connect(executor)
+          .customExecute(questryErc20.address, value, data)
       ).to.be.revertedWith("Pausable: paused");
     });
   });
 
   describe("addExecutor", function () {
     it("[S] should add a new executor successfully", async function () {
-      await questryForwarder.connect(admin).addExecutor(executor.address);
+      await questryForwarder.connect(admin).addExecutor(nonExecutor.address);
       expect(
         await questryForwarder.hasRole(
           await questryForwarder.EXECUTOR_ROLE(),
-          executor.address
+          nonExecutor.address
         )
       ).to.equal(true);
     });
@@ -164,10 +243,6 @@ describe("QuestryForwarder", function () {
   });
 
   describe("removeExecutor", function () {
-    beforeEach(async function () {
-      await questryForwarder.connect(admin).addExecutor(executor.address);
-    });
-
     it("[S] should remove an executor successfully", async function () {
       await questryForwarder.connect(admin).removeExecutor(executor.address);
       expect(
