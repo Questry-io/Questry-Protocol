@@ -10,6 +10,7 @@ module.exports = {
     "standard",
     "plugin:prettier/recommended",
     "plugin:node/recommended",
+    "plugin:chai-friendly/recommended",
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
