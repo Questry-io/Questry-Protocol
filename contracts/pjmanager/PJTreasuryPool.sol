@@ -135,7 +135,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   /// @inheritdoc IPJTreasuryPool
   function allowERC20(IERC20 token) external onlyRole(PJ_WHITELIST_ROLE) {
     require(Address.isContract(address(token)), "PJTreasuryPool: token is not a contract");
-    require(!isWhitelisted(token), "PJTreasuryPool: already whitelisted");
+    require(!_isTokenWhitelisted[token], "PJTreasuryPool: already whitelisted");
     tokenWhitelists.push(token);
     _isTokenWhitelisted[token] = true;
     emit AllowERC20(address(token));
@@ -143,7 +143,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
 
   /// @inheritdoc IPJTreasuryPool
   function disallowERC20(IERC20 token) external onlyRole(PJ_WHITELIST_ROLE) {
-    require(isWhitelisted(token), "PJTreasuryPool: not whitelisted");
+    require(_isTokenWhitelisted[token], "PJTreasuryPool: not whitelisted");
     uint32 newIdx = 0;
     for (uint256 i = 0; i < tokenWhitelists.length; i++) {
       if (token != tokenWhitelists[i]) {
@@ -169,7 +169,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
     external
     onlyRole(PJ_DEPOSIT_ROLE)
   {
-    require(isWhitelisted(token), "PJTreasuryPool: not whitelisted");
+    require(_isTokenWhitelisted[token], "PJTreasuryPool: not whitelisted");
     token.transferFrom(_msgSender(), address(this), amount);
     emit DepositERC20(address(token), _msgSender(), amount);
   }
@@ -230,7 +230,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   }
 
   /// @inheritdoc IPJTreasuryPool
-  function isWhitelisted(IERC20 token) public view returns (bool) {
+  function isWhitelisted(IERC20 token) external view returns (bool) {
     return _isTokenWhitelisted[token];
   }
 
@@ -337,7 +337,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
    */
   function _payout(bytes4 _paymentMode, IERC20 _paymentToken) private {
     require(
-      _paymentMode == NATIVE_PAYMENT_MODE || isWhitelisted(_paymentToken),
+      _paymentMode == NATIVE_PAYMENT_MODE || _isTokenWhitelisted[_paymentToken],
       "PJTreasuryPool: not whitelisted"
     );
 
