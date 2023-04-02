@@ -32,6 +32,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   IContributionCalculator public immutable contributionCalculator;
   address public immutable admin;
   IERC20[] public tokenWhitelists;
+  mapping(IERC20 => bool) private _isTokenWhitelisted;
 
   AllocationShare[] public businessOwners;
 
@@ -135,6 +136,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   function allowERC20(IERC20 token) external onlyRole(PJ_WHITELIST_ROLE) {
     require(!isWhitelisted(token), "PJTreasuryPool: already whitelisted");
     tokenWhitelists.push(token);
+    _isTokenWhitelisted[token] = true;
     emit AllowERC20(address(token));
   }
 
@@ -148,6 +150,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
       }
     }
     tokenWhitelists.pop();
+    _isTokenWhitelisted[token] = false;
     emit DisallowERC20(address(token));
   }
 
@@ -227,12 +230,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
 
   /// @inheritdoc IPJTreasuryPool
   function isWhitelisted(IERC20 token) public view returns (bool) {
-    for (uint256 i = 0; i < tokenWhitelists.length; i++) {
-      if (token == tokenWhitelists[i]) {
-        return true;
-      }
-    }
-    return false;
+    return _isTokenWhitelisted[token];
   }
 
   // --------------------------------------------------
