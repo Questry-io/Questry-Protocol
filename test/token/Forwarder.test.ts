@@ -105,13 +105,15 @@ describe("QuestryForwarder", function () {
     });
   });
 
-  describe("customExecute", function () {
+  describe("execute", function () {
+    this.beforeEach(async function () {
+      const depositAmount = ethers.utils.parseEther("1");
+      await questryForwarder
+        .connect(executor)
+        .deposit({ value: depositAmount });
+    });
+
     it("[S] should process the meta-transaction correctly", async function () {
-      // console.log(Number(await ethers.provider.getBalance(admin.address)))
-      // console.log(Number(await ethers.provider.getBalance(executor.address)))
-      // console.log(Number(await ethers.provider.getBalance(nonExecutor.address)))
-      console.log(issuer.address);
-      console.log(executor.address);
       // Prepare meta-transaction
       const data = questryErc20.interface.encodeFunctionData("selfMint", [
         1000,
@@ -119,7 +121,7 @@ describe("QuestryForwarder", function () {
       const from = issuer.address;
       const nonce: string = (await questryForwarder.getNonce(from)).toString();
       const to = questryErc20.address;
-      // get proper gas to customExecute meta tx
+      // get proper gas to execute meta tx
       const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
         this.name,
         this.chainId,
@@ -131,16 +133,11 @@ describe("QuestryForwarder", function () {
         this.value,
         this.gas
       );
-      const estimatedGas: string =
-        // await questryForwarder.estimateGas.customExecute(
-        //   metaTxForGas.message,
-        //   signForGas
-        // )
-        (
-          await questryForwarder
-            .connect(executor)
-            .estimateGas.customExecute(metaTxForGas.message, signForGas)
-        ).toString();
+      const estimatedGas: string = (
+        await questryForwarder
+          .connect(executor)
+          .estimateGas.execute(metaTxForGas.message, signForGas)
+      ).toString();
       // create typedData for sign meta tx
       const metaTx = await getMetaTx(
         this.name,
@@ -165,61 +162,74 @@ describe("QuestryForwarder", function () {
       ).to.equal(true);
       // Relay meta-transaction
       await questryForwarder
-        .connect(issuer)
-        .customExecute(metaTx.message, signature);
-      // // Check if the meta-transaction was processed successfully
+        .connect(executor)
+        .execute(metaTx.message, signature);
+      // Check if the meta-transaction was processed successfully
       expect(await questryForwarder.getNonce(from)).to.equal(nonce + 1);
-      //   const startBalance = await ethers.provider.getBalance(executor.address);
-      //   const value = ethers.utils.parseEther("0.1");
-      //   const data = questryErc20.interface.encodeFunctionData("selfMint", [1000]);
-
-      //   await questryForwarder.connect(admin).deposit({ value });
-      //   const tx = await questryForwarder
-      //     .connect(executor)
-      //     .customExecute(questryErc20.address, value, data);
-      //   const receipt = await tx.wait();
-
-      //   expect(await ethers.provider.getBalance(questryForwarder.address)).to.equal(value);
-      //   expect(
-      //     await ethers.provider.getBalance(questryForwarder.address)
-      //   ).to.equal(0);
-
-      //   const gasUsed = receipt.gasUsed.toNumber();
-      //   const actualRefund = startBalance
-      //     .sub(await ethers.provider.getBalance(executor.address))
-      //     .sub(gasUsed * tx.gasPrice);
-
-      //   expect(actualRefund).to.be.closeTo(value, 1000); // 1000 wei
-      //   expect(
-      //     await questryForwarder
-      //       .connect(executor)
-      //       .customExecute(questryErc20.address, value, data)
-      //   )
-      //     .to.emit(questryForwarder, "Withdraw")
-      //     .withArgs(executor.address, actualRefund);
+      expect(await questryErc20.balanceOf(questryErc20.address)).to.equal(1000);
     });
 
     it("[R] should fail if the sender is not an executor", async function () {
       await questryForwarder
         .connect(executor)
         .deposit({ value: ethers.utils.parseEther("0.1") });
-      const value = ethers.utils.parseEther("0.1");
-      const data = questryErc20.interface.encodeFunctionData("receiveEth");
+      // const value = ethers.utils.parseEther("0.1");
+      const from = issuer.address;
+      const to = questryErc20.address;
+      const nonce: string = (await questryForwarder.getNonce(from)).toString();
+      const data = questryErc20.interface.encodeFunctionData("selfMint", [
+        1000,
+      ]);
+      const metaTx = await getMetaTx(
+        this.name,
+        this.chainId,
+        questryForwarder.address,
+        from,
+        to,
+        nonce,
+        data,
+        this.value
+      );
+      // sign meta tx
+      const signature = await ethers.provider.send("eth_signTypedData_v4", [
+        from,
+        JSON.stringify(metaTx),
+      ]);
+
       await expect(
-        questryForwarder
-          .connect(nonExecutor)
-          .customExecute(questryErc20.address, value, data)
+        questryForwarder.connect(nonExecutor).execute(metaTx.message, signature)
       ).to.be.reverted;
     });
 
     it("[R] should fail if the contract is paused", async function () {
+      await questryForwarder
+        .connect(executor)
+        .deposit({ value: ethers.utils.parseEther("0.1") });
       await questryForwarder.connect(admin).pause();
-      const value = ethers.utils.parseEther("0.1");
-      const data = questryErc20.interface.encodeFunctionData("receiveEth");
+      const from = issuer.address;
+      const to = questryErc20.address;
+      const nonce: string = (await questryForwarder.getNonce(from)).toString();
+      const data = questryErc20.interface.encodeFunctionData("selfMint", [
+        1000,
+      ]);
+      const metaTx = await getMetaTx(
+        this.name,
+        this.chainId,
+        questryForwarder.address,
+        from,
+        to,
+        nonce,
+        data,
+        this.value
+      );
+      // sign meta tx
+      const signature = await ethers.provider.send("eth_signTypedData_v4", [
+        from,
+        JSON.stringify(metaTx),
+      ]);
+
       await expect(
-        questryForwarder
-          .connect(executor)
-          .customExecute(questryErc20.address, value, data)
+        questryForwarder.connect(executor).execute(metaTx.message, signature)
       ).to.be.revertedWith("Pausable: paused");
     });
   });
