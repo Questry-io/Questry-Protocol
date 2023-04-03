@@ -73,11 +73,11 @@ contract QuestryForwarder is
     emit Withdraw(_executor, _amount);
   }
 
-  function getNonce(address from) public view returns (uint256) {
-    return _nonces[from];
+  function getNonce(address _from) public view returns (uint256) {
+    return _nonces[_from];
   }
 
-  function verify(ForwardRequest calldata req, bytes calldata signature)
+  function verify(ForwardRequest calldata _req, bytes calldata _signature)
     public
     view
     returns (bool)
@@ -86,19 +86,19 @@ contract QuestryForwarder is
       keccak256(
         abi.encode(
           _TYPEHASH,
-          req.from,
-          req.to,
-          req.value,
-          req.gas,
-          req.nonce,
-          keccak256(req.data)
+          _req.from,
+          _req.to,
+          _req.value,
+          _req.gas,
+          _req.nonce,
+          keccak256(_req.data)
         )
       )
-    ).recover(signature);
-    return _nonces[req.from] == req.nonce && signer == req.from;
+    ).recover(_signature);
+    return _nonces[_req.from] == _req.nonce && signer == _req.from;
   }
 
-  function execute(ForwardRequest calldata req, bytes calldata signature)
+  function execute(ForwardRequest calldata _req, bytes calldata _signature)
     public
     payable
     onlyRole(EXECUTOR_ROLE)
@@ -106,20 +106,20 @@ contract QuestryForwarder is
     returns (bool, bytes memory)
   {
     require(
-      verify(req, signature),
+      verify(_req, _signature),
       "QuestryForwarder: signature does not match request"
     );
     uint256 startGas = gasleft();
-    _nonces[req.from] = req.nonce + 1;
+    _nonces[_req.from] = _req.nonce + 1;
 
-    (bool success, bytes memory returndata) = req.to.call{
-      gas: req.gas,
-      value: req.value
-    }(abi.encodePacked(req.data, req.from));
+    (bool success, bytes memory returndata) = _req.to.call{
+      gas: _req.gas,
+      value: _req.value
+    }(abi.encodePacked(_req.data, _req.from));
 
     // Validate that the relayer has sent enough gas for the call.
     // See https://ronan.eth.limo/blog/ethereum-gas-dangers/
-    if (gasleft() <= req.gas / 63) {
+    if (gasleft() <= _req.gas / 63) {
       // We explicitly trigger invalid opcode to consume all gas and bubble-up the effects, since
       // neither revert or assert consume all gas since Solidity 0.8.0
       // https://docs.soliditylang.org/en/v0.8.0/control-structures.html#panic-via-assert-and-error-via-require
@@ -142,15 +142,15 @@ contract QuestryForwarder is
     return (success, returndata);
   }
 
-  function addExecutor(address executor) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    _grantRole(EXECUTOR_ROLE, executor);
+  function addExecutor(address _executor) public onlyRole(DEFAULT_ADMIN_ROLE) {
+    _grantRole(EXECUTOR_ROLE, _executor);
   }
 
-  function removeExecutor(address executor)
+  function removeExecutor(address _executor)
     public
     onlyRole(DEFAULT_ADMIN_ROLE)
   {
-    _revokeRole(EXECUTOR_ROLE, executor);
+    _revokeRole(EXECUTOR_ROLE, _executor);
   }
 
   function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
@@ -161,7 +161,7 @@ contract QuestryForwarder is
     _unpause();
   }
 
-  function _authorizeUpgrade(address newImplementation)
+  function _authorizeUpgrade(address _newImplementation)
     internal
     override
     onlyRole(DEFAULT_ADMIN_ROLE)
