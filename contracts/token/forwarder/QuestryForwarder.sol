@@ -107,7 +107,7 @@ contract QuestryForwarder is
   {
     require(
       verify(req, signature),
-      "MinimalForwarder: signature does not match request"
+      "QuestryForwarder: signature does not match request"
     );
     uint256 startGas = gasleft();
     _nonces[req.from] = req.nonce + 1;

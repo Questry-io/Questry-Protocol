@@ -54,6 +54,14 @@ describe("QuestryForwarder", function () {
         )
       ).to.equal(true);
     });
+    it("[R] should fail if initialize is called more than once", async function () {
+      // The contract has already been initialized in the beforeEach hook, so trying to initialize it again should fail.
+      await expect(
+        questryForwarder
+          .connect(admin)
+          .initialize(admin.address, executor.address)
+      ).to.be.revertedWith("Initializable: contract is already initialized");
+    });
   });
 
   describe("deposit", function () {
@@ -201,10 +209,73 @@ describe("QuestryForwarder", function () {
       ).to.be.reverted;
     });
 
-    it("[R] should fail if the contract is paused", async function () {
+    it("[R] should fail if the gas price is too high", async function () {
+      const withdrawAmount = ethers.utils.parseEther("1");
       await questryForwarder
         .connect(executor)
-        .deposit({ value: ethers.utils.parseEther("0.1") });
+        .withdraw(executor.address, withdrawAmount);
+      const data = questryErc20.interface.encodeFunctionData("selfMint", [
+        1000,
+      ]);
+      const from = issuer.address;
+      const nonce: string = (await questryForwarder.getNonce(from)).toString();
+      const to = questryErc20.address;
+
+      // create typedData for sign meta tx
+      const metaTx = await getMetaTx(
+        this.name,
+        this.chainId,
+        questryForwarder.address,
+        from,
+        to,
+        nonce,
+        data,
+        this.value,
+        this.gas
+      );
+      // sign meta tx
+      const signature = await ethers.provider.send("eth_signTypedData_v4", [
+        from,
+        JSON.stringify(metaTx),
+      ]);
+
+      await expect(
+        questryForwarder.connect(executor).execute(metaTx.message, signature)
+      ).to.be.revertedWith(
+        "QuestryForwarder: withdraw value must be less than balance"
+      );
+    });
+
+    it("[R] should fail if the destination address is invalid", async function () {
+      const invalidAddress = "0x0000000000000000000000000000000000000000";
+      const from = issuer.address;
+      const to = questryErc20.address;
+      const nonce: string = (await questryForwarder.getNonce(from)).toString();
+      const data = questryErc20.interface.encodeFunctionData("selfMint", [
+        1000,
+      ]);
+      const metaTx = await getMetaTx(
+        this.name,
+        this.chainId,
+        questryForwarder.address,
+        invalidAddress,
+        to,
+        nonce,
+        data,
+        this.value
+      );
+      // sign meta tx
+      const signature = await ethers.provider.send("eth_signTypedData_v4", [
+        from,
+        JSON.stringify(metaTx),
+      ]);
+
+      await expect(
+        questryForwarder.connect(executor).execute(metaTx.message, signature)
+      ).to.be.reverted;
+    });
+
+    it("[R] should fail if the contract is paused", async function () {
       await questryForwarder.connect(admin).pause();
       const from = issuer.address;
       const to = questryErc20.address;
@@ -231,6 +302,65 @@ describe("QuestryForwarder", function () {
       await expect(
         questryForwarder.connect(executor).execute(metaTx.message, signature)
       ).to.be.revertedWith("Pausable: paused");
+    });
+
+    it("[R] should fail if the signature does not match the request", async function () {
+      const from = issuer.address;
+      const to = questryErc20.address;
+      const nonce: string = (await questryForwarder.getNonce(from)).toString();
+      const data = questryErc20.interface.encodeFunctionData("selfMint", [
+        1000,
+      ]);
+      const metaTx = await getMetaTx(
+        this.name,
+        this.chainId,
+        questryForwarder.address,
+        from,
+        to,
+        nonce,
+        data,
+        this.value
+      );
+
+      const invalidSignature = ethers.utils.hexZeroPad("0x01", 65);
+
+      await expect(
+        questryForwarder
+          .connect(executor)
+          .verify(metaTx.message, invalidSignature)
+      ).to.be.revertedWith("ECDSA: invalid signature 'v' value");
+    });
+
+    it("[R] should fail if there is not enough gas for the call", async function () {
+      const from = issuer.address;
+      const to = questryErc20.address;
+      const nonce: string = (await questryForwarder.getNonce(from)).toString();
+      const data = questryErc20.interface.encodeFunctionData("selfMint", [
+        1000,
+      ]);
+      const metaTx = await getMetaTx(
+        this.name,
+        this.chainId,
+        questryForwarder.address,
+        from,
+        to,
+        nonce,
+        data,
+        this.value
+      );
+      // sign meta tx
+      const signature = await ethers.provider.send("eth_signTypedData_v4", [
+        from,
+        JSON.stringify(metaTx),
+      ]);
+
+      // Modify the gas value to be insufficient for the call
+      const insufficientGas = 1000;
+      metaTx.message.gas = insufficientGas.toString();
+
+      await expect(
+        questryForwarder.connect(executor).execute(metaTx.message, signature)
+      ).to.be.reverted;
     });
   });
 
