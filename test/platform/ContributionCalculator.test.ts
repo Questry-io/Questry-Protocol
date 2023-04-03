@@ -1,6 +1,6 @@
 /* eslint-disable node/no-missing-import */
 import { ethers, upgrades } from "hardhat";
-import { Contract } from "ethers";
+import { Contract, utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
@@ -14,8 +14,13 @@ describe("ContributionCalculator", function () {
   let cPool2: Contract;
   let cCalculator: Contract;
 
+  const linearAlgorithm = utils
+    .keccak256(utils.toUtf8Bytes("LINEAR"))
+    .slice(0, 10);
+
   beforeEach(async function () {
-    [superAdmin, notAdmin, poolUpdater, member1, member2] = await ethers.getSigners();
+    [superAdmin, notAdmin, poolUpdater, member1, member2] =
+      await ethers.getSigners();
     const cfPool = await ethers.getContractFactory("ContributionPool");
 
     cPool1 = await cfPool.deploy(0, poolUpdater.address, superAdmin.address);
@@ -50,13 +55,49 @@ describe("ContributionCalculator", function () {
     });
   });
 
+  describe("calculateDispatch", function () {
+    it("[R] reverts if invalid arguments", async function () {
+      await expect(
+        cCalculator.calculateDispatch([member1.address], {
+          algorithm: linearAlgorithm,
+          args: ethers.constants.HashZero,
+        })
+      ).to.be.revertedWith(""); // expects abi.decode error
+    });
+
+    it("[R] reverts if unknown algorithm", async function () {
+      await expect(
+        cCalculator.calculateDispatch([member1.address], {
+          algorithm: utils.keccak256(utils.toUtf8Bytes("UNKNOWN")).slice(0, 10),
+          args: ethers.constants.HashZero,
+        })
+      ).to.be.revertedWith("Calculator: unknown algorithm");
+    });
+  });
+
   describe("calculateSharesWithLinear", function () {
+    type SharesWithLinear = {
+      pools: string[];
+      coefs: number[];
+    };
+    function createArgsWithLinear(args: SharesWithLinear) {
+      return {
+        algorithm: linearAlgorithm,
+        args: utils.defaultAbiCoder.encode(
+          ["(address[] pools,uint120[] coefs)"],
+          [args]
+        ),
+      };
+    }
+
     it("[S] check member1 has no contribution", async function () {
-      const result = await cCalculator.calculateSharesWithLinear({
-        pools: [cPool1.address, cPool2.address],
-        coefs: [2, 3],
-        members: [member1.address],
-      });
+      const result = await cCalculator.calculateDispatch(
+        [member1.address],
+        createArgsWithLinear({
+          pools: [cPool1.address, cPool2.address],
+          coefs: [2, 3],
+        })
+      );
       expect(result.shares.length).equals(1);
       expect(result.shares[0]).equals(0);
       expect(result.totalShare).equals(0);
@@ -64,11 +105,13 @@ describe("ContributionCalculator", function () {
 
     it("[S] check member1 contributes to pool1", async function () {
       await cPool1.connect(superAdmin).addContribution(member1.address, 2);
-      const result = await cCalculator.calculateSharesWithLinear({
-        pools: [cPool1.address, cPool2.address],
-        coefs: [2, 3],
-        members: [member1.address],
-      });
+      const result = await cCalculator.calculateDispatch(
+        [member1.address],
+        createArgsWithLinear({
+          pools: [cPool1.address, cPool2.address],
+          coefs: [2, 3],
+        })
+      );
       expect(result.shares.length).equals(1);
       expect(result.shares[0]).equals(4); // 2 * 2
       expect(result.totalShare).equals(4);
@@ -77,11 +120,13 @@ describe("ContributionCalculator", function () {
     it("[S] check member1 contributes to pool1 and pool2", async function () {
       await cPool1.connect(superAdmin).addContribution(member1.address, 2);
       await cPool2.connect(superAdmin).addContribution(member1.address, 3);
-      const result = await cCalculator.calculateSharesWithLinear({
-        pools: [cPool1.address, cPool2.address],
-        coefs: [2, 3],
-        members: [member1.address],
-      });
+      const result = await cCalculator.calculateDispatch(
+        [member1.address],
+        createArgsWithLinear({
+          pools: [cPool1.address, cPool2.address],
+          coefs: [2, 3],
+        })
+      );
       expect(result.shares.length).equals(1);
       expect(result.shares[0]).equals(13); // 2 * 2 + 3 * 3
       expect(result.totalShare).equals(13);
@@ -91,11 +136,13 @@ describe("ContributionCalculator", function () {
       await cPool1.connect(superAdmin).addContribution(member1.address, 2);
       await cPool1.connect(superAdmin).addContribution(member2.address, 2);
       await cPool2.connect(superAdmin).addContribution(member2.address, 3);
-      const result = await cCalculator.calculateSharesWithLinear({
-        pools: [cPool1.address, cPool2.address],
-        coefs: [2, 3],
-        members: [member1.address, member2.address],
-      });
+      const result = await cCalculator.calculateDispatch(
+        [member1.address, member2.address],
+        createArgsWithLinear({
+          pools: [cPool1.address, cPool2.address],
+          coefs: [2, 3],
+        })
+      );
       expect(result.shares.length).equals(2);
       expect(result.shares[0]).equals(4); // 2 * 2
       expect(result.shares[1]).equals(13); // 2 * 2 + 3 * 3
