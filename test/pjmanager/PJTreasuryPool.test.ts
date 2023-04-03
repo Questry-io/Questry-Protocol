@@ -646,6 +646,31 @@ describe("PJTreasuryPool", function () {
       });
     }
 
+    it("[R] should not allocate by others", async function () {
+      const { cTreasuryPool, cSBT } = await deployTreasuryPool(
+        4000,
+        withShares(businessOwners, [1, 2])
+      );
+      await addContribution(cSBT, cContributionPool, boardingMembers[0], 1);
+      await addContribution(cSBT, cContributionPool, boardingMembers[1], 2);
+      await cTreasuryPool.connect(depositer).deposit({ value: 100 });
+
+      const txPromise = cTreasuryPool.connect(user).allocate({
+        pjManager: cTreasuryPool.address,
+        paymentMode: nativeMode,
+        paymentToken: ethers.constants.AddressZero,
+        board: cSBT.address,
+        calculateArgs: TestUtils.createArgsWithLinear({
+          pools: [cContributionPool.address],
+          coefs: [1],
+        }),
+        signature: await TestUtils.createDummySignature(),
+      });
+      await expect(txPromise).revertedWith(
+        missingRoleError(user.address, allocateRoleHash)
+      );
+    });
+
     it("[S] ETH: should allocate tokens in a typical scenario", async function () {
       const { cTreasuryPool, cSBT } = await deployTreasuryPool(
         4000,
