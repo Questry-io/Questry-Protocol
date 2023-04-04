@@ -10,12 +10,14 @@ describe("QuestryForwarder", function () {
   let questryForwarder: Contract;
   let admin: SignerWithAddress;
   let executor: SignerWithAddress;
+  let executor2: SignerWithAddress;
   let nonExecutor: SignerWithAddress;
   let issuer: SignerWithAddress;
   let questryErc20: Contract;
 
   beforeEach(async function () {
-    [admin, executor, nonExecutor, issuer] = await ethers.getSigners();
+    [admin, executor, executor2, nonExecutor, issuer] =
+      await ethers.getSigners();
     QuestryForwarderFactory = await ethers.getContractFactory(
       "QuestryForwarder"
     );
@@ -25,6 +27,7 @@ describe("QuestryForwarder", function () {
     await questryForwarder
       .connect(admin)
       .initialize(admin.address, executor.address);
+    await questryForwarder.connect(admin).addExecutor(executor2.address);
     const ERC20 = await ethers.getContractFactory("QuestryERC20");
     questryErc20 = await ERC20.deploy(
       questryForwarder.address,
@@ -76,12 +79,14 @@ describe("QuestryForwarder", function () {
       ).to.equal(depositAmount);
     });
 
-    it("[R] should fail if the sender is not an executor", async function () {
+    it("[R] should fail if deposit value is 0", async function () {
       await expect(
         questryForwarder
           .connect(nonExecutor)
-          .deposit({ value: ethers.utils.parseEther("1") })
-      ).to.be.reverted;
+          .deposit({ value: ethers.utils.parseEther("0") })
+      ).to.be.revertedWith(
+        "QuestryForwarder: deposit value must be greater than 0"
+      );
     });
   });
 
@@ -96,12 +101,16 @@ describe("QuestryForwarder", function () {
 
     it("[S] should withdraw ethers successfully", async function () {
       const withdrawAmount = ethers.utils.parseEther("0.5");
+      const startBalance = await ethers.provider.getBalance(executor.address);
       await questryForwarder
-        .connect(executor)
+        .connect(executor2)
         .withdraw(executor.address, withdrawAmount);
       expect(
         await ethers.provider.getBalance(questryForwarder.address)
       ).to.equal(depositAmount.sub(withdrawAmount));
+      expect(await ethers.provider.getBalance(executor.address)).to.equal(
+        startBalance.add(withdrawAmount)
+      );
     });
 
     it("[R] should fail if the sender is not an executor", async function () {
@@ -122,6 +131,7 @@ describe("QuestryForwarder", function () {
     });
 
     it("[S] should process the meta-transaction correctly", async function () {
+      const startBalance = await ethers.provider.getBalance(executor.address);
       // Prepare meta-transaction
       const data = questryErc20.interface.encodeFunctionData("selfMint", [
         1000,
@@ -175,6 +185,73 @@ describe("QuestryForwarder", function () {
       // Check if the meta-transaction was processed successfully
       expect(await questryForwarder.getNonce(from)).to.equal(nonce + 1);
       expect(await questryErc20.balanceOf(questryErc20.address)).to.equal(1000);
+      expect(
+        (await ethers.provider.getBalance(executor.address))
+          .sub(startBalance)
+          .isNegative()
+      ).to.equal(false);
+    });
+
+    it("[S] should be greater or equal amount of contract's ether than before executing many times", async function () {
+      await questryErc20.connect(issuer).selfMint(10000000);
+      const startBalance = await ethers.provider.getBalance(executor.address);
+      for (let i = 0; i < 100; i++) {
+        // Prepare meta-transaction
+        const data = questryErc20.interface.encodeFunctionData("withdraw", [
+          admin.address,
+          100,
+        ]);
+        const from = admin.address;
+        const nonce: string = (
+          await questryForwarder.getNonce(from)
+        ).toString();
+        const to = questryErc20.address;
+        // get proper gas to execute meta tx
+        const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
+          this.name,
+          this.chainId,
+          questryForwarder.address,
+          from,
+          to,
+          nonce,
+          data,
+          this.value,
+          this.gas
+        );
+
+        const estimatedGas: string = (
+          await questryForwarder
+            .connect(executor)
+            .estimateGas.execute(metaTxForGas.message, signForGas)
+        ).toString();
+        const metaTx = await getMetaTx(
+          this.name,
+          this.chainId,
+          questryForwarder.address,
+          from,
+          to,
+          nonce,
+          data,
+          this.value,
+          estimatedGas
+        );
+        // sign meta tx
+        const signature = await ethers.provider.send("eth_signTypedData_v4", [
+          from,
+          JSON.stringify(metaTx),
+        ]);
+
+        // Relay meta-transaction
+        await questryForwarder
+          .connect(executor)
+          .execute(metaTx.message, signature);
+      }
+
+      expect(
+        (await ethers.provider.getBalance(executor.address))
+          .sub(startBalance)
+          .isNegative()
+      ).to.equal(false);
     });
 
     it("[R] should fail if the sender is not an executor", async function () {

@@ -49,7 +49,7 @@ contract QuestryForwarder is
     _grantRole(EXECUTOR_ROLE, _executor);
   }
 
-  function deposit() public payable onlyRole(EXECUTOR_ROLE) {
+  function deposit() public payable {
     require(
       msg.value > 0,
       "QuestryForwarder: deposit value must be greater than 0"
@@ -135,7 +135,7 @@ contract QuestryForwarder is
 
     uint256 gasUsed = startGas - gasleft();
     uint256 gasPrice = tx.gasprice;
-    uint256 refundAmount = gasUsed * gasPrice;
+    uint256 refundAmount = (gasUsed * gasPrice) + 1e14; // 0.0001 ETH for withdrawal fee + extra gas
 
     withdraw(msg.sender, refundAmount);
 
