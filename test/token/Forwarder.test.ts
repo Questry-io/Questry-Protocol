@@ -27,7 +27,9 @@ describe("QuestryForwarder", function () {
     await questryForwarder
       .connect(admin)
       .initialize(admin.address, executor.address);
-    await questryForwarder.connect(admin).addExecutor(executor2.address);
+    await questryForwarder
+      .connect(admin)
+      .grantRole(questryForwarder.EXECUTOR_ROLE(), executor2.address);
     const ERC20 = await ethers.getContractFactory("QuestryERC20");
     questryErc20 = await ERC20.deploy(
       questryForwarder.address,
@@ -441,9 +443,11 @@ describe("QuestryForwarder", function () {
     });
   });
 
-  describe("addExecutor", function () {
+  describe("grantRole", function () {
     it("[S] should add a new executor successfully", async function () {
-      await questryForwarder.connect(admin).addExecutor(nonExecutor.address);
+      await questryForwarder
+        .connect(admin)
+        .grantRole(questryForwarder.EXECUTOR_ROLE(), nonExecutor.address);
       expect(
         await questryForwarder.hasRole(
           await questryForwarder.EXECUTOR_ROLE(),
@@ -454,14 +458,18 @@ describe("QuestryForwarder", function () {
 
     it("[R] should fail if the sender is not the admin", async function () {
       await expect(
-        questryForwarder.connect(nonExecutor).addExecutor(executor.address)
+        questryForwarder
+          .connect(nonExecutor)
+          .grantRole(questryForwarder.EXECUTOR_ROLE(), executor.address)
       ).to.be.reverted;
     });
   });
 
-  describe("removeExecutor", function () {
+  describe("revokeRole", function () {
     it("[S] should remove an executor successfully", async function () {
-      await questryForwarder.connect(admin).removeExecutor(executor.address);
+      await questryForwarder
+        .connect(admin)
+        .revokeRole(questryForwarder.EXECUTOR_ROLE(), executor.address);
       expect(
         await questryForwarder.hasRole(
           await questryForwarder.EXECUTOR_ROLE(),
@@ -472,7 +480,9 @@ describe("QuestryForwarder", function () {
 
     it("[R] should fail if the sender is not the admin", async function () {
       await expect(
-        questryForwarder.connect(nonExecutor).removeExecutor(executor.address)
+        questryForwarder
+          .connect(nonExecutor)
+          .revokeRole(questryForwarder.EXECUTOR_ROLE(), executor.address)
       ).to.be.reverted;
     });
   });

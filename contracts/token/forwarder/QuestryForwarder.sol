@@ -142,17 +142,6 @@ contract QuestryForwarder is
     return (success, returndata);
   }
 
-  function addExecutor(address _executor) public onlyRole(DEFAULT_ADMIN_ROLE) {
-    _grantRole(EXECUTOR_ROLE, _executor);
-  }
-
-  function removeExecutor(address _executor)
-    public
-    onlyRole(DEFAULT_ADMIN_ROLE)
-  {
-    _revokeRole(EXECUTOR_ROLE, _executor);
-  }
-
   function pause() public onlyRole(DEFAULT_ADMIN_ROLE) {
     _pause();
   }
