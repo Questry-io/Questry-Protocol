@@ -514,4 +514,28 @@ describe("QuestryForwarder", function () {
         .reverted;
     });
   });
+  describe("receive", function () {
+    it("[S] should receive ETH successfully", async function () {
+      const amount = 100;
+      await issuer.sendTransaction({
+        to: questryForwarder.address,
+        value: amount,
+      });
+      expect(
+        await ethers.provider.getBalance(questryForwarder.address)
+      ).to.equal(amount);
+    });
+  });
+  describe("fallback", function () {
+    it("[S] should successfully receive ethers via fallback", async function () {
+      const valueToSend = ethers.utils.parseEther("1");
+      await expect(() =>
+        nonExecutor.sendTransaction({
+          to: questryForwarder.address,
+          value: valueToSend,
+          data: "0x", // Empty data to trigger fallback
+        })
+      ).to.changeEtherBalance(questryForwarder, valueToSend);
+    });
+  });
 });

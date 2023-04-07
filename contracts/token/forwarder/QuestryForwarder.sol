@@ -155,4 +155,8 @@ contract QuestryForwarder is
     override
     onlyRole(DEFAULT_ADMIN_ROLE)
   {}
+
+  receive() external payable {}
+
+  fallback() external payable {}
 }
