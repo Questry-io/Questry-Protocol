@@ -27,10 +27,10 @@ contract QuestryERC20 is
   event Migrated(address indexed to, uint256 amount);
 
   constructor(
-    MinimalForwarder _forwarder,
+    address _forwarder,
     address _admin,
     address _issuer
-  ) ERC20("QST", "QuestryERC20") ERC2771Context(address(_forwarder)) {
+  ) ERC20("QST", "QuestryERC20") ERC2771Context(_forwarder) {
     _grantRole(DEFAULT_ADMIN_ROLE, _admin);
     _grantRole(ISSUER_ROLE, _issuer);
   }
