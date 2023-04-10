@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import "@openzeppelin/contracts/metatx/MinimalForwarder.sol";
 
 contract QuestryERC20 is
   ERC20,
@@ -64,7 +63,10 @@ contract QuestryERC20 is
     emit Migrated(_to, _amount);
   }
 
-  function withdraw(address _to, uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+  function withdraw(address _to, uint256 _amount)
+    public
+    onlyRole(DEFAULT_ADMIN_ROLE)
+  {
     IERC20(this).safeTransfer(_to, _amount);
     emit Withdrawn(_to, _amount);
   }
