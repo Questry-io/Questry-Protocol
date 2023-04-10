@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import "@openzeppelin/contracts/metatx/MinimalForwarder.sol";
 
 contract QuestryERC20 is
   ERC20,
@@ -27,10 +26,10 @@ contract QuestryERC20 is
   event Migrated(address indexed to, uint256 amount);
 
   constructor(
-    MinimalForwarder _forwarder,
+    address _forwarder,
     address _admin,
     address _issuer
-  ) ERC20("QST", "QuestryERC20") ERC2771Context(address(_forwarder)) {
+  ) ERC20("QST", "QuestryERC20") ERC2771Context(_forwarder) {
     _grantRole(DEFAULT_ADMIN_ROLE, _admin);
     _grantRole(ISSUER_ROLE, _issuer);
   }
@@ -64,7 +63,10 @@ contract QuestryERC20 is
     emit Migrated(_to, _amount);
   }
 
-  function withdraw(address _to, uint256 _amount) public onlyRole(DEFAULT_ADMIN_ROLE) {
+  function withdraw(address _to, uint256 _amount)
+    public
+    onlyRole(DEFAULT_ADMIN_ROLE)
+  {
     IERC20(this).safeTransfer(_to, _amount);
     emit Withdrawn(_to, _amount);
   }
