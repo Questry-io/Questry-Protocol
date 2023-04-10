@@ -17,6 +17,9 @@ async function main() {
   const forwarderAddress = "";
   const adminAddress = "";
   const issuerAddress = "";
+  if (forwarderAddress === "" || adminAddress === "" || issuerAddress === "") {
+    throw new Error("Please set forwarderAddress, adminAddress and issuerAddress");
+  }
   const QuestryErc20 = await hre.ethers.getContractFactory("QuestryERC20");
   const questryErc20 = await QuestryErc20.deploy(forwarderAddress, adminAddress, issuerAddress);
   await questryErc20.deployed();
