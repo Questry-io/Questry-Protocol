@@ -22,7 +22,7 @@ async function main() {
   const Trustedforwarder = ""
 
   if (name == "" || symbol == "" || baseTokenURI == "" || pjmanagerContract == "" || admin == "" || Trustedforwarder == "") {
-    throw new Error("Please set adminAddress");
+    throw new Error("Please set all of name, symbol, baseTokenURI, pjmanagerContract, admin, Trustedforwarder");
   }
 
   const SBT = await hre.ethers.getContractFactory("SBT");
