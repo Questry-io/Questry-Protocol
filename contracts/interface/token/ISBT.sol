@@ -31,6 +31,10 @@ interface ISBT {
 
     function Bulkburn(uint256[] calldata tokenIds) external;
 
+    function boardingMembersExist() external returns (bool);
+
+    function boardingMembers() external returns (address[] memory);
+
     /**
      * @dev Resolve Kaname Protocol DID from the board which tokenId is `tokenId`.
      */

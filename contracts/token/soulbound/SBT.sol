@@ -26,6 +26,7 @@ contract SBT is
 
     string public _baseTokenURI;
     address public immutable PJManagerContract;
+    address[] private _boardingMembers;
 
     bool public isTransfable = false;
 
@@ -129,6 +130,7 @@ contract SBT is
     function mint(address to) public {
         require(hasRole(MINTER_ROLE, _msgSender()), "SBT: must have minter role to mint");
 
+        _boardingMembers.push(to);
         uint256 tokenId = _tokenIdTracker.current();
         _mint(to, tokenId);
         _tokenIdTracker.increment();
@@ -151,6 +153,14 @@ contract SBT is
         for(uint i =0;i < tokenIds.length;i++){
             burn(tokenIds[i]);
         }
+    }
+
+    function boardingMembers() external view returns (address[] memory) {
+        return _boardingMembers;
+    }
+
+    function boardingMembersExist() external view returns (bool) {
+        return _boardingMembers.length > 0;
     }
 
     function _transfer(address from, address to, uint256 tokenId) internal virtual override {
