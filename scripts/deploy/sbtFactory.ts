@@ -14,13 +14,13 @@ async function main() {
   await hre.run("compile");
 
   // We get the contract to deploy
-  const adminAddress = "";
-  if (adminAddress === "") {
-    throw new Error("Please set adminAddress");
+  const admin = "";
+  if (admin === "") {
+    throw new Error("Please set admin");
   }
 
   const SBTFactory = await hre.ethers.getContractFactory("SBTFactory");
-  const sbtFactory = await SBTFactory.deploy(adminAddress);
+  const sbtFactory = await SBTFactory.deploy(admin);
   await sbtFactory.deployed();
 
   console.log("SBTFactory deployed to:", sbtFactory.address);
