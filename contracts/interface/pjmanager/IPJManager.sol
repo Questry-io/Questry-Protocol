@@ -4,9 +4,9 @@ pragma solidity ^0.8.17;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {LibPJManager} from "../../library/LibPJManager.sol";
-import {LibQuestryPlatform} from "../../library/LibQuestryPlatform.sol";
+import {ISignatureVerifier} from "./ISignatureVerifier.sol";
 
-interface IPJManager {
+interface IPJManager is ISignatureVerifier {
   event AddBusinessOwner(address owner, uint120 share);
   event RemoveBusinessOwner(address owner);
   event UpdateBusinessOwner(address owner, uint120 share);
@@ -68,12 +68,4 @@ interface IPJManager {
     external
     view
     returns (uint256);
-
-  /**
-   * @dev Verifies the signature of PJManager signers.
-   */
-  function verifySignature(LibQuestryPlatform.AllocateArgs calldata _args)
-    external
-    view
-    returns (bool);
 }

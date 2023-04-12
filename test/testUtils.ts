@@ -1,7 +1,8 @@
 /* eslint-disable node/no-missing-import */
 import { ethers } from "hardhat";
-import { utils } from "ethers";
+import { Contract, utils } from "ethers";
 import { keccak256 } from "ethers/lib/utils";
+import { MockCallerContract } from "../typechain";
 
 export type Signature = {
   signer: string;
@@ -12,6 +13,11 @@ export type Signature = {
 export type SharesWithLinear = {
   pools: string[];
   coefs: number[];
+};
+
+export type AllocationShare = {
+  recipient: string;
+  share: number;
 };
 
 export class TestUtils {
@@ -33,5 +39,17 @@ export class TestUtils {
       signature: ethers.constants.HashZero,
       signedTime: 123,
     };
+  }
+
+  static async call(
+    caller: MockCallerContract,
+    callee: Contract,
+    func: string,
+    args: any[]
+  ) {
+    const iface = new ethers.utils.Interface([`function ${func}`]);
+    const fname = func.split("(")[0];
+    const signature = iface.encodeFunctionData(fname, args);
+    return await caller.callFunction(callee.address, signature);
   }
 }

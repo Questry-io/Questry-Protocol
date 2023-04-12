@@ -48,6 +48,15 @@ contract PJManagerMock is IPJManager {
     revert("Not implemented.");
   }
 
+  function withdrawForAllocation(
+    bytes4 paymentMode,
+    IERC20 paymentToken,
+    address receiver,
+    uint256 amount
+  ) external {
+    revert("Not implemented.");
+  }
+
   function allowERC20(IERC20 token) external {
     revert("Not implemented.");
   }
@@ -64,7 +73,11 @@ contract PJManagerMock is IPJManager {
     revert("Not implemented.");
   }
 
-  function allocate(LibQuestryPlatform.AllocateArgs calldata _args) external {
+  function getBoardingMembersProportion()
+    external
+    view
+    returns (uint32)
+  {
     revert("Not implemented.");
   }
 
@@ -77,6 +90,22 @@ contract PJManagerMock is IPJManager {
   }
 
   function isWhitelisted(IERC20 token) external view returns (bool) {
+    revert("Not implemented.");
+  }
+
+  function getTotalBalance(bytes4 paymentMode, IERC20 paymentToken)
+    external
+    view
+    returns (uint256)
+  {
+    revert("Not implemented.");
+  }
+
+  function verifySignature(LibQuestryPlatform.Signature calldata)
+    public
+    view
+    returns (bool)
+  {
     revert("Not implemented.");
   }
 }
