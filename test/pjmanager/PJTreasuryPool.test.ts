@@ -10,8 +10,8 @@ import {
   ContributionPool,
   ContributionPool__factory,
   ERC20,
-  MockKanamePlatform,
-  MockKanamePlatform__factory,
+  MockQuestryPlatform,
+  MockQuestryPlatform__factory,
   PJManagerMock__factory,
   PJTreasuryPool,
   PJTreasuryPool__factory,
@@ -34,7 +34,7 @@ describe("PJTreasuryPool", function () {
   let boardingMembers: SignerWithAddress[];
   let daoTreasuryPool: SignerWithAddress;
   let user: SignerWithAddress;
-  let cMockKanamePlatform: MockKanamePlatform;
+  let cMockQuestryPlatform: MockQuestryPlatform;
   let cCalculator: ContributionCalculator;
   let cContributionPool: ContributionPool;
 
@@ -78,7 +78,7 @@ describe("PJTreasuryPool", function () {
     _businessOwners: AllocationShare[]
   ) {
     const cTreasuryPool = await new PJTreasuryPool__factory(deployer).deploy(
-      cMockKanamePlatform.address,
+      cMockQuestryPlatform.address,
       cCalculator.address,
       admin.address,
       _boardingMembersProportion,
@@ -147,10 +147,10 @@ describe("PJTreasuryPool", function () {
     businessOwners = rest.slice(0, 2);
     boardingMembers = rest.slice(2, 4);
 
-    cMockKanamePlatform = await new MockKanamePlatform__factory(
+    cMockQuestryPlatform = await new MockQuestryPlatform__factory(
       deployer
     ).deploy(daoTreasuryPool.address);
-    await cMockKanamePlatform.deployed();
+    await cMockQuestryPlatform.deployed();
 
     cCalculator = await new ContributionCalculator__factory(deployer).deploy();
     await cCalculator.deployed();
@@ -615,7 +615,7 @@ describe("PJTreasuryPool", function () {
     }
 
     async function allocateNative(cTreasuryPool: PJTreasuryPool, cSBT: SBT) {
-      return await cMockKanamePlatform.allocate({
+      return await cMockQuestryPlatform.allocate({
         pjManager: cTreasuryPool.address,
         paymentMode: nativeMode,
         paymentToken: ethers.constants.AddressZero,
@@ -633,7 +633,7 @@ describe("PJTreasuryPool", function () {
       cERC20: ERC20,
       cSBT: SBT
     ) {
-      return await cMockKanamePlatform.allocate({
+      return await cMockQuestryPlatform.allocate({
         pjManager: cTreasuryPool.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {IKanamePlatform} from "../interface/platform/IKanamePlatform.sol";
+import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 
-contract KanamePlatform is IKanamePlatform {
+contract QuestryPlatform is IQuestryPlatform {
   uint32 public constant PROTOCOL_FEE_RATE = 300;
 
   address public daoTreasuryPool;
@@ -12,7 +12,7 @@ contract KanamePlatform is IKanamePlatform {
     daoTreasuryPool = _daoTreasuryPool;
   }
 
-  /// @inheritdoc IKanamePlatform
+  /// @inheritdoc IQuestryPlatform
   function getDAOTreasuryPool()
     external
     view
@@ -21,7 +21,7 @@ contract KanamePlatform is IKanamePlatform {
     return daoTreasuryPool;
   }
 
-  /// @inheritdoc IKanamePlatform
+  /// @inheritdoc IQuestryPlatform
   function getProtocolFeeRate()
     external
     pure

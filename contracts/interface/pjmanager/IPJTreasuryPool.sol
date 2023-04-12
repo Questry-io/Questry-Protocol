@@ -2,7 +2,7 @@
 pragma solidity ^0.8.17;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IKanamePlatform} from "../platform/IKanamePlatform.sol";
+import {IQuestryPlatform} from "../platform/IQuestryPlatform.sol";
 
 interface IPJTreasuryPool {
   event AddBusinessOwner(address owner, uint120 share);
@@ -75,7 +75,7 @@ interface IPJTreasuryPool {
   /**
    * @dev Allocates to the boarding members, business owners and DAO treasury pool.
    */
-  function allocate(IKanamePlatform.AllocateArgs calldata _args) external;
+  function allocate(IQuestryPlatform.AllocateArgs calldata _args) external;
 
   /**
    * @dev Returns businessOwners.
