@@ -9,25 +9,6 @@ import {ISBT} from "../token/ISBT.sol";
 
 interface IQuestryPlatform {
   /**
-   * TODO: Move to PlatfromDomain library.
-   * @dev Arguments for QuestryPlatform.allocate() funtion.
-   */
-  struct AllocateArgs {
-    IPJManager pjManager;
-    bytes4 paymentMode;           // determines to allocate native or ERC20 token
-    IERC20 paymentToken;          // ERC20 token to allocate. Ignored if paymentMode == NATIVE_PAYMENT_MODE
-    ISBT board;                   // allocation target board which has contributions
-    IContributionCalculator.CalculateDispatchArgs calculateArgs; // allocation calculation args
-    Signature signature;          // signature
-  }
-
-  struct Signature {
-    address signer;
-    bytes32 signature;
-    uint256 signedTime;
-  }
-
-  /**
    * @dev Returns the DAO treasury pool.
    */
   function getDAOTreasuryPool()

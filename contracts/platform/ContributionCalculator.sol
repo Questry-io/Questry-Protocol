@@ -6,6 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {IContributionCalculator} from "../interface/platform/IContributionCalculator.sol";
+import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 
 /**
  * @dev Implementation of ContributionCalculator.
@@ -35,16 +36,16 @@ contract ContributionCalculator is
   /// @inheritdoc IContributionCalculator
   function calculateDispatch(
     address[] memory members,
-    CalculateDispatchArgs memory calculateArgs
+    LibQuestryPlatform.CalculateDispatchArgs memory calculateArgs
   )
     external
     view
-    returns (SharesResult memory result)
+    returns (LibQuestryPlatform.SharesResult memory result)
   {
     if (calculateArgs.algorithm == LINEAR_ALGORITHM) {
       result = calculateSharesWithLinear(
         members,
-        abi.decode(calculateArgs.args, (IContributionCalculator.SharesWithLinearArgs))
+        abi.decode(calculateArgs.args, (LibQuestryPlatform.SharesWithLinearArgs))
       );
     } else {
       revert ("Calculator: unknown algorithm");
@@ -54,12 +55,12 @@ contract ContributionCalculator is
   /// @inheritdoc IContributionCalculator
   function calculateSharesWithLinear(
     address[] memory members,
-    IContributionCalculator.SharesWithLinearArgs memory args
+    LibQuestryPlatform.SharesWithLinearArgs memory args
   )
     public
     view
     virtual
-    returns (IContributionCalculator.SharesResult memory result)
+    returns (LibQuestryPlatform.SharesResult memory result)
   {
     result.shares = new uint120[](members.length);
     for (uint memberIdx = 0; memberIdx < members.length; memberIdx++) {

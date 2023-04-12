@@ -179,14 +179,14 @@ describe("PJTreasuryPool", function () {
     it("[R] should not deploy if boardingMembersProportion is over 10000", async function () {
       await expect(
         deployTreasuryPool(10001, withShares(businessOwners, [1, 1]))
-      ).revertedWith("PJTreasuryPool: proportion is out of range");
+      ).revertedWith("LibPJManager: proportion is out of range");
     });
 
     it("[R] should not deploy if boardingMembersProportion is 10000 but businessOwnersShare exists", async function () {
       await expect(
         deployTreasuryPool(10000, withShares(businessOwners, [1, 1]))
       ).revertedWith(
-        "PJTreasuryPool: proportion should be less than 10000 or businessOwners share should not exist"
+        "LibPJManager: proportion should be less than 10000 or businessOwners share should not exist"
       );
     });
 
@@ -194,7 +194,7 @@ describe("PJTreasuryPool", function () {
       await expect(
         deployTreasuryPool(4000, withShares(businessOwners, [0, 0]))
       ).revertedWith(
-        "PJTreasuryPool: businessOwners share should exist unless proportion is 10000"
+        "LibPJManager: businessOwners share should exist unless proportion is 10000"
       );
     });
 
@@ -202,7 +202,7 @@ describe("PJTreasuryPool", function () {
       await expect(
         deployTreasuryPool(0, withShares(businessOwners, [0, 0]))
       ).revertedWith(
-        "PJTreasuryPool: businessOwners share should exist unless proportion is 10000"
+        "LibPJManager: businessOwners share should exist unless proportion is 10000"
       );
     });
   });
@@ -267,7 +267,7 @@ describe("PJTreasuryPool", function () {
       await expect(
         cTreasuryPool.connect(stateManager).addBusinessOwner(arg)
       ).revertedWith(
-        "PJTreasuryPool: proportion should be less than 10000 or businessOwners share should not exist"
+        "LibPJManager: proportion should be less than 10000 or businessOwners share should not exist"
       );
     });
   });
@@ -332,7 +332,7 @@ describe("PJTreasuryPool", function () {
           .connect(stateManager)
           .removeBusinessOwner(businessOwners[1].address)
       ).revertedWith(
-        "PJTreasuryPool: businessOwners share should exist unless proportion is 10000"
+        "LibPJManager: businessOwners share should exist unless proportion is 10000"
       );
     });
   });
@@ -391,7 +391,7 @@ describe("PJTreasuryPool", function () {
       await expect(
         cTreasuryPool.connect(stateManager).updateBusinessOwner(arg)
       ).revertedWith(
-        "PJTreasuryPool: businessOwners share should exist unless proportion is 10000"
+        "LibPJManager: businessOwners share should exist unless proportion is 10000"
       );
     });
   });

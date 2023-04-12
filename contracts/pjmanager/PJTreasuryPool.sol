@@ -10,31 +10,21 @@ import {IContributionCalculator} from "../interface/platform/IContributionCalcul
 import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 import {IPJTreasuryPool} from "../interface/pjmanager/IPJTreasuryPool.sol";
 import {ISBT} from "../interface/token/ISBT.sol";
+import {LibPJManager} from "../library/LibPJManager.sol";
+import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 
 /**
  * @title PJTreasuryPool
  * @dev This contract stores treasury and controls token whitelists.
  */
 contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
-  // TODO: Move PlatformDomain library
-  bytes4 public constant NATIVE_PAYMENT_MODE = bytes4(keccak256("NATIVE"));
-  bytes4 public constant ERC20_PAYMENT_MODE = bytes4(keccak256("ERC20"));
-
-  // TODO: Move PlatformDomain library
-  bytes32 public constant PJ_ALLOCATE_ROLE = keccak256("PJ_ALLOCATE_ROLE");
-
-  bytes32 public constant PJ_ADMIN_ROLE = keccak256("PJ_ADMIN_ROLE");
-  bytes32 public constant PJ_MANAGEMENT_ROLE = keccak256("PJ_MANAGEMENT_ROLE");
-  bytes32 public constant PJ_WHITELIST_ROLE = keccak256("PJ_WHITELIST_ROLE");
-  bytes32 public constant PJ_DEPOSIT_ROLE = keccak256("PJ_DEPOSIT_ROLE");
-
   IQuestryPlatform public immutable questryPlatform;
   IContributionCalculator public immutable contributionCalculator;
   address public immutable admin;
   IERC20[] public tokenWhitelists;
   mapping(IERC20 => bool) private _isTokenWhitelisted;
 
-  AllocationShare[] public businessOwners;
+  LibPJManager.AllocationShare[] public businessOwners;
 
   /// @dev the basis points proportion of total allocation for boarding members
   uint32 public immutable boardingMembersProportion;
@@ -49,37 +39,39 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
     IContributionCalculator _contributionCalculator,
     address _admin,
     uint32 _boardingMembersProportion,
-    AllocationShare[] memory _businessOwners
+    LibPJManager.AllocationShare[] memory _businessOwners
   ) {
     bool ownersShareExists = _initBusinessOwners(_businessOwners);
-    _validateAllocationSettings(_boardingMembersProportion, ownersShareExists);
+    LibPJManager._validateAllocationSettings(
+      _boardingMembersProportion,
+      ownersShareExists
+    );
 
     questryPlatform = _questryPlatform;
     contributionCalculator = _contributionCalculator;
     admin = _admin;
     boardingMembersProportion = _boardingMembersProportion;
 
-    _setupRole(PJ_ALLOCATE_ROLE, address(_questryPlatform));
+    _setupRole(LibPJManager.PJ_ALLOCATE_ROLE, address(_questryPlatform));
 
-    _setupRole(PJ_ADMIN_ROLE, _admin);
-    _setupRole(PJ_MANAGEMENT_ROLE, _admin);
-    _setupRole(PJ_WHITELIST_ROLE, _admin);
-    _setupRole(PJ_DEPOSIT_ROLE, _admin);
+    _setupRole(LibPJManager.PJ_ADMIN_ROLE, _admin);
+    _setupRole(LibPJManager.PJ_MANAGEMENT_ROLE, _admin);
+    _setupRole(LibPJManager.PJ_WHITELIST_ROLE, _admin);
+    _setupRole(LibPJManager.PJ_DEPOSIT_ROLE, _admin);
 
-    _setRoleAdmin(PJ_MANAGEMENT_ROLE, PJ_ADMIN_ROLE);
-    _setRoleAdmin(PJ_WHITELIST_ROLE, PJ_ADMIN_ROLE);
-    _setRoleAdmin(PJ_DEPOSIT_ROLE, PJ_ADMIN_ROLE);
+    _setRoleAdmin(LibPJManager.PJ_MANAGEMENT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
+    _setRoleAdmin(LibPJManager.PJ_WHITELIST_ROLE, LibPJManager.PJ_ADMIN_ROLE);
+    _setRoleAdmin(LibPJManager.PJ_DEPOSIT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
   }
 
   // --------------------------------------------------
-  // PJ_MANAGEMENT_ROLE
+  // LibPJManager.PJ_MANAGEMENT_ROLE
   // --------------------------------------------------
 
   /// @inheritdoc IPJTreasuryPool
-  function addBusinessOwner(AllocationShare calldata _businessOwner)
-    external
-    onlyRole(PJ_MANAGEMENT_ROLE)
-  {
+  function addBusinessOwner(
+    LibPJManager.AllocationShare calldata _businessOwner
+  ) external onlyRole(LibPJManager.PJ_MANAGEMENT_ROLE) {
     for (uint256 i = 0; i < businessOwners.length; i++) {
       require(
         businessOwners[i].recipient != _businessOwner.recipient,
@@ -87,14 +79,17 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
       );
     }
     businessOwners.push(_businessOwner);
-    _validateAllocationSettings();
+    LibPJManager._validateAllocationSettings(
+      businessOwners,
+      boardingMembersProportion
+    );
     emit AddBusinessOwner(_businessOwner.recipient, _businessOwner.share);
   }
 
   /// @inheritdoc IPJTreasuryPool
   function removeBusinessOwner(address _businessOwner)
     external
-    onlyRole(PJ_MANAGEMENT_ROLE)
+    onlyRole(LibPJManager.PJ_MANAGEMENT_ROLE)
   {
     bool removed = false;
     uint32 newIdx = 0;
@@ -107,15 +102,17 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
     }
     require(removed, "PJTreasuryPool: businessOwner doesn't exist");
     businessOwners.pop();
-    _validateAllocationSettings();
+    LibPJManager._validateAllocationSettings(
+      businessOwners,
+      boardingMembersProportion
+    );
     emit RemoveBusinessOwner(_businessOwner);
   }
 
   /// @inheritdoc IPJTreasuryPool
-  function updateBusinessOwner(AllocationShare calldata _businessOwner)
-    external
-    onlyRole(PJ_MANAGEMENT_ROLE)
-  {
+  function updateBusinessOwner(
+    LibPJManager.AllocationShare calldata _businessOwner
+  ) external onlyRole(LibPJManager.PJ_MANAGEMENT_ROLE) {
     bool updated = false;
     for (uint256 i = 0; i < businessOwners.length; i++) {
       if (businessOwners[i].recipient == _businessOwner.recipient) {
@@ -124,17 +121,26 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
       }
     }
     require(updated, "PJTreasuryPool: businessOwner doesn't exist");
-    _validateAllocationSettings();
+    LibPJManager._validateAllocationSettings(
+      businessOwners,
+      boardingMembersProportion
+    );
     emit UpdateBusinessOwner(_businessOwner.recipient, _businessOwner.share);
   }
 
   // --------------------------------------------------
-  // PJ_WHITELIST_ROLE
+  // LibPJManager.PJ_WHITELIST_ROLE
   // --------------------------------------------------
 
   /// @inheritdoc IPJTreasuryPool
-  function allowERC20(IERC20 token) external onlyRole(PJ_WHITELIST_ROLE) {
-    require(Address.isContract(address(token)), "PJTreasuryPool: token is not a contract");
+  function allowERC20(IERC20 token)
+    external
+    onlyRole(LibPJManager.PJ_WHITELIST_ROLE)
+  {
+    require(
+      Address.isContract(address(token)),
+      "PJTreasuryPool: token is not a contract"
+    );
     require(!_isTokenWhitelisted[token], "PJTreasuryPool: already whitelisted");
     tokenWhitelists.push(token);
     _isTokenWhitelisted[token] = true;
@@ -142,7 +148,10 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   }
 
   /// @inheritdoc IPJTreasuryPool
-  function disallowERC20(IERC20 token) external onlyRole(PJ_WHITELIST_ROLE) {
+  function disallowERC20(IERC20 token)
+    external
+    onlyRole(LibPJManager.PJ_WHITELIST_ROLE)
+  {
     require(_isTokenWhitelisted[token], "PJTreasuryPool: not whitelisted");
     uint32 newIdx = 0;
     for (uint256 i = 0; i < tokenWhitelists.length; i++) {
@@ -156,18 +165,18 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   }
 
   // --------------------------------------------------
-  // PJ_DEPOSIT_ROLE
+  // LibPJManager.PJ_DEPOSIT_ROLE
   // --------------------------------------------------
 
   /// @inheritdoc IPJTreasuryPool
-  function deposit() external payable onlyRole(PJ_DEPOSIT_ROLE) {
+  function deposit() external payable onlyRole(LibPJManager.PJ_DEPOSIT_ROLE) {
     emit Deposit(_msgSender(), msg.value);
   }
 
   /// @inheritdoc IPJTreasuryPool
   function depositERC20(IERC20 token, uint256 amount)
     external
-    onlyRole(PJ_DEPOSIT_ROLE)
+    onlyRole(LibPJManager.PJ_DEPOSIT_ROLE)
   {
     require(_isTokenWhitelisted[token], "PJTreasuryPool: not whitelisted");
     token.transferFrom(_msgSender(), address(this), amount);
@@ -175,14 +184,14 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   }
 
   // --------------------------------------------------
-  // PJ_ALLOCATE_ROLE
+  // LibPJManager.PJ_ALLOCATE_ROLE
   // --------------------------------------------------
 
   /// @inheritdoc IPJTreasuryPool
-  function allocate(IQuestryPlatform.AllocateArgs calldata _args)
+  function allocate(LibQuestryPlatform.AllocateArgs calldata _args)
     external
     nonReentrant
-    onlyRole(PJ_ALLOCATE_ROLE)
+    onlyRole(LibPJManager.PJ_ALLOCATE_ROLE)
   {
     // Step1. Simulate deduction of the protocol fee.
     uint256 totalBalance = _totalBalance(_args.paymentMode, _args.paymentToken);
@@ -220,7 +229,11 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   // --------------------------------------------------
 
   /// @inheritdoc IPJTreasuryPool
-  function getBusinessOwners() external view returns (AllocationShare[] memory) {
+  function getBusinessOwners()
+    external
+    view
+    returns (LibPJManager.AllocationShare[] memory)
+  {
     return businessOwners;
   }
 
@@ -238,38 +251,6 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   // Private functions
   // --------------------------------------------------
 
-  function _validateAllocationSettings() private view {
-    bool ownersShareExists = false;
-    for (uint256 i = 0; i < businessOwners.length; i++) {
-      if (businessOwners[i].share > 0) {
-        ownersShareExists = true;
-        break;
-      }
-    }
-    _validateAllocationSettings(boardingMembersProportion, ownersShareExists);
-  }
-
-  function _validateAllocationSettings(
-    uint32 _boardingMembersProportion,
-    bool _businessOwnersShareExists
-  ) private pure {
-    require(
-      _boardingMembersProportion <= 10000,
-      "PJTreasuryPool: proportion is out of range"
-    );
-    if (_boardingMembersProportion < 10000) {
-      require(
-        _businessOwnersShareExists,
-        "PJTreasuryPool: businessOwners share should exist unless proportion is 10000"
-      );
-    } else {
-      require(
-        !_businessOwnersShareExists,
-        "PJTreasuryPool: proportion should be less than 10000 or businessOwners share should not exist"
-      );
-    }
-  }
-
   /**
    * @dev Simulate the DAO Treasury transfer(Not actual transfer)
    */
@@ -283,15 +264,12 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
    */
   function _simulateBoardingMembersTransfer(
     ISBT board,
-    IContributionCalculator.CalculateDispatchArgs memory calculateArgs,
+    LibQuestryPlatform.CalculateDispatchArgs memory calculateArgs,
     uint256 totalAmount
   ) private returns (uint256) {
     address[] memory members = board.boardingMembers();
-    IContributionCalculator.SharesResult
-      memory sharesResult = contributionCalculator.calculateDispatch(
-        members,
-        calculateArgs
-      );
+    LibQuestryPlatform.SharesResult memory sharesResult = contributionCalculator
+      .calculateDispatch(members, calculateArgs);
     if (sharesResult.totalShare == 0) {
       return 0;
     }
@@ -337,7 +315,8 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
    */
   function _payout(bytes4 _paymentMode, IERC20 _paymentToken) private {
     require(
-      _paymentMode == NATIVE_PAYMENT_MODE || _isTokenWhitelisted[_paymentToken],
+      _paymentMode == LibQuestryPlatform.NATIVE_PAYMENT_MODE ||
+        _isTokenWhitelisted[_paymentToken],
       "PJTreasuryPool: not whitelisted"
     );
 
@@ -345,10 +324,10 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
       address payable receiver = payable(_tempPayoutAddress[i]);
       uint256 amount = _tempPayoutAmount[receiver];
 
-      if (_paymentMode == NATIVE_PAYMENT_MODE) {
+      if (_paymentMode == LibQuestryPlatform.NATIVE_PAYMENT_MODE) {
         // Sending ETH
         Address.sendValue(receiver, amount);
-      } else if (_paymentMode == ERC20_PAYMENT_MODE) {
+      } else if (_paymentMode == LibQuestryPlatform.ERC20_PAYMENT_MODE) {
         // Sending ERC20
         _paymentToken.transfer(receiver, amount);
       } else {
@@ -383,10 +362,9 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
     delete _tempPayoutAddress;
   }
 
-  function _initBusinessOwners(AllocationShare[] memory _businessOwners)
-    private
-    returns (bool shareExists)
-  {
+  function _initBusinessOwners(
+    LibPJManager.AllocationShare[] memory _businessOwners
+  ) private returns (bool shareExists) {
     uint256 totalShare = 0;
     for (uint256 i = 0; i < _businessOwners.length; i++) {
       totalShare += _businessOwners[i].share;
@@ -400,9 +378,9 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
     view
     returns (uint256)
   {
-    if (_paymentMode == NATIVE_PAYMENT_MODE) {
+    if (_paymentMode == LibQuestryPlatform.NATIVE_PAYMENT_MODE) {
       return address(this).balance;
-    } else if (_paymentMode == ERC20_PAYMENT_MODE) {
+    } else if (_paymentMode == LibQuestryPlatform.ERC20_PAYMENT_MODE) {
       return _paymentToken.balanceOf(address(this));
     } else {
       revert("PJTreasuryPool: unknown paymentMode");
