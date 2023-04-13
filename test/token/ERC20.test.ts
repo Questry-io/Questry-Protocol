@@ -1,25 +1,35 @@
 /* eslint-disable node/no-missing-import */
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { Contract } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { getMetaTx, getMetaTxAndSignForGas } from "../utils";
+import { MockContract } from "ethereum-waffle";
 
 describe("QuestryERC20", function () {
   let admin: SignerWithAddress;
   let issuer: SignerWithAddress;
+  let executor: SignerWithAddress;
   let user: SignerWithAddress;
   let contract: Contract;
   let forwarderContract: Contract;
 
   beforeEach(async function () {
-    [admin, issuer, user] = await ethers.getSigners();
-
-    const MinimalForwarder = await ethers.getContractFactory(
-      "MinimalForwarder"
-    );
-    forwarderContract = await MinimalForwarder.deploy();
+    [admin, issuer, executor, user] = await ethers.getSigners();
+    const MinimalForwarder = await ethers.getContractFactory("QuestryForwarder");
+  
+  
+    forwarderContract = await upgrades.deployProxy(MinimalForwarder, [admin.address, admin.address], { initializer: "initialize" });
     await forwarderContract.deployed();
+
+    console.log("CustomUpgradeableContract deployed to:", forwarderContract.address);
+  // console.log(forwarderContract)
+
+    // const MinimalForwarder = await ethers.getContractFactory(
+    //   "QuestryForwarder"
+    // );
+    // forwarderContract = await MinimalForwarder.deploy();
+    // await forwarderContract.deployed();
 
     const QuestryERC20 = await ethers.getContractFactory("QuestryERC20");
     contract = await QuestryERC20.deploy(
@@ -29,7 +39,7 @@ describe("QuestryERC20", function () {
     );
     await contract.deployed();
 
-    this.name = "MinimalForwarder";
+    this.name = "QuestryForwarder";
     this.chainId = (await ethers.provider.getNetwork()).chainId;
     this.value = "0";
     this.gas = (await ethers.provider.getBlock("latest")).gasLimit.toString();
@@ -53,6 +63,7 @@ describe("QuestryERC20", function () {
       // Prepare meta-transaction
       const data = contract.interface.encodeFunctionData("selfMint", [1000]);
       const from = user.address;
+      console.log(forwarderContract)
       const nonce: string = (await forwarderContract.getNonce(from)).toString();
       const to = contract.address;
       // get proper gas to execute meta tx
