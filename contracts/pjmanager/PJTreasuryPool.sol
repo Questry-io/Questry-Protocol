@@ -16,8 +16,13 @@ import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
  */
 abstract contract PJTreasuryPool is IPJManager, AccessControl {
   QuestryPlatform public immutable questryPlatform;
+
   IERC20[] public tokenWhitelists;
   mapping(IERC20 => bool) private _isTokenWhitelisted;
+
+  /// @dev The amount of ERC20 tokens deposited into the contract,
+  /// excluding any tokens transferred directly via the ERC20 function.
+  mapping(IERC20 => uint256) private tokenBalance;
 
   constructor(QuestryPlatform _questryPlatform) {
     questryPlatform = _questryPlatform;
@@ -46,6 +51,11 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl {
       Address.sendValue(payable(receiver), amount);
     } else if (paymentMode == LibQuestryPlatform.ERC20_PAYMENT_MODE) {
       // Sending ERC20
+      require(
+        tokenBalance[paymentToken] >= amount,
+        "PJTreasuryPool: insufficient balance"
+      );
+      tokenBalance[paymentToken] -= amount;
       paymentToken.transfer(receiver, amount);
     } else {
       revert("PJTreasuryPool: unknown paymentMode");
@@ -67,7 +77,6 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl {
 
   /**
    * @dev Deposits an `amount` of the ERC20 `token` into the pool.
-   * Note: Amount directly transfered via ERC20 function also is used for allocation.
    *
    * Emits a {DepositERC20} event.
    */
@@ -76,6 +85,7 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl {
     onlyRole(LibPJManager.PJ_DEPOSIT_ROLE)
   {
     require(_isTokenWhitelisted[token], "PJTreasuryPool: not whitelisted");
+    tokenBalance[token] += amount;
     token.transferFrom(_msgSender(), address(this), amount);
     emit DepositERC20(address(token), _msgSender(), amount);
   }
@@ -152,5 +162,13 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl {
     } else {
       revert("PJTreasuryPool: unknown paymentMode");
     }
+  }
+
+  /**
+   * @dev Returns the ERC20 `token` balance.
+   */
+  function getTokenBalance(IERC20 token) external view returns (uint256) {
+    require(_isTokenWhitelisted[token], "PJTreasuryPool: not whitelisted");
+    return tokenBalance[token];
   }
 }

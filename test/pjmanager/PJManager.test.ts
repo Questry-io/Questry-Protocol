@@ -612,5 +612,18 @@ describe("PJManager", function () {
           .withdrawForAllocation(erc20Mode, cERC20.address, user.address, 1)
       ).revertedWith(missingRoleError(user.address, withdrawRoleHash));
     });
+
+    it("[R] should not withdraw ERC20 tokens if they are transferred directly", async function () {
+      await cERC20.connect(depositer).transfer(cPJManager.address, 1);
+      expect(await cERC20.balanceOf(cPJManager.address)).equals(3);
+      await expect(
+        TestUtils.call(
+          cMockQuestryPlatform,
+          cPJManager,
+          "withdrawForAllocation(bytes4 paymentMode,address paymentToken,address receiver,uint256 amount)",
+          [erc20Mode, cERC20.address, user.address, 3]
+        )
+      ).revertedWith("PJTreasuryPool: insufficient balance");
+    });
   });
 });
