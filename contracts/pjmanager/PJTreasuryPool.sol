@@ -134,7 +134,7 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl {
   }
 
   /// @inheritdoc IPJManager
-  function isWhitelisted(IERC20 token) public view returns (bool) {
+  function isWhitelisted(IERC20 token) external view returns (bool) {
     return _isTokenWhitelisted[token];
   }
 
