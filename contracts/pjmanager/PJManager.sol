@@ -2,8 +2,8 @@
 pragma solidity ^0.8.17;
 
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
-import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 import {LibPJManager} from "../library/LibPJManager.sol";
+import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
 import {PJTreasuryPool} from "./PJTreasuryPool.sol";
 import {SignatureVerifier} from "./SignatureVerifier.sol";
 
@@ -21,7 +21,7 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
   LibPJManager.AllocationShare[] public businessOwners;
 
   constructor(
-    IQuestryPlatform _questryPlatform,
+    QuestryPlatform _questryPlatform,
     address _admin,
     uint32 _boardingMembersProportion,
     LibPJManager.AllocationShare[] memory _businessOwners

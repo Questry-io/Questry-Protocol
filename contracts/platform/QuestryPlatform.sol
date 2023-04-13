@@ -6,12 +6,11 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {IContributionCalculator} from "../interface/platform/IContributionCalculator.sol";
-import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 import {LibPJManager} from "../library/LibPJManager.sol";
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 import {ISBT} from "../interface/token/ISBT.sol";
 
-contract QuestryPlatform is IQuestryPlatform, AccessControl, ReentrancyGuard {
+contract QuestryPlatform is AccessControl, ReentrancyGuard {
   uint32 public constant PROTOCOL_FEE_RATE = 300;
 
   IContributionCalculator public contributionCalculator;
