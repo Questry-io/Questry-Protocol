@@ -2,19 +2,32 @@
 pragma solidity ^0.8.9;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
+import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
 
 contract ContributionPool is IContributionPool, AccessControl {
+  using Counters for Counters.Counter;
+
+  bytes32 public constant INCREMENT_TERM_ROLE = keccak256("INCREMENT_TERM_ROLE");
   bytes32 public constant CONTRIBUTION_UPDATER_ROLE = keccak256("CONTRIBUTION_UPDATER_ROLE");
 
   IContributionPool.MutationMode immutable public mode;
 
   address public admin;
   address public contributionUpdater;
-  mapping (uint64 => mapping (address => uint120)) public contributions; // globalTerm => member => value
+  mapping (uint256 => mapping (address => uint120)) public contributions; // term => member => value
+  Counters.Counter public term;
 
-  constructor(IContributionPool.MutationMode _mode, address _contributionUpdater, address _admin) {
+  constructor(
+    QuestryPlatform _questryPlatform,
+    IContributionPool.MutationMode _mode,
+    address _contributionUpdater,
+    address _admin
+  ) {
     mode = _mode;
+
+    _setupRole(INCREMENT_TERM_ROLE, address(_questryPlatform));
 
     contributionUpdater = _contributionUpdater;
     _setupRole(CONTRIBUTION_UPDATER_ROLE, contributionUpdater);
@@ -89,33 +102,42 @@ contract ContributionPool is IContributionPool, AccessControl {
   }
 
   /// @inheritdoc IContributionPool
+  function incrementTerm()
+    external
+    onlyRole(INCREMENT_TERM_ROLE)
+  {
+    term.increment();
+  }
+
+  /// @inheritdoc IContributionPool
   function getContribution(address member)
     external
     view
     returns (uint120)
   {
-    return contributions[_globalTerm()][member];
+    return contributions[term.current()][member];
+  }
+
+  /// @inheritdoc IContributionPool
+  function getTerm() external view returns (uint256) {
+    return term.current();
   }
 
   function _addContribution(address member, uint120 value)
     private
   {
-    contributions[_globalTerm()][member] += value;
+    contributions[term.current()][member] += value;
   }
 
   function _subtractContribution(address member, uint120 value)
     private
   {
-    contributions[_globalTerm()][member] -= value;
+    contributions[term.current()][member] -= value;
   }
 
   function _setContribution(address member, uint120 value)
     private
   {
-    contributions[_globalTerm()][member] = value;
-  }
-
-  function _globalTerm() private pure returns (uint64) {
-    return 0; // TODO: 精算後にグローバルにincrementされる値
+    contributions[term.current()][member] = value;
   }
 }

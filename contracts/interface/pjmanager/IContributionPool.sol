@@ -61,7 +61,17 @@ interface IContributionPool {
   function bulkSetContribution(address[] calldata members, uint120[] calldata values) external;
 
   /**
+   * @dev Increments the accumulation period for contributions.
+   */
+  function incrementTerm() external;
+
+  /**
    * @dev Gets contribution of `member`.
    */
   function getContribution(address member) external view returns (uint120);
+
+  /**
+   * @dev Returns the accumulation period for contributions.
+   */
+  function getTerm() external view returns (uint256);
 }

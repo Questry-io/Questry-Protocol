@@ -125,6 +125,7 @@ describe("QuestryPlatform", function () {
     await cQuestryPlatform.deployed();
 
     cContributionPool = await new ContributionPool__factory(deployer).deploy(
+      cQuestryPlatform.address,
       0,
       dummyAddress,
       contributionUpdater.address

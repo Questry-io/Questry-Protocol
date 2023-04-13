@@ -3,6 +3,8 @@ import { ethers } from "hardhat";
 import { Contract, utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { TestUtils } from "../testUtils";
+import { MockCallerContract } from "../../typechain";
 
 describe("ContributionPool", function () {
   let deployer: SignerWithAddress;
@@ -11,6 +13,7 @@ describe("ContributionPool", function () {
   let notUpdater: SignerWithAddress;
   let user1: SignerWithAddress;
   let user2: SignerWithAddress;
+  let cQuestryPlatform: MockCallerContract;
   let cPoolAdd: Contract;
   let cPoolFull: Contract;
 
@@ -20,17 +23,20 @@ describe("ContributionPool", function () {
   } as const;
 
   const adminRoleHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
+  const incrementTermRoleHash = utils.keccak256(utils.toUtf8Bytes("INCREMENT_TERM_ROLE"));
   const updaterRoleHash = utils.keccak256(utils.toUtf8Bytes("CONTRIBUTION_UPDATER_ROLE"));
 
   function missingRoleError(address: string, roleHash: string) {
-    return `AccessControl: account ${address.toLowerCase()} is missing role ${updaterRoleHash}`;
+    return `AccessControl: account ${address.toLowerCase()} is missing role ${roleHash}`;
   }
 
   beforeEach(async function () {
     [deployer, superAdmin, updater, notUpdater, user1, user2] = await ethers.getSigners();
+    const cfMockQuestryPlatform = await ethers.getContractFactory("MockCallerContract");
+    cQuestryPlatform = await cfMockQuestryPlatform.deploy();
     const cfPool = await ethers.getContractFactory("ContributionPool");
-    cPoolAdd = await cfPool.deploy(MutationMode.AddOnlyAccess, updater.address, superAdmin.address);
-    cPoolFull = await cfPool.deploy(MutationMode.FullControl, updater.address, superAdmin.address);
+    cPoolAdd = await cfPool.deploy(cQuestryPlatform.address, MutationMode.AddOnlyAccess, updater.address, superAdmin.address);
+    cPoolFull = await cfPool.deploy(cQuestryPlatform.address, MutationMode.FullControl, updater.address, superAdmin.address);
   });
 
   describe("Post deployment checks", function () {
@@ -232,6 +238,20 @@ describe("ContributionPool", function () {
         await expect(cPoolFull.connect(notUpdater).bulkSetContribution([user1.address, user2.address], [1, 2]))
           .to.be.revertedWith(missingRoleError(notUpdater.address, updaterRoleHash));
       });
+    });
+  });
+
+  describe("incrementTerm", function () {
+    it("[S] can incrementTerm by QuestryPlatform", async function () {
+      await TestUtils.call(cQuestryPlatform, cPoolAdd, "incrementTerm()", []);
+      expect(await cPoolAdd.getTerm()).equals(1);
+      await TestUtils.call(cQuestryPlatform, cPoolAdd, "incrementTerm()", []);
+      expect(await cPoolAdd.getTerm()).equals(2);
+    });
+
+    it("[R] cannot incrementTerm by others", async function () {
+      await expect(cPoolAdd.connect(user1).incrementTerm())
+        .to.be.revertedWith(missingRoleError(user1.address, incrementTermRoleHash));
     });
   });
 

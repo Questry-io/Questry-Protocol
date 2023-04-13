@@ -139,6 +139,7 @@ describe("PJManager", function () {
     await cCalculator.deployed();
 
     cContributionPool = await new ContributionPool__factory(deployer).deploy(
+      cMockQuestryPlatform.address,
       0,
       dummyAddress,
       contributionUpdater.address

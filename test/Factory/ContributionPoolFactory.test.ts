@@ -11,10 +11,12 @@ describe("ContributionPoolFactory", function () {
   let businessOwner: SignerWithAddress;
   let cPoolFactory: Contract;
 
+  const dummyContract = "0x00E9C198af8F6a8692d83d1702e691A03F2cdc63";
+
   beforeEach(async function () {
     [deployer, superAdmin, updater, businessOwner] = await ethers.getSigners();
     const cfPoolFactory = await ethers.getContractFactory("ContributionPoolFactory");
-    cPoolFactory = await cfPoolFactory.deploy();
+    cPoolFactory = await cfPoolFactory.deploy(dummyContract);
   });
 
   describe("createPool", function () {
