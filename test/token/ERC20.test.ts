@@ -4,7 +4,6 @@ import { Contract } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { getMetaTx, getMetaTxAndSignForGas } from "../utils";
-import { MockContract } from "ethereum-waffle";
 
 describe("QuestryERC20", function () {
   let admin: SignerWithAddress;
@@ -16,20 +15,16 @@ describe("QuestryERC20", function () {
 
   beforeEach(async function () {
     [admin, issuer, executor, user] = await ethers.getSigners();
-    const MinimalForwarder = await ethers.getContractFactory("QuestryForwarder");
-  
-  
-    forwarderContract = await upgrades.deployProxy(MinimalForwarder, [admin.address, admin.address], { initializer: "initialize" });
+    const QuestryForwarder = await ethers.getContractFactory(
+      "QuestryForwarder"
+    );
+
+    forwarderContract = await upgrades.deployProxy(
+      QuestryForwarder,
+      [admin.address, executor.address],
+      { initializer: "initialize" }
+    );
     await forwarderContract.deployed();
-
-    console.log("CustomUpgradeableContract deployed to:", forwarderContract.address);
-  // console.log(forwarderContract)
-
-    // const MinimalForwarder = await ethers.getContractFactory(
-    //   "QuestryForwarder"
-    // );
-    // forwarderContract = await MinimalForwarder.deploy();
-    // await forwarderContract.deployed();
 
     const QuestryERC20 = await ethers.getContractFactory("QuestryERC20");
     contract = await QuestryERC20.deploy(
@@ -38,6 +33,11 @@ describe("QuestryERC20", function () {
       issuer.address
     );
     await contract.deployed();
+
+    await admin.sendTransaction({
+      to: forwarderContract.address,
+      value: ethers.utils.parseEther("1.0"),
+    });
 
     this.name = "QuestryForwarder";
     this.chainId = (await ethers.provider.getNetwork()).chainId;
@@ -62,8 +62,7 @@ describe("QuestryERC20", function () {
     it("[S] should process the meta-transaction correctly", async function () {
       // Prepare meta-transaction
       const data = contract.interface.encodeFunctionData("selfMint", [1000]);
-      const from = user.address;
-      console.log(forwarderContract)
+      const from = issuer.address;
       const nonce: string = (await forwarderContract.getNonce(from)).toString();
       const to = contract.address;
       // get proper gas to execute meta tx
@@ -79,10 +78,9 @@ describe("QuestryERC20", function () {
         this.gas
       );
       const estimatedGas: string = (
-        await forwarderContract.estimateGas.execute(
-          metaTxForGas.message,
-          signForGas
-        )
+        await forwarderContract
+          .connect(executor)
+          .estimateGas.execute(metaTxForGas.message, signForGas)
       ).toString();
       // create typedData for sign meta tx
       const metaTx = await getMetaTx(
@@ -104,8 +102,11 @@ describe("QuestryERC20", function () {
       expect(
         await forwarderContract.verify(metaTx.message, signature)
       ).to.equal(true);
+
       // Relay meta-transaction
-      await forwarderContract.execute(metaTx.message, signature);
+      await forwarderContract
+        .connect(executor)
+        .execute(metaTx.message, signature);
       // // Check if the meta-transaction was processed successfully
       expect(await forwarderContract.getNonce(from)).to.equal(nonce + 1);
     });
@@ -115,7 +116,7 @@ describe("QuestryERC20", function () {
       const nonce = (
         await forwarderContract.getNonce(issuer.address)
       ).toString();
-      const from = user.address;
+      const from = issuer.address;
       const to = contract.address;
       // get proper gas to execute meta tx
       const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
@@ -130,10 +131,9 @@ describe("QuestryERC20", function () {
         this.gas
       );
       const estimatedGas: string = (
-        await forwarderContract.estimateGas.execute(
-          metaTxForGas.message,
-          signForGas
-        )
+        await forwarderContract
+          .connect(executor)
+          .estimateGas.execute(metaTxForGas.message, signForGas)
       ).toString();
       // create typedData for sign meta tx
       const metaTx = await getMetaTx(
@@ -156,10 +156,10 @@ describe("QuestryERC20", function () {
       // Relay meta-transaction
       await expect(
         forwarderContract
-          .connect(issuer)
+          .connect(executor)
           .execute({ ...metaTx.message, nonce: 10 }, signature)
       ).to.be.revertedWith(
-        "MinimalForwarder: signature does not match request"
+        "QuestryForwarder: signature does not match request"
       );
     });
 
@@ -190,10 +190,9 @@ describe("QuestryERC20", function () {
           this.gas
         );
         const estimatedGas: string = (
-          await forwarderContract.estimateGas.execute(
-            metaTxForGas.message,
-            signForGas
-          )
+          await forwarderContract
+            .connect(executor)
+            .estimateGas.execute(metaTxForGas.message, signForGas)
         ).toString();
         // create typedData for sign meta tx
         const metaTx = await getMetaTx(
@@ -216,7 +215,9 @@ describe("QuestryERC20", function () {
           await forwarderContract.verify(metaTx.message, signature)
         ).to.equal(true);
         // Relay meta-transaction
-        await forwarderContract.execute(metaTx.message, signature);
+        await forwarderContract
+          .connect(executor)
+          .execute(metaTx.message, signature);
         expect(await contract.allowance(from, issuer.address)).to.equal(250);
       });
     });
@@ -249,10 +250,9 @@ describe("QuestryERC20", function () {
           this.gas
         );
         const estimatedGas: string = (
-          await forwarderContract.estimateGas.execute(
-            metaTxForGas.message,
-            signForGas
-          )
+          await forwarderContract
+            .connect(executor)
+            .estimateGas.execute(metaTxForGas.message, signForGas)
         ).toString();
         // create typedData for sign meta tx
         const metaTx = await getMetaTx(
@@ -272,7 +272,7 @@ describe("QuestryERC20", function () {
         ]);
         // // Check if the meta-transaction was processed successfully
         await forwarderContract
-          .connect(user)
+          .connect(executor)
           .execute(metaTx.message, signature);
         expect(await contract.balanceOf(issuer.address)).to.equal(250);
       });
@@ -307,10 +307,9 @@ describe("QuestryERC20", function () {
           this.gas
         );
         const estimatedGas: string = (
-          await forwarderContract.estimateGas.execute(
-            metaTxForGas.message,
-            signForGas
-          )
+          await forwarderContract
+            .connect(executor)
+            .estimateGas.execute(metaTxForGas.message, signForGas)
         ).toString();
         // create typedData for sign meta tx
         const metaTx = await getMetaTx(
@@ -330,7 +329,7 @@ describe("QuestryERC20", function () {
         ]);
         // // Check if the meta-transaction was processed successfully
         await forwarderContract
-          .connect(issuer)
+          .connect(executor)
           .execute(metaTx.message, signature);
         expect(await contract.balanceOf(from)).to.equal(250);
       });
