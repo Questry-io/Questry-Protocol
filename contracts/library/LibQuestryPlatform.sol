@@ -19,6 +19,7 @@ library LibQuestryPlatform {
     IERC20 paymentToken; // ERC20 token to allocate. Ignored if paymentMode == NATIVE_PAYMENT_MODE
     ISBT board; // allocation target board which has contributions
     CalculateDispatchArgs calculateArgs; // allocation calculation args
+    IContributionPool[] updateNeededPools; // term update needed pools
     Signature signature; // signature
   }
 

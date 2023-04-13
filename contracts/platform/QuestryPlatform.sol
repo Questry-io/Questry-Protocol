@@ -8,6 +8,7 @@ import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {IContributionCalculator} from "../interface/platform/IContributionCalculator.sol";
 import {LibPJManager} from "../library/LibPJManager.sol";
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
+import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {ISBT} from "../interface/token/ISBT.sol";
 
 contract QuestryPlatform is AccessControl, ReentrancyGuard {
@@ -81,6 +82,9 @@ contract QuestryPlatform is AccessControl, ReentrancyGuard {
     // Step5. Payout
     _payout(pjManager, _args.paymentMode, _args.paymentToken);
     _resetPayoutTemp();
+
+    // Step6. Update the terms of the contribution pools
+    _updatesTermsOfContributionPools(_args.updateNeededPools);
   }
 
   // --------------------------------------------------
@@ -189,6 +193,15 @@ contract QuestryPlatform is AccessControl, ReentrancyGuard {
       delete _tempPayoutAmount[_tempPayoutAddress[i]];
     }
     delete _tempPayoutAddress;
+  }
+
+  /**
+   * @dev Updates the terms of contribution pools.
+   */
+  function _updatesTermsOfContributionPools(IContributionPool[] calldata pools) private {
+    for (uint256 i = 0; i < pools.length; i++) {
+      pools[i].incrementTerm();
+    }
   }
 
   /**

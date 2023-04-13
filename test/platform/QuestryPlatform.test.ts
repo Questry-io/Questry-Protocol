@@ -156,6 +156,7 @@ describe("QuestryPlatform", function () {
           pools: [cContributionPool.address],
           coefs: [1],
         }),
+        updateNeededPools: [cContributionPool.address],
         signature: await TestUtils.createDummySignature(),
       });
     }
@@ -174,6 +175,7 @@ describe("QuestryPlatform", function () {
           pools: [cContributionPool.address],
           coefs: [1],
         }),
+        updateNeededPools: [cContributionPool.address],
         signature: await TestUtils.createDummySignature(),
       });
     }
@@ -197,11 +199,24 @@ describe("QuestryPlatform", function () {
           pools: [cContributionPool.address],
           coefs: [1],
         }),
+        updateNeededPools: [cContributionPool.address],
         signature: await TestUtils.createDummySignature(),
       });
       await expect(txPromise).revertedWith(
         "QuestryPlatform: signature verification failed"
       );
+    });
+
+    it("[S] should update terms after allocate()", async function () {
+      const { cPJManager, cSBT } = await deployPJManager(
+        4000,
+        withShares(businessOwners, [1, 2])
+      );
+      await addContribution(cSBT, cContributionPool, boardingMembers[0], 1);
+      await cPJManager.connect(depositer).deposit({ value: 100 });
+      expect(await cContributionPool.getTerm()).equals(0);
+      await allocateNative(cPJManager, cSBT);
+      expect(await cContributionPool.getTerm()).equals(1);
     });
 
     it("[S] ETH: should allocate tokens in a typical scenario", async function () {
