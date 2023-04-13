@@ -177,6 +177,7 @@ describe("QuestryPlatform", function () {
       });
     }
 
+    // TODO: Implement SignatureVerifier.verifySignature()
     it.skip("[R] should not allocate if signature verification failed", async function () {
       const { cPJManager, cSBT } = await deployPJManager(
         4000,
