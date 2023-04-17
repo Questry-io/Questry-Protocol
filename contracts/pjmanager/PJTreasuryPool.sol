@@ -7,7 +7,7 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IContributionCalculator} from "../interface/platform/IContributionCalculator.sol";
-import {IKanamePlatform} from "../interface/platform/IKanamePlatform.sol";
+import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 import {IPJTreasuryPool} from "../interface/pjmanager/IPJTreasuryPool.sol";
 import {ISBT} from "../interface/token/ISBT.sol";
 
@@ -28,7 +28,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   bytes32 public constant PJ_WHITELIST_ROLE = keccak256("PJ_WHITELIST_ROLE");
   bytes32 public constant PJ_DEPOSIT_ROLE = keccak256("PJ_DEPOSIT_ROLE");
 
-  IKanamePlatform public immutable kanamePlatform;
+  IQuestryPlatform public immutable questryPlatform;
   IContributionCalculator public immutable contributionCalculator;
   address public immutable admin;
   IERC20[] public tokenWhitelists;
@@ -45,7 +45,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   address[] private _tempPayoutAddress;
 
   constructor(
-    IKanamePlatform _kanamePlatform,
+    IQuestryPlatform _questryPlatform,
     IContributionCalculator _contributionCalculator,
     address _admin,
     uint32 _boardingMembersProportion,
@@ -54,12 +54,12 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
     bool ownersShareExists = _initBusinessOwners(_businessOwners);
     _validateAllocationSettings(_boardingMembersProportion, ownersShareExists);
 
-    kanamePlatform = _kanamePlatform;
+    questryPlatform = _questryPlatform;
     contributionCalculator = _contributionCalculator;
     admin = _admin;
     boardingMembersProportion = _boardingMembersProportion;
 
-    _setupRole(PJ_ALLOCATE_ROLE, address(_kanamePlatform));
+    _setupRole(PJ_ALLOCATE_ROLE, address(_questryPlatform));
 
     _setupRole(PJ_ADMIN_ROLE, _admin);
     _setupRole(PJ_MANAGEMENT_ROLE, _admin);
@@ -179,7 +179,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   // --------------------------------------------------
 
   /// @inheritdoc IPJTreasuryPool
-  function allocate(IKanamePlatform.AllocateArgs calldata _args)
+  function allocate(IQuestryPlatform.AllocateArgs calldata _args)
     external
     nonReentrant
     onlyRole(PJ_ALLOCATE_ROLE)
@@ -274,7 +274,7 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
    * @dev Simulate the DAO Treasury transfer(Not actual transfer)
    */
   function _simulateDAOTreasuryTransfer(uint256 amount) private {
-    address daoTreasuryPool = kanamePlatform.getDAOTreasuryPool();
+    address daoTreasuryPool = questryPlatform.getDAOTreasuryPool();
     _registerPayout(daoTreasuryPool, amount);
   }
 
@@ -422,6 +422,6 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
   }
 
   function _protocolFee(uint256 totalBalance) private view returns (uint256) {
-    return (totalBalance * kanamePlatform.getProtocolFeeRate()) / 10000;
+    return (totalBalance * questryPlatform.getProtocolFeeRate()) / 10000;
   }
 }

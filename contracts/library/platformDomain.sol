@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 /**
  * This Domain library is based on a smart contract platform of a certain marketplace, 
- * and will be modified like kaname protocol in the future.
+ * and will be modified like questry protocol in the future.
  * reference : https://polygonscan.com/address/0xb9a83eb825bbef7336e852c73a27e41f05503d65#code#F22#L1
  */
 

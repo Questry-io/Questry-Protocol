@@ -4,13 +4,13 @@ pragma solidity ^0.8.17;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPJManager} from "../pjmanager/IPJManager.sol";
 import {IContributionCalculator} from "../platform/IContributionCalculator.sol";
-import {IKanamePlatform} from "../platform/IKanamePlatform.sol";
+import {IQuestryPlatform} from "../platform/IQuestryPlatform.sol";
 import {ISBT} from "../token/ISBT.sol";
 
-interface IKanamePlatform {
+interface IQuestryPlatform {
   /**
    * TODO: Move to PlatfromDomain library.
-   * @dev Arguments for KanamePlatform.allocate() funtion.
+   * @dev Arguments for QuestryPlatform.allocate() funtion.
    */
   struct AllocateArgs {
     IPJManager pjManager;
