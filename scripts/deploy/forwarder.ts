@@ -38,5 +38,3 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
-
-// SBIToken deployed to: 0xF83A820626f6e2495E3fA322C8bcA86796ad29E0
