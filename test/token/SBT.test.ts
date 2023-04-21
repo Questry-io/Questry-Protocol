@@ -144,7 +144,7 @@ describe("SBT", function () {
         address3.address,
       ];
 
-      await cSBTMock.connect(SuperAdmin).Bulkmint(recipients);
+      await cSBTMock.connect(SuperAdmin).bulkMint(recipients);
       // check Not Minter address recipient
       expect(await cSBTMock.balanceOf(NotMinter.address)).to.equal(1);
       expect(await cSBTMock.ownerOf(1)).to.equal(NotMinter.address);
@@ -165,14 +165,14 @@ describe("SBT", function () {
       ).to.be.revertedWith(NotMinterRoleError);
     });
 
-    it("[R] can not Mint by NotMinter not have role", async function () {
+    it("[R] can not bulkMint by NotMinter not have role", async function () {
       const recipents = [
         NotMinter.address,
         NotBurner.address,
         address3.address,
       ];
       await expect(
-        cSBTMock.connect(NotMinter).Bulkmint(recipents)
+        cSBTMock.connect(NotMinter).bulkMint(recipents)
       ).to.be.revertedWith(NotMinterRoleError);
     });
   });
@@ -194,7 +194,7 @@ describe("SBT", function () {
         NotBurner.address,
         address3.address,
       ];
-      await cSBTMock.connect(SuperAdmin).Bulkmint(recipents);
+      await cSBTMock.connect(SuperAdmin).bulkMint(recipents);
       // check Not Minter address recipent
       expect(await cSBTMock.balanceOf(NotMinter.address)).to.equal(1);
       expect(await cSBTMock.ownerOf(1)).to.equal(NotMinter.address);
@@ -206,7 +206,7 @@ describe("SBT", function () {
       expect(await cSBTMock.ownerOf(3)).to.equal(address3.address);
 
       const tokenIDs = [1, 2, 3];
-      await cSBTMock.connect(SuperAdmin).Bulkburn(tokenIDs);
+      await cSBTMock.connect(SuperAdmin).bulkBurn(tokenIDs);
       // check Not Minter address recipent
       expect(await cSBTMock.balanceOf(NotMinter.address)).to.equal(0);
       await expect(cSBTMock.ownerOf(1)).to.be.revertedWith("ERC721: owner query for nonexistent token");

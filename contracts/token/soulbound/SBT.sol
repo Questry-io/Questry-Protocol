@@ -25,7 +25,7 @@ contract SBT is
     Counters.Counter private _tokenIdTracker;
 
     string public _baseTokenURI;
-    address public immutable PJManagerContract;
+    address public immutable pjManager;
     address[] private _boardingMembers;
 
     bool public isTransfable = false;
@@ -38,23 +38,23 @@ contract SBT is
      * See {ERC721-tokenURI}.
      */
     constructor(
-        string memory name,
-        string memory symbol,
+        string memory _name,
+        string memory _symbol,
         string memory baseTokenURI,
-        address pjmanagerContract,
-        address admin,
-        address Trustedforwarder
-    ) ERC721(name, symbol) 
-      ERC2771Context(Trustedforwarder)
+        address _pjManager,
+        address _admin,
+        address _trustedForwarder
+    ) ERC721(_name, _symbol)
+      ERC2771Context(_trustedForwarder)
     {
         _baseTokenURI = baseTokenURI;
-        PJManagerContract = pjmanagerContract;
+        pjManager = _pjManager;
         _tokenIdTracker.increment();
 
-        _setupRole(DEFAULT_ADMIN_ROLE, admin);
-        _setupRole(MINTER_ROLE, admin);
-        _setupRole(URIUPDATER_ROLE, admin);
-        _setupRole(BURNER_ROLE, admin);
+        _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+        _setupRole(MINTER_ROLE, _admin);
+        _setupRole(URIUPDATER_ROLE, _admin);
+        _setupRole(BURNER_ROLE, _admin);
     }
 
     /**
@@ -80,7 +80,7 @@ contract SBT is
     /// @inheritdoc ISBT
     function did(uint256 tokenId) public view returns (string memory) {
         address member = ownerOf(tokenId);
-        try IPJManager(PJManagerContract).resolveBoardId(address(this), tokenId) returns (uint256 _boardId) {
+        try IPJManager(pjManager).resolveBoardId(address(this), tokenId) returns (uint256 _boardId) {
             string memory boardId = _boardId.toString();
             return string(abi.encodePacked(didSchema(), ":", didNamespace(), ":", didMember(member), ":", boardId));
         } catch (bytes memory reason) {
@@ -103,7 +103,7 @@ contract SBT is
     /// @inheritdoc ISBT
     function didNamespace() public view returns (string memory) {
         string memory chainId = block.chainid.toString();
-        string memory hexPJManager = Strings.toHexString(uint160(PJManagerContract), 20);
+        string memory hexPJManager = Strings.toHexString(uint160(pjManager), 20);
         return string(abi.encodePacked("eip155:", chainId, ":", hexPJManager));
     }
 
@@ -135,10 +135,10 @@ contract SBT is
         _mint(to, tokenId);
         _tokenIdTracker.increment();
 
-        IPJManager(PJManagerContract).registerBoard(address(this), tokenId);
+        IPJManager(pjManager).registerBoard(address(this), tokenId);
     }
 
-    function Bulkmint(address[] calldata tos) public {
+    function bulkMint(address[] calldata tos) public {
         for(uint i =0;i < tos.length;i++){
             mint(tos[i]);
         }
@@ -149,7 +149,7 @@ contract SBT is
         _burn(tokenId);
     }
 
-    function Bulkburn(uint256[] calldata tokenIds) public {
+    function bulkBurn(uint256[] calldata tokenIds) public {
         for(uint i =0;i < tokenIds.length;i++){
             burn(tokenIds[i]);
         }

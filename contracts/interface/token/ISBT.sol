@@ -25,11 +25,11 @@ interface ISBT {
      */
     function mint(address to) external;
 
-    function Bulkmint(address[] calldata tos) external;
+    function bulkMint(address[] calldata tos) external;
 
     function burn(uint256 tokenId) external;
 
-    function Bulkburn(uint256[] calldata tokenIds) external;
+    function bulkBurn(uint256[] calldata tokenIds) external;
 
     function boardingMembersExist() external returns (bool);
 
