@@ -22,13 +22,11 @@ contract SBT is
     bytes32 public constant URIUPDATER_ROLE = keccak256("URIUPDATER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BUNER_ROLE");
 
-    Counters.Counter private _tokenIdTracker;
-
-    string public _baseTokenURI;
-    address public immutable pjManager;
-    address[] private _boardingMembers;
-
     bool public isTransfable = false;
+    address public immutable pjManager;
+    string private _baseTokenURI;
+    address[] private _boardingMembers;
+    Counters.Counter private _tokenIdTracker;
 
     /**
      * @dev Grants `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`, `URIUPDATETR_ROLE` and
