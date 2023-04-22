@@ -89,32 +89,21 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   /// @inheritdoc ISBT
   function did(uint256 tokenId) public view returns (string memory) {
     address member = ownerOf(tokenId);
-    try pjManager.resolveBoardId(address(this), tokenId) returns (
-      uint256 _boardId
-    ) {
-      string memory boardId = _boardId.toString();
-      return
-        string(
-          abi.encodePacked(
-            didSchema(),
-            ":",
-            didNamespace(),
-            ":",
-            didMember(member),
-            ":",
-            boardId
-          )
-        );
-    } catch (bytes memory reason) {
-      if (reason.length == 0) {
-        revert("SBT: failed to resolveBoardId for unexpected reason");
-      } else {
-        /// @solidity memory-safe-assembly
-        assembly {
-          revert(add(32, reason), mload(reason))
-        }
-      }
-    }
+    string memory boardId = pjManager
+      .resolveBoardId(address(this), tokenId)
+      .toString();
+    return
+      string(
+        abi.encodePacked(
+          didSchema(),
+          ":",
+          didNamespace(),
+          ":",
+          didMember(member),
+          ":",
+          boardId
+        )
+      );
   }
 
   /// @inheritdoc ISBT
