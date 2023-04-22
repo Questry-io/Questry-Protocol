@@ -49,7 +49,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   }
 
   /**
-   * @dev Resolve metadata from Kaname Protocol DID for the board which tokenId is `tokenId`.
+   * @dev Resolve metadata from Questry Protocol DID for the board which tokenId is `tokenId`.
    * Example: https://example.kaname.io/did:kaname:
    * DID spec: https://github.com/KanameProtocol/did-kaname-spec
    * See {IERC721Metadata-tokenURI}
@@ -78,6 +78,9 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
     return _baseTokenURI;
   }
 
+  /**
+   * @dev Update baseTokenURI to `_uri`.
+   */
   function updateBaseTokenURI(string memory _uri) external {
     require(
       hasRole(URIUPDATER_ROLE, _msgSender()),
@@ -86,7 +89,9 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
     _baseTokenURI = _uri;
   }
 
-  /// @inheritdoc ISBT
+  /**
+   * @dev Resolve Questry Protocol DID from the board which tokenId is `tokenId`.
+   */
   function did(uint256 tokenId) public view returns (string memory) {
     address member = ownerOf(tokenId);
     string memory boardId = pjManager
@@ -106,12 +111,16 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
       );
   }
 
-  /// @inheritdoc ISBT
+  /**
+   * @dev Returns Questry Protocol DID spec's schema.
+   */
   function didSchema() public pure returns (string memory) {
     return "did:kaname";
   }
 
-  /// @inheritdoc ISBT
+  /**
+   * @dev Returns Questry Protocol DID spec's namespace corresponding to the boards.
+   */
   function didNamespace() public view returns (string memory) {
     string memory chainId = block.chainid.toString();
     string memory hexPJManager = Strings.toHexString(
@@ -122,7 +131,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   }
 
   /**
-   * @dev Returns Kaname Protocol DID spec's member.
+   * @dev Returns Questry Protocol DID spec's member.
    */
   function didMember(address member) public view returns (string memory) {
     string memory chainId = block.chainid.toString();

@@ -3,12 +3,10 @@
 pragma solidity ^0.8.9;
 
 /**
- * @title  SBINFT market non-native asset transfer protocol
+ * @title Board SBT interface
  */
 interface ISBT {
   /** event などを定義 */
-
-  function updateBaseTokenURI(string memory _uri) external;
 
   /**
    * @dev Creates a new token for `to`. Its token ID will be automatically
@@ -32,24 +30,4 @@ interface ISBT {
   function boardingMembersExist() external returns (bool);
 
   function boardingMembers() external returns (address[] memory);
-
-  /**
-   * @dev Resolve Kaname Protocol DID from the board which tokenId is `tokenId`.
-   */
-  function did(uint256 tokenId) external view returns (string memory);
-
-  /**
-   * @dev Returns Kaname Protocol DID spec's schema.
-   */
-  function didSchema() external pure returns (string memory);
-
-  /**
-   * @dev Returns Kaname Protocol DID spec's namespace corresponding to the boards.
-   */
-  function didNamespace() external view returns (string memory);
-
-  /**
-   * @dev Returns Kaname Protocol DID spec's member.
-   */
-  function didMember(address member) external view returns (string memory);
 }
