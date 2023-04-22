@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.17;
 
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {SBT, AccessControl} from "../token/soulbound/SBT.sol";
