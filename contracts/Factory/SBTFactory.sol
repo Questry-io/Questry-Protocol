@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
+import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {SBT, AccessControl} from "../token/soulbound/SBT.sol";
 
 contract SBTFactory is AccessControl {
@@ -8,7 +9,7 @@ contract SBTFactory is AccessControl {
     address contractAddress,
     string name,
     string symbol,
-    address indexed pjmanager,
+    address indexed pjManager,
     address indexed admin
   );
 
@@ -28,7 +29,7 @@ contract SBTFactory is AccessControl {
     string calldata _name,
     string calldata _symbol,
     string memory _baseTokenURI,
-    address _pjmanager,
+    IPJManager _pjManager,
     address _admin
   ) external returns (address sbt) {
     require(
@@ -42,14 +43,14 @@ contract SBTFactory is AccessControl {
         _name,
         _symbol,
         _baseTokenURI,
-        _pjmanager,
+        _pjManager,
         _admin,
         _TrustedForwarder
       )
     );
 
     getSBTaddress[_name][_symbol] = sbt;
-    emit SBTCreated(sbt, _name, _symbol, _pjmanager, _admin);
+    emit SBTCreated(sbt, _name, _symbol, address(_pjManager), _admin);
   }
 
   //Same _name & _symbol let be override

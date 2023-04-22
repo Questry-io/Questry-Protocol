@@ -18,7 +18,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   bytes32 public constant BURNER_ROLE = keccak256("BUNER_ROLE");
 
   bool public isTransfable = false;
-  address public immutable pjManager;
+  IPJManager public immutable pjManager;
   string private _baseTokenURI;
   address[] private _boardingMembers;
   Counters.Counter private _tokenIdTracker;
@@ -34,7 +34,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
     string memory _name,
     string memory _symbol,
     string memory baseTokenURI,
-    address _pjManager,
+    IPJManager _pjManager,
     address _admin,
     address _trustedForwarder
   ) ERC721(_name, _symbol) ERC2771Context(_trustedForwarder) {
@@ -89,7 +89,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   /// @inheritdoc ISBT
   function did(uint256 tokenId) public view returns (string memory) {
     address member = ownerOf(tokenId);
-    try IPJManager(pjManager).resolveBoardId(address(this), tokenId) returns (
+    try pjManager.resolveBoardId(address(this), tokenId) returns (
       uint256 _boardId
     ) {
       string memory boardId = _boardId.toString();
@@ -125,7 +125,10 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   /// @inheritdoc ISBT
   function didNamespace() public view returns (string memory) {
     string memory chainId = block.chainid.toString();
-    string memory hexPJManager = Strings.toHexString(uint160(pjManager), 20);
+    string memory hexPJManager = Strings.toHexString(
+      uint160(address(pjManager)),
+      20
+    );
     return string(abi.encodePacked("eip155:", chainId, ":", hexPJManager));
   }
 
