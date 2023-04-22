@@ -14,17 +14,16 @@ async function main() {
   await hre.run("compile");
 
   // We get the contract to deploy
-  const forwarderAddress = "";
-  const adminAddress = "";
-  const issuerAddress = "";
-  if (forwarderAddress === "" || adminAddress === "" || issuerAddress === "") {
-    throw new Error("Please set forwarderAddress, adminAddress and issuerAddress");
+  const admin = "";
+  if (admin === "") {
+    throw new Error("Please set admin");
   }
-  const QuestryErc20 = await hre.ethers.getContractFactory("QuestryERC20");
-  const questryErc20 = await QuestryErc20.deploy(forwarderAddress, adminAddress, issuerAddress);
-  await questryErc20.deployed();
 
-  console.log("QuestryErc20 deployed to:", questryErc20.address);
+  const SBTFactory = await hre.ethers.getContractFactory("SBTFactory");
+  const sbtFactory = await SBTFactory.deploy(admin);
+  await sbtFactory.deployed();
+
+  console.log("SBTFactory deployed to:", sbtFactory.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -34,3 +33,4 @@ main().catch((error) => {
   process.exitCode = 1;
 });
 
+// SBIToken deployed to: 0xF83A820626f6e2495E3fA322C8bcA86796ad29E0

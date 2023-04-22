@@ -12,19 +12,24 @@ async function main() {
   // If this script is run directly using `node` you may want to call compile
   // manually to make sure everything is compiled
   await hre.run("compile");
-
-  // We get the contract to deploy
-  const forwarderAddress = "";
+  const ethers = hre.ethers;
+  const upgrades = hre.upgrades;
+  const QuestryForwarder = await ethers.getContractFactory("QuestryForwarder");
   const adminAddress = "";
-  const issuerAddress = "";
-  if (forwarderAddress === "" || adminAddress === "" || issuerAddress === "") {
-    throw new Error("Please set forwarderAddress, adminAddress and issuerAddress");
+  const executorAddress = "";
+  if (adminAddress == "" || executorAddress == "") {
+    throw new Error(
+      "Please set adminAddress and executorAddress in the script before running it"
+    );
   }
-  const QuestryErc20 = await hre.ethers.getContractFactory("QuestryERC20");
-  const questryErc20 = await QuestryErc20.deploy(forwarderAddress, adminAddress, issuerAddress);
-  await questryErc20.deployed();
 
-  console.log("QuestryErc20 deployed to:", questryErc20.address);
+  console.log("Deploying QuestryForwarder...");
+  const questryForwarder = await upgrades.deployProxy(
+    QuestryForwarder,
+    [adminAddress, executorAddress],
+    { initializer: "initialize" }
+  );
+  console.log("QuestryForwarder deployed to:", questryForwarder.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -33,4 +38,3 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
-
