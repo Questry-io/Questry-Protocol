@@ -5,8 +5,6 @@ pragma solidity ^0.8.17;
  * @title Board SBT interface
  */
 interface ISBT {
-  /** event などを定義 */
-
   /**
    * @dev Creates a new token for `to`. Its token ID will be automatically
    * assigned (and available on the emitted {IERC721-Transfer} event), and the token
@@ -20,13 +18,40 @@ interface ISBT {
    */
   function mint(address to) external;
 
+  /**
+   * @dev Bulk mint new tokens for `tos`.
+   *
+   * Requirements:
+   *
+   * - the caller must have the `MINTER_ROLE`.
+   */
   function bulkMint(address[] calldata tos) external;
 
+  /**
+   * @dev Burn `tokenId` token.
+   *
+   * Requirements:
+   *
+   * - the caller must have the `BURNER_ROLE`.
+   */
   function burn(uint256 tokenId) external;
 
+  /**
+   * @dev Bulk burn `tokenIds` tokens.
+   *
+   * Requirements:
+   *
+   * - the caller must have the `BURNER_ROLE`.
+   */
   function bulkBurn(uint256[] calldata tokenIds) external;
 
+  /**
+   * @dev Return if any boarding member exists or not.
+   */
   function boardingMembersExist() external returns (bool);
 
+  /**
+   * @dev Return all boarding members.
+   */
   function boardingMembers() external returns (address[] memory);
 }
