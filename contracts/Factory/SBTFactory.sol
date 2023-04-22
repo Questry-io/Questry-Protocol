@@ -15,15 +15,14 @@ contract SBTFactory is AccessControl {
 
   bytes32 public constant SET_FORWARDER_ROLE = keccak256("SET_FORWARDER_ROLE");
 
+  // Mapping from name and symbol to basic ERC721 address
+  mapping(string => mapping(string => address)) public getSBTaddress;
+  address private _trustedForwarder;
+
   constructor(address admin) {
     _setupRole(DEFAULT_ADMIN_ROLE, admin);
     _setupRole(SET_FORWARDER_ROLE, admin);
   }
-
-  // Mapping from name and symbol to basic ERC721 address
-  mapping(string => mapping(string => address)) public getSBTaddress;
-
-  address private _TrustedForwarder;
 
   function createSBT(
     string calldata _name,
@@ -45,7 +44,7 @@ contract SBTFactory is AccessControl {
         _baseTokenURI,
         _pjManager,
         _admin,
-        _TrustedForwarder
+        _trustedForwarder
       )
     );
 
@@ -62,19 +61,19 @@ contract SBTFactory is AccessControl {
     return getSBTaddress[_name][_symbol];
   }
 
-  function setChildTrustedforwarder(address ForwarderAddress) public {
+  function setChildTrustedForwarder(address forwarderAddress) public {
     require(
       hasRole(SET_FORWARDER_ROLE, _msgSender()),
       "SBTFactory: must have SET_FORWARDER_ROLE"
     );
-    _setChildTrusedForwarder(ForwarderAddress);
+    _setChildTrustedForwarder(forwarderAddress);
   }
 
-  function _setChildTrusedForwarder(address ForwarderAddress) internal {
-    _TrustedForwarder = ForwarderAddress;
+  function _setChildTrustedForwarder(address forwarderAddress) internal {
+    _trustedForwarder = forwarderAddress;
   }
 
-  function getChildTrustedforwarder() public view returns (address) {
-    return _TrustedForwarder;
+  function getChildTrustedForwarder() public view returns (address) {
+    return _trustedForwarder;
   }
 }

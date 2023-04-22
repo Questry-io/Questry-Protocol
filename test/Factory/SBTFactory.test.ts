@@ -96,8 +96,8 @@ describe("SBTFactory", function () {
     it("[S] can update forwarder by admin", async function () {
       await cFactoryMock
         .connect(SuperAdmin)
-        .setChildTrustedforwarder(dummyContract);
-      expect(await cFactoryMock.getChildTrustedforwarder()).to.be.equal(
+        .setChildTrustedForwarder(dummyContract);
+      expect(await cFactoryMock.getChildTrustedForwarder()).to.be.equal(
         dummyContract
       );
     });
@@ -105,8 +105,8 @@ describe("SBTFactory", function () {
     it("[S] can update forwarder by set-forwarder-role account", async function () {
       await cFactoryMock
         .connect(SetForwarderer)
-        .setChildTrustedforwarder(dummyContract);
-      expect(await cFactoryMock.getChildTrustedforwarder()).to.be.equal(
+        .setChildTrustedForwarder(dummyContract);
+      expect(await cFactoryMock.getChildTrustedForwarder()).to.be.equal(
         dummyContract
       );
     });
@@ -115,7 +115,7 @@ describe("SBTFactory", function () {
       await expect(
         cFactoryMock
           .connect(NotSetForwarderer)
-          .setChildTrustedforwarder(dummyContract)
+          .setChildTrustedForwarder(dummyContract)
       ).to.be.revertedWith(SetForwarderRoleError);
     });
   });
