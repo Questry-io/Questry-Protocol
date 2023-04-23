@@ -5,7 +5,7 @@ pragma solidity ^0.8.17;
  * @dev Library for PJManager. Defines constants, validations and create signatures.
  */
 library LibPJManager {
-  bytes32 public constant PJ_ALLOCATE_ROLE = keccak256("PJ_ALLOCATE_ROLE");
+  bytes32 public constant PJ_WITHDRAW_ROLE = keccak256("PJ_WITHDRAW_ROLE");
 
   bytes32 public constant PJ_ADMIN_ROLE = keccak256("PJ_ADMIN_ROLE");
   bytes32 public constant PJ_MANAGEMENT_ROLE = keccak256("PJ_MANAGEMENT_ROLE");
