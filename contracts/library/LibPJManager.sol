@@ -26,32 +26,26 @@ library LibPJManager {
     AllocationShare[] memory businessOwners,
     uint32 boardingMembersProportion
   ) internal pure {
-    bool ownersShareExists = false;
+    bool businessOwnersShareExists = false;
     for (uint256 i = 0; i < businessOwners.length; i++) {
       if (businessOwners[i].share > 0) {
-        ownersShareExists = true;
+        businessOwnersShareExists = true;
         break;
       }
     }
-    _validateAllocationSettings(boardingMembersProportion, ownersShareExists);
-  }
 
-  function _validateAllocationSettings(
-    uint32 _boardingMembersProportion,
-    bool _businessOwnersShareExists
-  ) internal pure {
     require(
-      _boardingMembersProportion <= MAX_BASIS_POINT,
+      boardingMembersProportion <= MAX_BASIS_POINT,
       "LibPJManager: proportion is out of range"
     );
-    if (_boardingMembersProportion < MAX_BASIS_POINT) {
+    if (boardingMembersProportion < MAX_BASIS_POINT) {
       require(
-        _businessOwnersShareExists,
+        businessOwnersShareExists,
         "LibPJManager: businessOwners share should exist unless proportion is MAX_BASIS_POINT"
       );
     } else {
       require(
-        !_businessOwnersShareExists,
+        !businessOwnersShareExists,
         "LibPJManager: proportion should be less than MAX_BASIS_POINT or businessOwners share should not exist"
       );
     }

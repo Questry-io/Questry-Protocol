@@ -41,10 +41,10 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
     uint32 _boardingMembersProportion,
     LibPJManager.AllocationShare[] memory _businessOwners
   ) {
-    bool ownersShareExists = _initBusinessOwners(_businessOwners);
+    _initBusinessOwners(_businessOwners);
     LibPJManager._validateAllocationSettings(
-      _boardingMembersProportion,
-      ownersShareExists
+      _businessOwners,
+      _boardingMembersProportion
     );
 
     questryPlatform = _questryPlatform;
@@ -364,13 +364,12 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
 
   function _initBusinessOwners(
     LibPJManager.AllocationShare[] memory _businessOwners
-  ) private returns (bool shareExists) {
+  ) private {
     uint256 totalShare = 0;
     for (uint256 i = 0; i < _businessOwners.length; i++) {
       totalShare += _businessOwners[i].share;
       businessOwners.push(_businessOwners[i]);
     }
-    shareExists = totalShare > 0;
   }
 
   function _totalBalance(bytes4 _paymentMode, IERC20 _paymentToken)
