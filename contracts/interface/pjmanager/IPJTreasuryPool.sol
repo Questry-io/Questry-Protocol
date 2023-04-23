@@ -2,7 +2,8 @@
 pragma solidity ^0.8.17;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IQuestryPlatform} from "../platform/IQuestryPlatform.sol";
+import {LibPJManager} from "../../library/LibPJManager.sol";
+import {LibQuestryPlatform} from "../../library/LibQuestryPlatform.sol";
 
 interface IPJTreasuryPool {
   event AddBusinessOwner(address owner, uint120 share);
@@ -14,19 +15,11 @@ interface IPJTreasuryPool {
   event DisallowERC20(address token);
 
   /**
-   * @dev Allocation share for target address.
-   */
-  struct AllocationShare {
-    address recipient;
-    uint120 share;
-  }
-
-  /**
    * @dev Adds `_businessOwner` to businessOwners.
    *
    * Emits an {AddBusinessOwner} event.
    */
-  function addBusinessOwner(AllocationShare calldata _businessOwner) external;
+  function addBusinessOwner(LibPJManager.AllocationShare calldata _businessOwner) external;
 
   /**
    * @dev Removes `_businessOwner` from businessOwners.
@@ -40,7 +33,7 @@ interface IPJTreasuryPool {
    *
    * Emits an {UpdateBusinessOwner} event.
    */
-  function updateBusinessOwner(AllocationShare calldata _businessOwner)
+  function updateBusinessOwner(LibPJManager.AllocationShare calldata _businessOwner)
     external;
 
   /**
@@ -75,12 +68,12 @@ interface IPJTreasuryPool {
   /**
    * @dev Allocates to the boarding members, business owners and DAO treasury pool.
    */
-  function allocate(IQuestryPlatform.AllocateArgs calldata _args) external;
+  function allocate(LibQuestryPlatform.AllocateArgs calldata _args) external;
 
   /**
    * @dev Returns businessOwners.
    */
-  function getBusinessOwners() external view returns (AllocationShare[] memory);
+  function getBusinessOwners() external view returns (LibPJManager.AllocationShare[] memory);
 
   /**
    * @dev Returns token whitelists.
