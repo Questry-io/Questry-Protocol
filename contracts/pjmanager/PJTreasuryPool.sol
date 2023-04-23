@@ -396,10 +396,12 @@ contract PJTreasuryPool is IPJTreasuryPool, AccessControl, ReentrancyGuard {
     view
     returns (uint256)
   {
-    return (revenue * boardingMembersProportion) / 10000;
+    return (revenue * boardingMembersProportion) / LibPJManager.MAX_BASIS_POINT;
   }
 
   function _protocolFee(uint256 totalBalance) private view returns (uint256) {
-    return (totalBalance * questryPlatform.getProtocolFeeRate()) / 10000;
+    return
+      (totalBalance * questryPlatform.getProtocolFeeRate()) /
+      LibPJManager.MAX_BASIS_POINT;
   }
 }
