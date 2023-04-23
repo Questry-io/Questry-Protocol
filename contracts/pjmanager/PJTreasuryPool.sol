@@ -138,6 +138,7 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl {
     return _isTokenWhitelisted[token];
   }
 
+
   /// @inheritdoc IPJManager
   function getTotalBalance(bytes4 paymentMode, IERC20 paymentToken)
     external

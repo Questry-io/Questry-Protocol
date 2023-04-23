@@ -14,17 +14,23 @@ async function main() {
   await hre.run("compile");
 
   // We get the contract to deploy
-  const forwarderAddress = "";
-  const adminAddress = "";
-  const issuerAddress = "";
-  if (forwarderAddress === "" || adminAddress === "" || issuerAddress === "") {
-    throw new Error("Please set forwarderAddress, adminAddress and issuerAddress");
-  }
-  const QuestryErc20 = await hre.ethers.getContractFactory("QuestryERC20");
-  const questryErc20 = await QuestryErc20.deploy(forwarderAddress, adminAddress, issuerAddress);
-  await questryErc20.deployed();
+  const name = ""
+  const symbol = ""
+  const baseTokenURI = ""
+  const pjmanagerContract = ""
+  const admin = ""
+  const Trustedforwarder = ""
 
-  console.log("QuestryErc20 deployed to:", questryErc20.address);
+  if (name == "" || symbol == "" || baseTokenURI == "" || pjmanagerContract == "" || admin == "" || Trustedforwarder == "") {
+    throw new Error("Please set all of name, symbol, baseTokenURI, pjmanagerContract, admin, Trustedforwarder");
+  }
+
+  const SBT = await hre.ethers.getContractFactory("SBT");
+   
+  const sbt = await SBT.deploy(name, symbol, baseTokenURI, pjmanagerContract, admin, Trustedforwarder);
+  await sbt.deployed();
+
+  console.log("SBT deployed to:", sbt.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -34,3 +40,4 @@ main().catch((error) => {
   process.exitCode = 1;
 });
 
+// SBIToken deployed to: 0xF83A820626f6e2495E3fA322C8bcA86796ad29E0
