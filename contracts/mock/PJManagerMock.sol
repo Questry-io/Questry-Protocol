@@ -4,7 +4,8 @@ pragma solidity ^0.8.9;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
-import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
+import {LibPJManager} from "../library/LibPJManager.sol";
+import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 
 contract PJManagerMock is IPJManager {
   using Counters for Counters.Counter;
@@ -33,7 +34,7 @@ contract PJManagerMock is IPJManager {
     return boardIds[sbt][tokenId];
   }
 
-  function addBusinessOwner(AllocationShare calldata _businessOwner) external {
+  function addBusinessOwner(LibPJManager.AllocationShare calldata _businessOwner) external {
     revert("Not implemented.");
   }
 
@@ -41,9 +42,18 @@ contract PJManagerMock is IPJManager {
     revert("Not implemented.");
   }
 
-  function updateBusinessOwner(AllocationShare calldata _businessOwner)
+  function updateBusinessOwner(LibPJManager.AllocationShare calldata _businessOwner)
     external
   {
+    revert("Not implemented.");
+  }
+
+  function withdrawForAllocation(
+    bytes4 paymentMode,
+    IERC20 paymentToken,
+    address receiver,
+    uint256 amount
+  ) external {
     revert("Not implemented.");
   }
 
@@ -63,11 +73,15 @@ contract PJManagerMock is IPJManager {
     revert("Not implemented.");
   }
 
-  function allocate(IQuestryPlatform.AllocateArgs calldata _args) external {
+  function getBoardingMembersProportion()
+    external
+    view
+    returns (uint32)
+  {
     revert("Not implemented.");
   }
 
-  function getBusinessOwners() external view returns (AllocationShare[] memory) {
+  function getBusinessOwners() external view returns (LibPJManager.AllocationShare[] memory) {
     revert("Not implemented.");
   }
 
@@ -76,6 +90,22 @@ contract PJManagerMock is IPJManager {
   }
 
   function isWhitelisted(IERC20 token) external view returns (bool) {
+    revert("Not implemented.");
+  }
+
+  function getTotalBalance(bytes4 paymentMode, IERC20 paymentToken)
+    external
+    view
+    returns (uint256)
+  {
+    revert("Not implemented.");
+  }
+
+  function verifySignature(LibQuestryPlatform.Signature calldata)
+    public
+    view
+    returns (bool)
+  {
     revert("Not implemented.");
   }
 }
