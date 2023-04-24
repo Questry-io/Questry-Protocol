@@ -28,8 +28,8 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
   ) PJTreasuryPool(_questryPlatform) {
     bool ownersShareExists = _initBusinessOwners(_businessOwners);
     LibPJManager._validateAllocationSettings(
-      _boardingMembersProportion,
-      ownersShareExists
+      _businessOwners,
+      _boardingMembersProportion
     );
 
     admin = _admin;
