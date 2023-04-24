@@ -29,7 +29,7 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
     bool ownersShareExists = _initBusinessOwners(_businessOwners);
     LibPJManager._validateAllocationSettings(
       _businessOwners,
-      boardingMembersProportion
+      _boardingMembersProportion
     );
 
     admin = _admin;
