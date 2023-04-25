@@ -89,6 +89,36 @@ describe("TokenControllProxy", function () {
         "TokenControllProxy: must have executor role to exec"
       );
     });
+
+    it("[R] should revert when insufficient allowance", async function () {
+      await erc20.connect(nonExecutor).approve(tokenControlProxy.address, 100);
+      await expect(
+        tokenControlProxy
+          .connect(executor)
+          .erc20safeTransferFrom(
+            erc20.address,
+            nonExecutor.address,
+            user.address,
+            1000
+          )
+      ).to.be.revertedWith("ERC20: insufficient allowance");
+    });
+
+    it("[R] should revert when amount exceeds balance", async function () {
+      await erc20
+        .connect(nonExecutor)
+        .approve(tokenControlProxy.address, 100000);
+      await expect(
+        tokenControlProxy
+          .connect(executor)
+          .erc20safeTransferFrom(
+            erc20.address,
+            nonExecutor.address,
+            user.address,
+            100000
+          )
+      ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+    });
   });
 
   describe("erc721safeTransferFrom", function () {
@@ -120,6 +150,21 @@ describe("TokenControllProxy", function () {
       ).to.be.revertedWith(
         "TokenControllProxy: must have executor role to exec"
       );
+    });
+
+    it("[R] should revert when transfer caller is not owner nor approved", async function () {
+      await erc721.connect(admin).mint(nonExecutor.address, 2);
+      await erc721.connect(nonExecutor).approve(tokenControlProxy.address, 1);
+      await expect(
+        tokenControlProxy
+          .connect(executor)
+          .erc721safeTransferFrom(
+            erc721.address,
+            nonExecutor.address,
+            user.address,
+            2
+          )
+      ).to.be.revertedWith("ERC721: transfer caller is not owner nor approved");
     });
   });
 
@@ -169,6 +214,41 @@ describe("TokenControllProxy", function () {
       ).to.be.revertedWith(
         "TokenControllProxy: must have executor role to exec"
       );
+    });
+
+    it("[R] should revert when insufficient balance for transfer", async function () {
+      await erc1155
+        .connect(nonExecutor)
+        .setApprovalForAll(tokenControlProxy.address, true);
+      await expect(
+        tokenControlProxy
+          .connect(executor)
+          .erc1155safeTransferFrom(
+            erc1155.address,
+            nonExecutor.address,
+            user.address,
+            1,
+            1000000,
+            "0x"
+          )
+      ).to.be.revertedWith("ERC1155: insufficient balance for transfer");
+    });
+    it("[R] should revert when token with id that user does not have nor mint", async function () {
+      await erc1155
+        .connect(nonExecutor)
+        .setApprovalForAll(tokenControlProxy.address, true);
+      await expect(
+        tokenControlProxy
+          .connect(executor)
+          .erc1155safeTransferFrom(
+            erc1155.address,
+            nonExecutor.address,
+            user.address,
+            2,
+            100,
+            "0x"
+          )
+      ).to.be.revertedWith("ERC1155: insufficient balance for transfer");
     });
   });
 });
