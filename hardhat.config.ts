@@ -35,7 +35,6 @@ subtask(
       const filename = solidityFilePath.split("/").slice(-1)[0];
       // compileから除外するコントラクトを指定
       return ![
-        "tokenControl.sol",
         "platformDomain.sol",
       ].includes(filename);
     });
