@@ -11,6 +11,7 @@ contract ContributionPool is IContributionPool, AccessControl {
 
   bytes32 public constant INCREMENT_TERM_ROLE = keccak256("INCREMENT_TERM_ROLE");
   bytes32 public constant CONTRIBUTION_UPDATER_ROLE = keccak256("CONTRIBUTION_UPDATER_ROLE");
+  bytes32 public constant POOL_ADMIN_ROLE = keccak256("POOL_ADMIN_ROLE");
 
   IContributionPool.MutationMode immutable public mode;
 
@@ -33,7 +34,8 @@ contract ContributionPool is IContributionPool, AccessControl {
     _setupRole(CONTRIBUTION_UPDATER_ROLE, contributionUpdater);
 
     admin = _admin;
-    _setupRole(DEFAULT_ADMIN_ROLE, admin);
+    _setRoleAdmin(CONTRIBUTION_UPDATER_ROLE, POOL_ADMIN_ROLE);
+    _setupRole(POOL_ADMIN_ROLE, admin);
     _setupRole(CONTRIBUTION_UPDATER_ROLE, admin);
   }
 

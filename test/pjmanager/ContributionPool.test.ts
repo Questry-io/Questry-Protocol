@@ -22,7 +22,7 @@ describe("ContributionPool", function () {
     FullControl: 1,
   } as const;
 
-  const adminRoleHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
+  const poolAdminRoleHash = utils.keccak256(utils.toUtf8Bytes("POOL_ADMIN_ROLE"));
   const incrementTermRoleHash = utils.keccak256(utils.toUtf8Bytes("INCREMENT_TERM_ROLE"));
   const updaterRoleHash = utils.keccak256(utils.toUtf8Bytes("CONTRIBUTION_UPDATER_ROLE"));
 
@@ -40,8 +40,8 @@ describe("ContributionPool", function () {
   });
 
   describe("Post deployment checks", function () {
-    it("check admin role", async function () {
-      expect(await cPoolAdd.hasRole(adminRoleHash, superAdmin.address)).to.be.true;
+    it("check pool admin role", async function () {
+      expect(await cPoolAdd.hasRole(poolAdminRoleHash, superAdmin.address)).to.be.true;
     });
 
     it("check contribution updater role for admin", async function () {
@@ -50,6 +50,10 @@ describe("ContributionPool", function () {
 
     it("check contribution updater role for updater", async function () {
       expect(await cPoolAdd.hasRole(updaterRoleHash, updater.address)).to.be.true;
+    });
+
+    it("check pool admin doesn't have increment term role", async function () {
+      expect(await cPoolAdd.hasRole(incrementTermRoleHash, superAdmin.address)).to.be.false;
     });
   });
 
