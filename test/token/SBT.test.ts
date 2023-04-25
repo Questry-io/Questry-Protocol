@@ -24,11 +24,15 @@ describe("SBT", function () {
   const baseURI = "https://sample.com/";
 
   const dummyContract = "0x00E9C198af8F6a8692d83d1702e691A03F2cdc63";
-  const Adminhash = "0x0000000000000000000000000000000000000000000000000000000000000000";
+  const Adminhash =
+    "0x0000000000000000000000000000000000000000000000000000000000000000";
 
   beforeEach(async function () {
-    [Deployer, SuperAdmin, NotMinter, NotBurner, address3] = await ethers.getSigners();
-    const cfPJManagerContract = await ethers.getContractFactory("PJManagerMock");
+    [Deployer, SuperAdmin, NotMinter, NotBurner, address3] =
+      await ethers.getSigners();
+    const cfPJManagerContract = await ethers.getContractFactory(
+      "PJManagerMock"
+    );
     cPJManagerMock = await cfPJManagerContract.deploy();
     const cfSBTContract = await ethers.getContractFactory("SBT");
     cSBTMock = await cfSBTContract.deploy(
@@ -51,22 +55,32 @@ describe("SBT", function () {
     });
 
     it("Admin Role Check", async function () {
-      expect(await cSBTMock.hasRole(Adminhash, SuperAdmin.address)).to.equal(true);
+      expect(await cSBTMock.hasRole(Adminhash, SuperAdmin.address)).to.equal(
+        true
+      );
     });
 
     it("MINTER Role Check", async function () {
       const Minterhash = utils.keccak256(utils.toUtf8Bytes("MINTER_ROLE"));
-      expect(await cSBTMock.hasRole(Minterhash, SuperAdmin.address)).to.equal(true);
+      expect(await cSBTMock.hasRole(Minterhash, SuperAdmin.address)).to.equal(
+        true
+      );
     });
 
     it("BURNER Role Check", async function () {
       const Burnerhash = utils.keccak256(utils.toUtf8Bytes("BUNER_ROLE"));
-      expect(await cSBTMock.hasRole(Burnerhash, SuperAdmin.address)).to.equal(true);
+      expect(await cSBTMock.hasRole(Burnerhash, SuperAdmin.address)).to.equal(
+        true
+      );
     });
 
     it("URI UPDATER Role Check", async function () {
-      const URIupdaterhash = utils.keccak256(utils.toUtf8Bytes("URIUPDATER_ROLE"));
-      expect(await cSBTMock.hasRole(URIupdaterhash, SuperAdmin.address)).to.equal(true);
+      const URIupdaterhash = utils.keccak256(
+        utils.toUtf8Bytes("URIUPDATER_ROLE")
+      );
+      expect(
+        await cSBTMock.hasRole(URIupdaterhash, SuperAdmin.address)
+      ).to.equal(true);
     });
 
     it("Trusted Forwarder Check", async function () {
@@ -82,13 +96,17 @@ describe("SBT", function () {
     it("[S] check DID namespace", async function () {
       const chainId = network.config.chainId;
       const pjmanager = cPJManagerMock.address.toLowerCase();
-      expect(await cSBTMock.didNamespace()).to.equal(`eip155:${chainId}:${pjmanager}`);
+      expect(await cSBTMock.didNamespace()).to.equal(
+        `eip155:${chainId}:${pjmanager}`
+      );
     });
 
     it("[S] check DID member", async function () {
       const chainId = network.config.chainId;
       const member = address3.address.toLowerCase();
-      expect(await cSBTMock.didMember(address3.address)).to.equal(`eip155:${chainId}:${member}`);
+      expect(await cSBTMock.didMember(address3.address)).to.equal(
+        `eip155:${chainId}:${member}`
+      );
     });
 
     it("[S] check DID", async function () {
@@ -101,7 +119,9 @@ describe("SBT", function () {
     });
 
     it("[R] can not resolve DID before mint", async function () {
-      await expect(cSBTMock.did(1)).to.be.revertedWith("ERC721: owner query for nonexistent token");
+      await expect(cSBTMock.did(1)).to.be.revertedWith(
+        "ERC721: owner query for nonexistent token"
+      );
     });
   });
 
@@ -120,7 +140,9 @@ describe("SBT", function () {
     });
 
     it("[R] err check updateBaseTokenURI", async function () {
-      await expect(cSBTMock.connect(address3).updateBaseTokenURI(baseURI)).to.be.revertedWith(URIUpdaterError);
+      await expect(
+        cSBTMock.connect(address3).updateBaseTokenURI(baseURI)
+      ).to.be.revertedWith(URIUpdaterError);
     });
   });
 
@@ -134,17 +156,19 @@ describe("SBT", function () {
       expect(await cSBTMock.ownerOf(1)).to.equal(address3.address);
       expect(await cSBTMock.boardingMembersExist()).to.be.true;
       expect(await cSBTMock.boardingMembers()).deep.equal([address3.address]);
-      expect(await cPJManagerMock.resolveBoardId(cSBTMock.address, 1)).to.equal(1);
+      expect(await cPJManagerMock.resolveBoardId(cSBTMock.address, 1)).to.equal(
+        1
+      );
     });
 
-    it("[S] Bulk mint check", async function () {
+    it("[S] bulkMint check", async function () {
       const recipients = [
         NotMinter.address,
         NotBurner.address,
         address3.address,
       ];
 
-      await cSBTMock.connect(SuperAdmin).Bulkmint(recipients);
+      await cSBTMock.connect(SuperAdmin).bulkMint(recipients);
       // check Not Minter address recipient
       expect(await cSBTMock.balanceOf(NotMinter.address)).to.equal(1);
       expect(await cSBTMock.ownerOf(1)).to.equal(NotMinter.address);
@@ -159,42 +183,44 @@ describe("SBT", function () {
       expect(await cSBTMock.boardingMembers()).deep.equal(recipients);
     });
 
-    it("[R] can not Mint by NotMinter not have role", async function () {
+    it("[R] can not mint by NotMinter not have role", async function () {
       await expect(
         cSBTMock.connect(NotMinter).mint(address3.address)
       ).to.be.revertedWith(NotMinterRoleError);
     });
 
-    it("[R] can not Mint by NotMinter not have role", async function () {
+    it("[R] can not bulkMint by NotMinter not have role", async function () {
       const recipents = [
         NotMinter.address,
         NotBurner.address,
         address3.address,
       ];
       await expect(
-        cSBTMock.connect(NotMinter).Bulkmint(recipents)
+        cSBTMock.connect(NotMinter).bulkMint(recipents)
       ).to.be.revertedWith(NotMinterRoleError);
     });
   });
 
   describe("burn", function () {
-    it("[S] Burn check", async function () {
+    it("[S] burn check", async function () {
       await cSBTMock.connect(SuperAdmin).mint(address3.address);
       expect(await cSBTMock.balanceOf(address3.address)).to.equal(1);
       expect(await cSBTMock.ownerOf(1)).to.equal(address3.address);
 
       await cSBTMock.connect(SuperAdmin).burn(1);
       expect(await cSBTMock.balanceOf(address3.address)).to.equal(0);
-      await expect(cSBTMock.ownerOf(1)).to.be.revertedWith("ERC721: owner query for nonexistent token");
+      await expect(cSBTMock.ownerOf(1)).to.be.revertedWith(
+        "ERC721: owner query for nonexistent token"
+      );
     });
 
-    it("[S] Bulk Burn check", async function () {
+    it("[S] bulkBurn check", async function () {
       const recipents = [
         NotMinter.address,
         NotBurner.address,
         address3.address,
       ];
-      await cSBTMock.connect(SuperAdmin).Bulkmint(recipents);
+      await cSBTMock.connect(SuperAdmin).bulkMint(recipents);
       // check Not Minter address recipent
       expect(await cSBTMock.balanceOf(NotMinter.address)).to.equal(1);
       expect(await cSBTMock.ownerOf(1)).to.equal(NotMinter.address);
@@ -206,16 +232,22 @@ describe("SBT", function () {
       expect(await cSBTMock.ownerOf(3)).to.equal(address3.address);
 
       const tokenIDs = [1, 2, 3];
-      await cSBTMock.connect(SuperAdmin).Bulkburn(tokenIDs);
+      await cSBTMock.connect(SuperAdmin).bulkBurn(tokenIDs);
       // check Not Minter address recipent
       expect(await cSBTMock.balanceOf(NotMinter.address)).to.equal(0);
-      await expect(cSBTMock.ownerOf(1)).to.be.revertedWith("ERC721: owner query for nonexistent token");
+      await expect(cSBTMock.ownerOf(1)).to.be.revertedWith(
+        "ERC721: owner query for nonexistent token"
+      );
       // check Not Burner address recipient
       expect(await cSBTMock.balanceOf(NotBurner.address)).to.equal(0);
-      await expect(cSBTMock.ownerOf(2)).to.be.revertedWith("ERC721: owner query for nonexistent token");
+      await expect(cSBTMock.ownerOf(2)).to.be.revertedWith(
+        "ERC721: owner query for nonexistent token"
+      );
       // check address3 address recipient
       expect(await cSBTMock.balanceOf(address3.address)).to.equal(0);
-      await expect(cSBTMock.ownerOf(3)).to.be.revertedWith("ERC721: owner query for nonexistent token");
+      await expect(cSBTMock.ownerOf(3)).to.be.revertedWith(
+        "ERC721: owner query for nonexistent token"
+      );
     });
 
     it("[R] NotBurner Err check", async function () {
@@ -241,12 +273,21 @@ describe("SBT", function () {
       await expect(
         cSBTMock
           .connect(NotMinter)
-          ["safeTransferFrom(address,address,uint256)"](NotMinter.address, NotBurner.address, 1)
+          ["safeTransferFrom(address,address,uint256)"](
+            NotMinter.address,
+            NotBurner.address,
+            1
+          )
       ).to.be.revertedWith(SBTError);
       await expect(
         cSBTMock
           .connect(NotMinter)
-          ["safeTransferFrom(address,address,uint256,bytes)"](NotMinter.address, NotBurner.address, 1, [])
+          ["safeTransferFrom(address,address,uint256,bytes)"](
+            NotMinter.address,
+            NotBurner.address,
+            1,
+            []
+          )
       ).to.be.revertedWith(SBTError);
     });
 
