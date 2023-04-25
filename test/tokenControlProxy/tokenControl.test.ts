@@ -642,10 +642,6 @@ describe("TokenControllProxy", function () {
 
         it("[R] should revert when signature does not match request", async function () {
           // Prepare meta-transaction
-          const nonExecutorBalance = await erc1155.balanceOf(
-            nonExecutor.address,
-            1
-          );
           await erc1155
             .connect(nonExecutor)
             .setApprovalForAll(tokenControlProxy.address, true);
@@ -692,16 +688,16 @@ describe("TokenControllProxy", function () {
             JSON.stringify(metaTx),
           ]);
           // // Check if the meta-transaction was processed successfully
-          await forwarderContract
-            .connect(executor)
-            .execute(metaTx.message, signature);
-          const userBalance = await erc1155.balanceOf(user.address, 1);
-          const nonExecutorBalanceAfter = await erc1155.balanceOf(
-            nonExecutor.address,
-            1
+          await expect(
+            forwarderContract
+              .connect(executor)
+              .execute(
+                { ...metaTx.message, from: nonExecutor.address },
+                signature
+              )
+          ).to.be.revertedWith(
+            "QuestryForwarder: signature does not match request"
           );
-          expect(userBalance).to.equal(10);
-          expect(nonExecutorBalanceAfter).to.equal(nonExecutorBalance.sub(10));
         });
       });
     });
