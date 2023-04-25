@@ -15,11 +15,20 @@ async function main() {
 
   // We get the contract to deploy
 
+  const platformAddress = "";
+  if (platformAddress == "") {
+    throw new Error(
+      "Please set platformAddress in the script before running it"
+    );
+  }
+
   const ContributionPoolFactory = await hre.ethers.getContractFactory(
     "ContributionPoolFactory"
   );
 
-  const contributionPoolFactory = await ContributionPoolFactory.deploy();
+  const contributionPoolFactory = await ContributionPoolFactory.deploy(
+    platformAddress
+  );
   await contributionPoolFactory.deployed();
 
   console.log(
