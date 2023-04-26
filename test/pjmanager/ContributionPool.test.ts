@@ -25,6 +25,7 @@ describe("ContributionPool", function () {
   const poolAdminRoleHash = utils.keccak256(utils.toUtf8Bytes("POOL_ADMIN_ROLE"));
   const incrementTermRoleHash = utils.keccak256(utils.toUtf8Bytes("INCREMENT_TERM_ROLE"));
   const updaterRoleHash = utils.keccak256(utils.toUtf8Bytes("CONTRIBUTION_UPDATER_ROLE"));
+  const incrementTermWhitelistAdminRole = utils.keccak256(utils.toUtf8Bytes("INCREMENT_TERM_WHITELIST_ADMIN_ROLE"));
 
   function missingRoleError(address: string, roleHash: string) {
     return `AccessControl: account ${address.toLowerCase()} is missing role ${roleHash}`;
@@ -46,6 +47,10 @@ describe("ContributionPool", function () {
 
     it("check contribution updater role for admin", async function () {
       expect(await cPoolAdd.hasRole(updaterRoleHash, superAdmin.address)).to.be.true;
+    });
+
+    it("check increment term whitelist admin role for admin", async function () {
+      expect(await cPoolAdd.hasRole(incrementTermWhitelistAdminRole, superAdmin.address)).to.be.true;
     });
 
     it("check contribution updater role for updater", async function () {
@@ -256,6 +261,32 @@ describe("ContributionPool", function () {
     it("[R] cannot incrementTerm by others", async function () {
       await expect(cPoolAdd.connect(user1).incrementTerm())
         .to.be.revertedWith(missingRoleError(user1.address, incrementTermRoleHash));
+    });
+  });
+
+  describe("grantIncrementTermRole", function () {
+    it("[S] can grantIncrementTermRole by admin", async function () {
+      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user2.address);
+      expect(await cPoolAdd.incrementTermSigners(user2.address)).to.be.true;
+    });
+
+    it("[R] cannot grantIncrementTermRole by others", async function () {
+      await expect(cPoolAdd.connect(user1).grantIncrementTermRole(user2.address))
+        .to.be.revertedWith(missingRoleError(user1.address, incrementTermWhitelistAdminRole));
+    });
+  });
+
+  describe("revokeIncrementTermRole", function () {
+    it("[S] can revokeIncrementTermRole by admin", async function () {
+      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user2.address);
+      await cPoolAdd.connect(superAdmin).revokeIncrementTermRole(user2.address);
+      expect(await cPoolAdd.incrementTermSigners(user2.address)).to.be.false;
+    });
+
+    it("[R] cannot revokeIncrementTermRole by others", async function () {
+      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user2.address);
+      await expect(cPoolAdd.connect(user1).revokeIncrementTermRole(user2.address))
+        .to.be.revertedWith(missingRoleError(user1.address, incrementTermWhitelistAdminRole));
     });
   });
 

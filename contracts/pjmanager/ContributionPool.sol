@@ -11,9 +11,11 @@ contract ContributionPool is IContributionPool, AccessControl {
 
   bytes32 public constant INCREMENT_TERM_ROLE = keccak256("INCREMENT_TERM_ROLE");
   bytes32 public constant CONTRIBUTION_UPDATER_ROLE = keccak256("CONTRIBUTION_UPDATER_ROLE");
+  bytes32 public constant INCREMENT_TERM_WHITELIST_ADMIN_ROLE = keccak256("INCREMENT_TERM_WHITELIST_ADMIN_ROLE");
   bytes32 public constant POOL_ADMIN_ROLE = keccak256("POOL_ADMIN_ROLE");
 
   IContributionPool.MutationMode immutable public mode;
+  mapping (address => bool) public incrementTermSigners;
 
   address public admin;
   address public contributionUpdater;
@@ -35,8 +37,10 @@ contract ContributionPool is IContributionPool, AccessControl {
 
     admin = _admin;
     _setRoleAdmin(CONTRIBUTION_UPDATER_ROLE, POOL_ADMIN_ROLE);
+    _setRoleAdmin(INCREMENT_TERM_WHITELIST_ADMIN_ROLE, POOL_ADMIN_ROLE);
     _setupRole(POOL_ADMIN_ROLE, admin);
     _setupRole(CONTRIBUTION_UPDATER_ROLE, admin);
+    _setupRole(INCREMENT_TERM_WHITELIST_ADMIN_ROLE, admin);
   }
 
   /// @inheritdoc IContributionPool
@@ -109,6 +113,28 @@ contract ContributionPool is IContributionPool, AccessControl {
     onlyRole(INCREMENT_TERM_ROLE)
   {
     term.increment();
+  }
+
+  /**
+   * @dev Grants increment term role to signer.
+   */
+  function grantIncrementTermRole(address signer)
+    external
+    onlyRole(INCREMENT_TERM_WHITELIST_ADMIN_ROLE)
+  {
+    require(!incrementTermSigners[signer], "ContributionPool: signer already exists");
+    incrementTermSigners[signer] = true;
+  }
+
+  /**
+   * @dev Revokes increment term role to signer.
+   */
+  function revokeIncrementTermRole(address signer)
+    external
+    onlyRole(INCREMENT_TERM_WHITELIST_ADMIN_ROLE)
+  {
+    require(incrementTermSigners[signer], "ContributionPool: signer doesn't exist");
+    incrementTermSigners[signer] = false;
   }
 
   /// @inheritdoc IContributionPool
