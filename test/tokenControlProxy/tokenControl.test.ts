@@ -327,7 +327,8 @@ describe("TokenControllProxy", function () {
             from,
             JSON.stringify(metaTx),
           ]);
-          // // Check if the meta-transaction was processed successfully
+
+          // Check if the meta-transaction was processed successfully
           await forwarderContract
             .connect(executor)
             .execute(metaTx.message, signature);
@@ -335,7 +336,6 @@ describe("TokenControllProxy", function () {
           const nonExecutorBalanceAfter = await erc20.balanceOf(
             nonExecutor.address
           );
-
           expect(userBalance).to.equal(10);
           expect(nonExecutorBalanceAfter).to.equal(nonExecutorBalance.sub(10));
         });
@@ -386,8 +386,8 @@ describe("TokenControllProxy", function () {
             from,
             JSON.stringify(metaTx),
           ]);
-          // Check if the meta-transaction was processed successfully
 
+          // Check if the execution revert
           await expect(
             forwarderContract
               .connect(nonExecutor)
@@ -443,8 +443,8 @@ describe("TokenControllProxy", function () {
             from,
             JSON.stringify(metaTx),
           ]);
-          // Check if the meta-transaction was processed successfully
 
+          // Check if the execution revert
           await expect(
             forwarderContract
               .connect(executor)
@@ -504,11 +504,11 @@ describe("TokenControllProxy", function () {
             from,
             JSON.stringify(metaTx),
           ]);
-          // // Check if the meta-transaction was processed successfully
+
+          // Check if the meta-transaction was processed successfully
           await forwarderContract
             .connect(executor)
             .execute(metaTx.message, signature);
-
           const owner = await erc721.ownerOf(1);
           expect(owner).to.equal(user.address);
         });
@@ -560,8 +560,8 @@ describe("TokenControllProxy", function () {
             from,
             JSON.stringify(metaTx),
           ]);
-          // Check if the meta-transaction was processed successfully
 
+          // Check if the execution revert
           await expect(
             forwarderContract
               .connect(executor)
@@ -627,7 +627,8 @@ describe("TokenControllProxy", function () {
             from,
             JSON.stringify(metaTx),
           ]);
-          // // Check if the meta-transaction was processed successfully
+
+          // Check if the meta-transaction was processed successfully
           await forwarderContract
             .connect(executor)
             .execute(metaTx.message, signature);
@@ -687,7 +688,8 @@ describe("TokenControllProxy", function () {
             from,
             JSON.stringify(metaTx),
           ]);
-          // // Check if the meta-transaction was processed successfully
+
+          // Check if the execution revert
           await expect(
             forwarderContract
               .connect(executor)
