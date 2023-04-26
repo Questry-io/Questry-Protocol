@@ -250,20 +250,6 @@ describe("ContributionPool", function () {
     });
   });
 
-  describe("incrementTerm", function () {
-    it("[S] can incrementTerm by QuestryPlatform", async function () {
-      await TestUtils.call(cQuestryPlatform, cPoolAdd, "incrementTerm()", []);
-      expect(await cPoolAdd.getTerm()).equals(1);
-      await TestUtils.call(cQuestryPlatform, cPoolAdd, "incrementTerm()", []);
-      expect(await cPoolAdd.getTerm()).equals(2);
-    });
-
-    it("[R] cannot incrementTerm by others", async function () {
-      await expect(cPoolAdd.connect(user1).incrementTerm())
-        .to.be.revertedWith(missingRoleError(user1.address, incrementTermRoleHash));
-    });
-  });
-
   describe("grantIncrementTermRole", function () {
     it("[S] can grantIncrementTermRole by admin", async function () {
       await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user2.address);
@@ -287,6 +273,27 @@ describe("ContributionPool", function () {
       await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user2.address);
       await expect(cPoolAdd.connect(user1).revokeIncrementTermRole(user2.address))
         .to.be.revertedWith(missingRoleError(user1.address, incrementTermWhitelistAdminRole));
+    });
+  });
+
+  describe("incrementTerm", function () {
+    it("[S] can incrementTerm by QuestryPlatform", async function () {
+      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user1.address);
+      await TestUtils.call(cQuestryPlatform, cPoolAdd, "incrementTerm(address permittedSigner)", [user1.address]);
+      expect(await cPoolAdd.getTerm()).equals(1);
+      await TestUtils.call(cQuestryPlatform, cPoolAdd, "incrementTerm(address permittedSigner)", [user1.address]);
+      expect(await cPoolAdd.getTerm()).equals(2);
+    });
+
+    it("[R] cannot incrementTerm by others", async function () {
+      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user1.address);
+      await expect(cPoolAdd.connect(user1).incrementTerm(user1.address))
+        .to.be.revertedWith(missingRoleError(user1.address, incrementTermRoleHash));
+    });
+
+    it("[R] cannot incrementTerm if signer is not allowed", async function () {
+      await expect(TestUtils.call(cQuestryPlatform, cPoolAdd, "incrementTerm(address permittedSigner)", [user1.address]))
+        .to.be.revertedWith("ContributionPool: operation not allowed");
     });
   });
 

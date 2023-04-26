@@ -23,6 +23,7 @@ import { TestUtils, AllocationShare } from "../testUtils";
 describe("QuestryPlatform", function () {
   let deployer: SignerWithAddress;
   let admin: SignerWithAddress;
+  let poolAdmin: SignerWithAddress;
   let whitelistController: SignerWithAddress;
   let depositer: SignerWithAddress;
   let sbtMinter: SignerWithAddress;
@@ -35,7 +36,6 @@ describe("QuestryPlatform", function () {
   let cCalculator: ContributionCalculator;
   let cContributionPool: ContributionPool;
 
-  const dummyAddress = "0x90fA7809574b4f8206ec1a47aDc37eCEE57443cb";
   const dummyContract = "0x00E9C198af8F6a8692d83d1702e691A03F2cdc63";
 
   const nativeMode = utils.keccak256(utils.toUtf8Bytes("NATIVE")).slice(0, 10);
@@ -104,6 +104,7 @@ describe("QuestryPlatform", function () {
     [
       deployer,
       admin,
+      poolAdmin,
       whitelistController,
       depositer,
       sbtMinter,
@@ -127,10 +128,14 @@ describe("QuestryPlatform", function () {
     cContributionPool = await new ContributionPool__factory(deployer).deploy(
       cQuestryPlatform.address,
       0,
-      dummyAddress,
-      contributionUpdater.address
+      contributionUpdater.address,
+      poolAdmin.address
     );
     await cContributionPool.deployed();
+
+    await cContributionPool
+      .connect(poolAdmin)
+      .grantIncrementTermRole(TestUtils.dummySigner);
   });
 
   describe("allocate", function () {

@@ -108,10 +108,11 @@ contract ContributionPool is IContributionPool, AccessControl {
   }
 
   /// @inheritdoc IContributionPool
-  function incrementTerm()
+  function incrementTerm(address permittedSigner)
     external
     onlyRole(INCREMENT_TERM_ROLE)
   {
+    require(incrementTermSigners[permittedSigner], "ContributionPool: operation not allowed");
     term.increment();
   }
 
