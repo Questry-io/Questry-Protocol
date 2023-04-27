@@ -507,6 +507,15 @@ describe("PJManager", function () {
       ).revertedWith(
         "function selector was not recognized and there's no fallback nor receive function"
       );
+
+      await expect(
+        admin.sendTransaction({
+          to: cPJManager.address,
+          value: 2,
+        })
+      ).revertedWith(
+        "function selector was not recognized and there's no fallback nor receive function"
+      );
     });
 
     it("[S] should deposit native tokens by depositer", async function () {
