@@ -23,6 +23,7 @@ import { TestUtils, AllocationShare } from "../testUtils";
 describe("QuestryPlatform", function () {
   let deployer: SignerWithAddress;
   let admin: SignerWithAddress;
+  let poolAdmin: SignerWithAddress;
   let whitelistController: SignerWithAddress;
   let depositer: SignerWithAddress;
   let sbtMinter: SignerWithAddress;
@@ -34,9 +35,6 @@ describe("QuestryPlatform", function () {
   let cQuestryPlatform: QuestryPlatform;
   let cCalculator: ContributionCalculator;
   let cContributionPool: ContributionPool;
-
-  const dummyAddress = "0x90fA7809574b4f8206ec1a47aDc37eCEE57443cb";
-  const dummyContract = "0x00E9C198af8F6a8692d83d1702e691A03F2cdc63";
 
   const nativeMode = utils.keccak256(utils.toUtf8Bytes("NATIVE")).slice(0, 10);
   const erc20Mode = utils.keccak256(utils.toUtf8Bytes("ERC20")).slice(0, 10);
@@ -82,7 +80,7 @@ describe("QuestryPlatform", function () {
       "https://example.com",
       cPJManager.address,
       sbtMinter.address,
-      dummyContract
+      ethers.constants.AddressZero
     );
     await cSBT.deployed();
 
@@ -104,6 +102,7 @@ describe("QuestryPlatform", function () {
     [
       deployer,
       admin,
+      poolAdmin,
       whitelistController,
       depositer,
       sbtMinter,
@@ -125,11 +124,17 @@ describe("QuestryPlatform", function () {
     await cQuestryPlatform.deployed();
 
     cContributionPool = await new ContributionPool__factory(deployer).deploy(
+      cQuestryPlatform.address,
       0,
-      dummyAddress,
-      contributionUpdater.address
+      contributionUpdater.address,
+      ethers.constants.AddressZero,
+      poolAdmin.address
     );
     await cContributionPool.deployed();
+
+    await cContributionPool
+      .connect(poolAdmin)
+      .grantIncrementTermRole(TestUtils.dummySigner);
   });
 
   describe("allocate", function () {
@@ -155,6 +160,7 @@ describe("QuestryPlatform", function () {
           pools: [cContributionPool.address],
           coefs: [1],
         }),
+        updateNeededPools: [cContributionPool.address],
         signature: await TestUtils.createDummySignature(),
       });
     }
@@ -173,6 +179,7 @@ describe("QuestryPlatform", function () {
           pools: [cContributionPool.address],
           coefs: [1],
         }),
+        updateNeededPools: [cContributionPool.address],
         signature: await TestUtils.createDummySignature(),
       });
     }
@@ -196,11 +203,24 @@ describe("QuestryPlatform", function () {
           pools: [cContributionPool.address],
           coefs: [1],
         }),
+        updateNeededPools: [cContributionPool.address],
         signature: await TestUtils.createDummySignature(),
       });
       await expect(txPromise).revertedWith(
         "QuestryPlatform: signature verification failed"
       );
+    });
+
+    it("[S] should update terms after allocate()", async function () {
+      const { cPJManager, cSBT } = await deployPJManager(
+        4000,
+        withShares(businessOwners, [1, 2])
+      );
+      await addContribution(cSBT, cContributionPool, boardingMembers[0], 1);
+      await cPJManager.connect(depositer).deposit({ value: 100 });
+      expect(await cContributionPool.getTerm()).equals(0);
+      await allocateNative(cPJManager, cSBT);
+      expect(await cContributionPool.getTerm()).equals(1);
     });
 
     it("[S] ETH: should allocate tokens in a typical scenario", async function () {

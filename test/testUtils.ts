@@ -22,6 +22,7 @@ export type AllocationShare = {
 
 export class TestUtils {
   static linearAlgorithm = keccak256(utils.toUtf8Bytes("LINEAR")).slice(0, 10);
+  static dummySigner = "0x3b0Ba9F781c0c090e55E544c2252CF1037239874";
 
   static createArgsWithLinear(args: SharesWithLinear) {
     return {
@@ -35,7 +36,7 @@ export class TestUtils {
 
   static async createDummySignature() {
     return {
-      signer: "0x3b0Ba9F781c0c090e55E544c2252CF1037239874",
+      signer: TestUtils.dummySigner,
       signature: ethers.constants.HashZero,
       signedTime: 123,
     };

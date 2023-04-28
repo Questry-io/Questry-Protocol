@@ -1,16 +1,20 @@
 /* eslint-disable node/no-missing-import */
 import { ethers } from "hardhat";
-import { Contract, utils } from "ethers";
+import { Contract, Signer, utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { TestUtils } from "../testUtils";
+import { MockCallerContract } from "../../typechain";
 
 describe("ContributionPool", function () {
   let deployer: SignerWithAddress;
   let superAdmin: SignerWithAddress;
   let updater: SignerWithAddress;
   let notUpdater: SignerWithAddress;
+  let incrementTermWhitelistAdmin: SignerWithAddress;
   let user1: SignerWithAddress;
   let user2: SignerWithAddress;
+  let cQuestryPlatform: MockCallerContract;
   let cPoolAdd: Contract;
   let cPoolFull: Contract;
 
@@ -19,31 +23,47 @@ describe("ContributionPool", function () {
     FullControl: 1,
   } as const;
 
-  const adminRoleHash = "0x0000000000000000000000000000000000000000000000000000000000000000";
-  const updaterRoleHash = utils.keccak256(utils.toUtf8Bytes("CONTRIBUTION_UPDATER_ROLE"));
+  const poolAdminRoleHash = utils.keccak256(utils.toUtf8Bytes("POOL_ADMIN_ROLE"));
+  const incrementTermRoleHash = utils.keccak256(utils.toUtf8Bytes("POOL_INCREMENT_TERM_ROLE"));
+  const updaterRoleHash = utils.keccak256(utils.toUtf8Bytes("POOL_CONTRIBUTION_UPDATER_ROLE"));
+  const incrementTermWhitelistAdminRole = utils.keccak256(utils.toUtf8Bytes("POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE"));
 
   function missingRoleError(address: string, roleHash: string) {
-    return `AccessControl: account ${address.toLowerCase()} is missing role ${updaterRoleHash}`;
+    return `AccessControl: account ${address.toLowerCase()} is missing role ${roleHash}`;
   }
 
   beforeEach(async function () {
-    [deployer, superAdmin, updater, notUpdater, user1, user2] = await ethers.getSigners();
+    [deployer, superAdmin, updater, notUpdater, incrementTermWhitelistAdmin, user1, user2] = await ethers.getSigners();
+    const cfMockQuestryPlatform = await ethers.getContractFactory("MockCallerContract");
+    cQuestryPlatform = await cfMockQuestryPlatform.deploy();
     const cfPool = await ethers.getContractFactory("ContributionPool");
-    cPoolAdd = await cfPool.deploy(MutationMode.AddOnlyAccess, updater.address, superAdmin.address);
-    cPoolFull = await cfPool.deploy(MutationMode.FullControl, updater.address, superAdmin.address);
+    cPoolAdd = await cfPool.deploy(cQuestryPlatform.address, MutationMode.AddOnlyAccess, updater.address, incrementTermWhitelistAdmin.address, superAdmin.address);
+    cPoolFull = await cfPool.deploy(cQuestryPlatform.address, MutationMode.FullControl, updater.address, incrementTermWhitelistAdmin.address, superAdmin.address);
   });
 
   describe("Post deployment checks", function () {
-    it("check admin role", async function () {
-      expect(await cPoolAdd.hasRole(adminRoleHash, superAdmin.address)).to.be.true;
+    it("check pool admin role", async function () {
+      expect(await cPoolAdd.hasRole(poolAdminRoleHash, superAdmin.address)).to.be.true;
     });
 
     it("check contribution updater role for admin", async function () {
       expect(await cPoolAdd.hasRole(updaterRoleHash, superAdmin.address)).to.be.true;
     });
 
+    it("check increment term whitelist admin role for admin", async function () {
+      expect(await cPoolAdd.hasRole(incrementTermWhitelistAdminRole, superAdmin.address)).to.be.true;
+    });
+
+    it("check increment term whitelist admin role for whitelistAdmin", async function () {
+      expect(await cPoolAdd.hasRole(incrementTermWhitelistAdminRole, incrementTermWhitelistAdmin.address)).to.be.true;
+    });
+
     it("check contribution updater role for updater", async function () {
       expect(await cPoolAdd.hasRole(updaterRoleHash, updater.address)).to.be.true;
+    });
+
+    it("check pool admin doesn't have increment term role", async function () {
+      expect(await cPoolAdd.hasRole(incrementTermRoleHash, superAdmin.address)).to.be.false;
     });
   });
 
@@ -232,6 +252,53 @@ describe("ContributionPool", function () {
         await expect(cPoolFull.connect(notUpdater).bulkSetContribution([user1.address, user2.address], [1, 2]))
           .to.be.revertedWith(missingRoleError(notUpdater.address, updaterRoleHash));
       });
+    });
+  });
+
+  describe("grantIncrementTermRole", function () {
+    it("[S] can grantIncrementTermRole by admin", async function () {
+      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user2.address);
+      expect(await cPoolAdd.incrementTermSigners(user2.address)).to.be.true;
+    });
+
+    it("[R] cannot grantIncrementTermRole by others", async function () {
+      await expect(cPoolAdd.connect(user1).grantIncrementTermRole(user2.address))
+        .to.be.revertedWith(missingRoleError(user1.address, incrementTermWhitelistAdminRole));
+    });
+  });
+
+  describe("revokeIncrementTermRole", function () {
+    it("[S] can revokeIncrementTermRole by admin", async function () {
+      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user2.address);
+      await cPoolAdd.connect(superAdmin).revokeIncrementTermRole(user2.address);
+      expect(await cPoolAdd.incrementTermSigners(user2.address)).to.be.false;
+    });
+
+    it("[R] cannot revokeIncrementTermRole by others", async function () {
+      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user2.address);
+      await expect(cPoolAdd.connect(user1).revokeIncrementTermRole(user2.address))
+        .to.be.revertedWith(missingRoleError(user1.address, incrementTermWhitelistAdminRole));
+    });
+  });
+
+  describe("incrementTerm", function () {
+    it("[S] can incrementTerm by QuestryPlatform", async function () {
+      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user1.address);
+      await TestUtils.call(cQuestryPlatform, cPoolAdd, "incrementTerm(address permittedSigner)", [user1.address]);
+      expect(await cPoolAdd.getTerm()).equals(1);
+      await TestUtils.call(cQuestryPlatform, cPoolAdd, "incrementTerm(address permittedSigner)", [user1.address]);
+      expect(await cPoolAdd.getTerm()).equals(2);
+    });
+
+    it("[R] cannot incrementTerm by others", async function () {
+      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user1.address);
+      await expect(cPoolAdd.connect(user1).incrementTerm(user1.address))
+        .to.be.revertedWith(missingRoleError(user1.address, incrementTermRoleHash));
+    });
+
+    it("[R] cannot incrementTerm if signer is not allowed", async function () {
+      await expect(TestUtils.call(cQuestryPlatform, cPoolAdd, "incrementTerm(address permittedSigner)", [user1.address]))
+        .to.be.revertedWith("ContributionPool: operation not allowed");
     });
   });
 

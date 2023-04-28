@@ -9,7 +9,6 @@ import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 describe("ContributionCalculator", function () {
   let superAdmin: SignerWithAddress;
   let notAdmin: SignerWithAddress;
-  let poolUpdater: SignerWithAddress;
   let member1: SignerWithAddress;
   let member2: SignerWithAddress;
   let cPool1: Contract;
@@ -17,12 +16,23 @@ describe("ContributionCalculator", function () {
   let cCalculator: Contract;
 
   beforeEach(async function () {
-    [superAdmin, notAdmin, poolUpdater, member1, member2] =
-      await ethers.getSigners();
+    [superAdmin, notAdmin, member1, member2] = await ethers.getSigners();
     const cfPool = await ethers.getContractFactory("ContributionPool");
 
-    cPool1 = await cfPool.deploy(0, poolUpdater.address, superAdmin.address);
-    cPool2 = await cfPool.deploy(0, poolUpdater.address, superAdmin.address);
+    cPool1 = await cfPool.deploy(
+      ethers.constants.AddressZero,
+      0,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
+      superAdmin.address
+    );
+    cPool2 = await cfPool.deploy(
+      ethers.constants.AddressZero,
+      0,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
+      superAdmin.address
+    );
 
     const cfCalculator = await ethers.getContractFactory(
       "ContributionCalculator",

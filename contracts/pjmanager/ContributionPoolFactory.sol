@@ -3,6 +3,7 @@ pragma solidity ^0.8.9;
 
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {ContributionPool} from "../pjmanager/ContributionPool.sol";
+import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
 
 /**
  * @dev Factory contract for ContributionPool.
@@ -16,7 +17,12 @@ contract ContributionPoolFactory {
     address indexed admin
   );
 
+  QuestryPlatform public questryPlatform;
   mapping (address => IContributionPool[]) public poolsByBusinessOwners;
+
+  constructor(QuestryPlatform _questryPlatform) {
+    questryPlatform = _questryPlatform;
+  }
 
   /**
    * @dev Creates a new ContributionPool contract.
@@ -27,12 +33,13 @@ contract ContributionPoolFactory {
   function createPool(
     IContributionPool.MutationMode mode,
     address contributionUpdater,
+    address incrementTermWhitelistAdmin,
     address admin
   )
     external
     returns (IContributionPool pool)
   {
-    pool = new ContributionPool(mode, contributionUpdater, admin);
+    pool = new ContributionPool(questryPlatform, mode, contributionUpdater, incrementTermWhitelistAdmin, admin);
     poolsByBusinessOwners[msg.sender].push(pool);
     emit PoolCreated(msg.sender, address(pool), mode, contributionUpdater, admin);
   }

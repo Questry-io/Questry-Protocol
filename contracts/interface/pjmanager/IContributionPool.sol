@@ -61,7 +61,18 @@ interface IContributionPool {
   function bulkSetContribution(address[] calldata members, uint120[] calldata values) external;
 
   /**
+   * @dev Increments the accumulation period for contributions by checking if the `permittedSigner`
+   * has the execution permission.
+   */
+  function incrementTerm(address permittedSigner) external;
+
+  /**
    * @dev Gets contribution of `member`.
    */
   function getContribution(address member) external view returns (uint120);
+
+  /**
+   * @dev Returns the accumulation period for contributions.
+   */
+  function getTerm() external view returns (uint256);
 }

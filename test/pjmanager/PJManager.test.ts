@@ -26,7 +26,6 @@ describe("PJManager", function () {
   let whitelistController: SignerWithAddress;
   let depositer: SignerWithAddress;
   let sbtMinter: SignerWithAddress;
-  let contributionUpdater: SignerWithAddress;
   let businessOwners: SignerWithAddress[];
   let user: SignerWithAddress;
   let cMockQuestryPlatform: MockCallerContract;
@@ -34,7 +33,6 @@ describe("PJManager", function () {
   let cContributionPool: ContributionPool;
 
   const dummyAddress = "0x90fA7809574b4f8206ec1a47aDc37eCEE57443cb";
-  const dummyContract = "0x00E9C198af8F6a8692d83d1702e691A03F2cdc63";
 
   const maxBasisPoint = 10000;
 
@@ -95,7 +93,7 @@ describe("PJManager", function () {
       "https://example.com",
       cPJManager.address,
       sbtMinter.address,
-      dummyContract
+      ethers.constants.AddressZero
     );
     await cSBT.deployed();
 
@@ -125,7 +123,6 @@ describe("PJManager", function () {
       whitelistController,
       depositer,
       sbtMinter,
-      contributionUpdater,
       user,
       ...rest
     ] = await ethers.getSigners();
@@ -139,9 +136,11 @@ describe("PJManager", function () {
     await cCalculator.deployed();
 
     cContributionPool = await new ContributionPool__factory(deployer).deploy(
+      cMockQuestryPlatform.address,
       0,
-      dummyAddress,
-      contributionUpdater.address
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero
     );
     await cContributionPool.deployed();
   });
