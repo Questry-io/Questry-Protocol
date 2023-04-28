@@ -15,16 +15,24 @@ describe("ContributionCalculator", function () {
   let cPool2: Contract;
   let cCalculator: Contract;
 
-  const dummyAddress = "0x90fA7809574b4f8206ec1a47aDc37eCEE57443cb";
-  const dummyContract = "0x00E9C198af8F6a8692d83d1702e691A03F2cdc63";
-
   beforeEach(async function () {
-    [superAdmin, notAdmin, member1, member2] =
-      await ethers.getSigners();
+    [superAdmin, notAdmin, member1, member2] = await ethers.getSigners();
     const cfPool = await ethers.getContractFactory("ContributionPool");
 
-    cPool1 = await cfPool.deploy(dummyContract, 0, dummyAddress, dummyAddress, superAdmin.address);
-    cPool2 = await cfPool.deploy(dummyContract, 0, dummyAddress, dummyAddress, superAdmin.address);
+    cPool1 = await cfPool.deploy(
+      ethers.constants.AddressZero,
+      0,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
+      superAdmin.address
+    );
+    cPool2 = await cfPool.deploy(
+      ethers.constants.AddressZero,
+      0,
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero,
+      superAdmin.address
+    );
 
     const cfCalculator = await ethers.getContractFactory(
       "ContributionCalculator",

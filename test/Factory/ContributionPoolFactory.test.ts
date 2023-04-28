@@ -12,8 +12,6 @@ describe("ContributionPoolFactory", function () {
   let businessOwner: SignerWithAddress;
   let cPoolFactory: Contract;
 
-  const dummyContract = "0x00E9C198af8F6a8692d83d1702e691A03F2cdc63";
-
   beforeEach(async function () {
     [
       deployer,
@@ -23,7 +21,7 @@ describe("ContributionPoolFactory", function () {
       businessOwner,
     ] = await ethers.getSigners();
     const cfPoolFactory = await ethers.getContractFactory("ContributionPoolFactory");
-    cPoolFactory = await cfPoolFactory.deploy(dummyContract);
+    cPoolFactory = await cfPoolFactory.deploy(ethers.constants.AddressZero);
   });
 
   describe("createPool", function () {
