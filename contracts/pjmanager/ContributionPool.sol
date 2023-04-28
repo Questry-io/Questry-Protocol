@@ -15,6 +15,7 @@ contract ContributionPool is IContributionPool, AccessControl {
 
   address public admin;
   address public contributionUpdater;
+  address public incrementTermWhitelistAdmin;
   mapping (uint256 => mapping (address => uint120)) public contributions; // term => member => value
   Counters.Counter public term;
 
@@ -22,6 +23,7 @@ contract ContributionPool is IContributionPool, AccessControl {
     QuestryPlatform _questryPlatform,
     IContributionPool.MutationMode _mode,
     address _contributionUpdater,
+    address _incrementTermWhitelistAdmin,
     address _admin
   ) {
     mode = _mode;
@@ -30,6 +32,9 @@ contract ContributionPool is IContributionPool, AccessControl {
 
     contributionUpdater = _contributionUpdater;
     _setupRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE, contributionUpdater);
+
+    incrementTermWhitelistAdmin = _incrementTermWhitelistAdmin;
+    _setupRole(LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE, _incrementTermWhitelistAdmin);
 
     admin = _admin;
     _setRoleAdmin(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE, LibPJManager.POOL_ADMIN_ROLE);

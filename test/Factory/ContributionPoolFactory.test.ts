@@ -7,14 +7,21 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 describe("ContributionPoolFactory", function () {
   let deployer: SignerWithAddress;
   let superAdmin: SignerWithAddress;
-  let updater: SignerWithAddress;
+  let contributionUpdater: SignerWithAddress;
+  let incrementTermWhitelistAdmin: SignerWithAddress;
   let businessOwner: SignerWithAddress;
   let cPoolFactory: Contract;
 
   const dummyContract = "0x00E9C198af8F6a8692d83d1702e691A03F2cdc63";
 
   beforeEach(async function () {
-    [deployer, superAdmin, updater, businessOwner] = await ethers.getSigners();
+    [
+      deployer,
+      superAdmin,
+      contributionUpdater,
+      incrementTermWhitelistAdmin,
+      businessOwner,
+    ] = await ethers.getSigners();
     const cfPoolFactory = await ethers.getContractFactory("ContributionPoolFactory");
     cPoolFactory = await cfPoolFactory.deploy(dummyContract);
   });
@@ -23,7 +30,12 @@ describe("ContributionPoolFactory", function () {
     it("[S] check ContributionPool address stored", async function () {
       await cPoolFactory
         .connect(businessOwner)
-        .createPool(0, updater.address, superAdmin.address);
+        .createPool(
+          0,
+          contributionUpdater.address,
+          incrementTermWhitelistAdmin.address,
+          superAdmin.address
+        );
       const pools = await cPoolFactory.getPools(businessOwner.address);
       expect(pools.length).equals(1);
       expect(pools[0]).not.equals(ethers.constants.AddressZero);
@@ -32,7 +44,12 @@ describe("ContributionPoolFactory", function () {
     it("[S] check event emitted", async function () {
       const tx = await cPoolFactory
         .connect(businessOwner)
-        .createPool(1, updater.address, superAdmin.address);
+        .createPool(
+          1,
+          contributionUpdater.address,
+          incrementTermWhitelistAdmin.address,
+          superAdmin.address
+        );
       const pools = await cPoolFactory.getPools(businessOwner.address);
       expect(tx)
         .to.emit(cPoolFactory, "PoolCreated")
@@ -40,7 +57,7 @@ describe("ContributionPoolFactory", function () {
           businessOwner.address,
           pools[0],
           1,
-          updater.address,
+          contributionUpdater.address,
           superAdmin.address
         );
     });

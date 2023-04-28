@@ -1,6 +1,6 @@
 /* eslint-disable node/no-missing-import */
 import { ethers } from "hardhat";
-import { Contract, utils } from "ethers";
+import { Contract, Signer, utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { TestUtils } from "../testUtils";
@@ -11,6 +11,7 @@ describe("ContributionPool", function () {
   let superAdmin: SignerWithAddress;
   let updater: SignerWithAddress;
   let notUpdater: SignerWithAddress;
+  let incrementTermWhitelistAdmin: SignerWithAddress;
   let user1: SignerWithAddress;
   let user2: SignerWithAddress;
   let cQuestryPlatform: MockCallerContract;
@@ -23,21 +24,21 @@ describe("ContributionPool", function () {
   } as const;
 
   const poolAdminRoleHash = utils.keccak256(utils.toUtf8Bytes("POOL_ADMIN_ROLE"));
-  const incrementTermRoleHash = utils.keccak256(utils.toUtf8Bytes("INCREMENT_TERM_ROLE"));
-  const updaterRoleHash = utils.keccak256(utils.toUtf8Bytes("CONTRIBUTION_UPDATER_ROLE"));
-  const incrementTermWhitelistAdminRole = utils.keccak256(utils.toUtf8Bytes("INCREMENT_TERM_WHITELIST_ADMIN_ROLE"));
+  const incrementTermRoleHash = utils.keccak256(utils.toUtf8Bytes("POOL_INCREMENT_TERM_ROLE"));
+  const updaterRoleHash = utils.keccak256(utils.toUtf8Bytes("POOL_CONTRIBUTION_UPDATER_ROLE"));
+  const incrementTermWhitelistAdminRole = utils.keccak256(utils.toUtf8Bytes("POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE"));
 
   function missingRoleError(address: string, roleHash: string) {
     return `AccessControl: account ${address.toLowerCase()} is missing role ${roleHash}`;
   }
 
   beforeEach(async function () {
-    [deployer, superAdmin, updater, notUpdater, user1, user2] = await ethers.getSigners();
+    [deployer, superAdmin, updater, notUpdater, incrementTermWhitelistAdmin, user1, user2] = await ethers.getSigners();
     const cfMockQuestryPlatform = await ethers.getContractFactory("MockCallerContract");
     cQuestryPlatform = await cfMockQuestryPlatform.deploy();
     const cfPool = await ethers.getContractFactory("ContributionPool");
-    cPoolAdd = await cfPool.deploy(cQuestryPlatform.address, MutationMode.AddOnlyAccess, updater.address, superAdmin.address);
-    cPoolFull = await cfPool.deploy(cQuestryPlatform.address, MutationMode.FullControl, updater.address, superAdmin.address);
+    cPoolAdd = await cfPool.deploy(cQuestryPlatform.address, MutationMode.AddOnlyAccess, updater.address, incrementTermWhitelistAdmin.address, superAdmin.address);
+    cPoolFull = await cfPool.deploy(cQuestryPlatform.address, MutationMode.FullControl, updater.address, incrementTermWhitelistAdmin.address, superAdmin.address);
   });
 
   describe("Post deployment checks", function () {
@@ -51,6 +52,10 @@ describe("ContributionPool", function () {
 
     it("check increment term whitelist admin role for admin", async function () {
       expect(await cPoolAdd.hasRole(incrementTermWhitelistAdminRole, superAdmin.address)).to.be.true;
+    });
+
+    it("check increment term whitelist admin role for whitelistAdmin", async function () {
+      expect(await cPoolAdd.hasRole(incrementTermWhitelistAdminRole, incrementTermWhitelistAdmin.address)).to.be.true;
     });
 
     it("check contribution updater role for updater", async function () {

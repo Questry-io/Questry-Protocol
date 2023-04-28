@@ -26,7 +26,6 @@ describe("PJManager", function () {
   let whitelistController: SignerWithAddress;
   let depositer: SignerWithAddress;
   let sbtMinter: SignerWithAddress;
-  let contributionUpdater: SignerWithAddress;
   let businessOwners: SignerWithAddress[];
   let user: SignerWithAddress;
   let cMockQuestryPlatform: MockCallerContract;
@@ -125,7 +124,6 @@ describe("PJManager", function () {
       whitelistController,
       depositer,
       sbtMinter,
-      contributionUpdater,
       user,
       ...rest
     ] = await ethers.getSigners();
@@ -142,7 +140,8 @@ describe("PJManager", function () {
       cMockQuestryPlatform.address,
       0,
       dummyAddress,
-      contributionUpdater.address
+      dummyAddress,
+      dummyAddress
     );
     await cContributionPool.deployed();
   });
