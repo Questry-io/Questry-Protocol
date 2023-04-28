@@ -4,15 +4,11 @@ pragma solidity ^0.8.9;
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
+import {LibPJManager} from "../library/LibPJManager.sol";
 import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
 
 contract ContributionPool is IContributionPool, AccessControl {
   using Counters for Counters.Counter;
-
-  bytes32 public constant INCREMENT_TERM_ROLE = keccak256("INCREMENT_TERM_ROLE");
-  bytes32 public constant CONTRIBUTION_UPDATER_ROLE = keccak256("CONTRIBUTION_UPDATER_ROLE");
-  bytes32 public constant INCREMENT_TERM_WHITELIST_ADMIN_ROLE = keccak256("INCREMENT_TERM_WHITELIST_ADMIN_ROLE");
-  bytes32 public constant POOL_ADMIN_ROLE = keccak256("POOL_ADMIN_ROLE");
 
   IContributionPool.MutationMode immutable public mode;
   mapping (address => bool) public incrementTermSigners;
@@ -30,23 +26,23 @@ contract ContributionPool is IContributionPool, AccessControl {
   ) {
     mode = _mode;
 
-    _setupRole(INCREMENT_TERM_ROLE, address(_questryPlatform));
+    _setupRole(LibPJManager.POOL_INCREMENT_TERM_ROLE, address(_questryPlatform));
 
     contributionUpdater = _contributionUpdater;
-    _setupRole(CONTRIBUTION_UPDATER_ROLE, contributionUpdater);
+    _setupRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE, contributionUpdater);
 
     admin = _admin;
-    _setRoleAdmin(CONTRIBUTION_UPDATER_ROLE, POOL_ADMIN_ROLE);
-    _setRoleAdmin(INCREMENT_TERM_WHITELIST_ADMIN_ROLE, POOL_ADMIN_ROLE);
-    _setupRole(POOL_ADMIN_ROLE, admin);
-    _setupRole(CONTRIBUTION_UPDATER_ROLE, admin);
-    _setupRole(INCREMENT_TERM_WHITELIST_ADMIN_ROLE, admin);
+    _setRoleAdmin(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE, LibPJManager.POOL_ADMIN_ROLE);
+    _setRoleAdmin(LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE, LibPJManager.POOL_ADMIN_ROLE);
+    _setupRole(LibPJManager.POOL_ADMIN_ROLE, admin);
+    _setupRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE, admin);
+    _setupRole(LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE, admin);
   }
 
   /// @inheritdoc IContributionPool
   function addContribution(address member, uint120 value)
     external
-    onlyRole(CONTRIBUTION_UPDATER_ROLE)
+    onlyRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE)
   {
     _addContribution(member, value);
     emit AddContribution(member, value);
@@ -55,7 +51,7 @@ contract ContributionPool is IContributionPool, AccessControl {
   /// @inheritdoc IContributionPool
   function bulkAddContribution(address[] calldata members, uint120[] calldata values)
     external
-    onlyRole(CONTRIBUTION_UPDATER_ROLE)
+    onlyRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE)
   {
     for (uint i = 0; i < members.length; i++) {
       _addContribution(members[i], values[i]);
@@ -66,7 +62,7 @@ contract ContributionPool is IContributionPool, AccessControl {
   /// @inheritdoc IContributionPool
   function subtractContribution(address member, uint120 value)
     external
-    onlyRole(CONTRIBUTION_UPDATER_ROLE)
+    onlyRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE)
   {
     require (mode == IContributionPool.MutationMode.FullControl, "ContributionPool: operation not allowed");
     _subtractContribution(member, value);
@@ -76,7 +72,7 @@ contract ContributionPool is IContributionPool, AccessControl {
   /// @inheritdoc IContributionPool
   function bulkSubtractContribution(address[] calldata members, uint120[] calldata values)
     external
-    onlyRole(CONTRIBUTION_UPDATER_ROLE)
+    onlyRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE)
   {
     require (mode == IContributionPool.MutationMode.FullControl, "ContributionPool: operation not allowed");
     for (uint i = 0; i < members.length; i++) {
@@ -88,7 +84,7 @@ contract ContributionPool is IContributionPool, AccessControl {
   /// @inheritdoc IContributionPool
   function setContribution(address member, uint120 value)
     external
-    onlyRole(CONTRIBUTION_UPDATER_ROLE)
+    onlyRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE)
   {
     require (mode == IContributionPool.MutationMode.FullControl, "ContributionPool: operation not allowed");
     _setContribution(member, value);
@@ -98,7 +94,7 @@ contract ContributionPool is IContributionPool, AccessControl {
   /// @inheritdoc IContributionPool
   function bulkSetContribution(address[] calldata members, uint120[] calldata values)
     external
-    onlyRole(CONTRIBUTION_UPDATER_ROLE)
+    onlyRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE)
   {
     require (mode == IContributionPool.MutationMode.FullControl, "ContributionPool: operation not allowed");
     for (uint i = 0; i < members.length; i++) {
@@ -110,7 +106,7 @@ contract ContributionPool is IContributionPool, AccessControl {
   /// @inheritdoc IContributionPool
   function incrementTerm(address permittedSigner)
     external
-    onlyRole(INCREMENT_TERM_ROLE)
+    onlyRole(LibPJManager.POOL_INCREMENT_TERM_ROLE)
   {
     require(incrementTermSigners[permittedSigner], "ContributionPool: operation not allowed");
     term.increment();
@@ -121,7 +117,7 @@ contract ContributionPool is IContributionPool, AccessControl {
    */
   function grantIncrementTermRole(address signer)
     external
-    onlyRole(INCREMENT_TERM_WHITELIST_ADMIN_ROLE)
+    onlyRole(LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE)
   {
     require(!incrementTermSigners[signer], "ContributionPool: signer already exists");
     incrementTermSigners[signer] = true;
@@ -132,7 +128,7 @@ contract ContributionPool is IContributionPool, AccessControl {
    */
   function revokeIncrementTermRole(address signer)
     external
-    onlyRole(INCREMENT_TERM_WHITELIST_ADMIN_ROLE)
+    onlyRole(LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE)
   {
     require(incrementTermSigners[signer], "ContributionPool: signer doesn't exist");
     incrementTermSigners[signer] = false;
