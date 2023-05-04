@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {IContributionCalculator} from "../interface/platform/IContributionCalculator.sol";
@@ -11,7 +13,12 @@ import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {ISBT} from "../interface/token/ISBT.sol";
 
-contract QuestryPlatform is AccessControl, ReentrancyGuard {
+contract QuestryPlatform is
+  Initializable,
+  OwnableUpgradeable,
+  ReentrancyGuardUpgradeable,
+  UUPSUpgradeable
+{
   uint32 public constant PROTOCOL_FEE_RATE = 300;
 
   IContributionCalculator public contributionCalculator;
@@ -22,13 +29,29 @@ contract QuestryPlatform is AccessControl, ReentrancyGuard {
   mapping(address => uint256) private _tempPayoutAmount;
   address[] private _tempPayoutAddress;
 
-  constructor(
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor() {
+    _disableInitializers();
+  }
+
+  function initialize(
     IContributionCalculator _contributionCalculator,
     address _daoTreasuryPool
-  ) {
+  ) public initializer {
+    __Ownable_init();
+    __ReentrancyGuard_init();
+    __UUPSUpgradeable_init();
+
     contributionCalculator = _contributionCalculator;
     daoTreasuryPool = _daoTreasuryPool;
   }
+
+  /// @inheritdoc UUPSUpgradeable
+  function _authorizeUpgrade(address newImplementation)
+    internal
+    override
+    onlyOwner
+  {}
 
   /**
    * @dev Allocates tokens to business owners, boarding members and DAO treasury pool.
