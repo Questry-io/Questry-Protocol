@@ -84,7 +84,10 @@ contract QuestryPlatform is AccessControl, ReentrancyGuard {
     _resetPayoutTemp();
 
     // Step6. Update the terms of the contribution pools
-    _updatesTermsOfContributionPools(_args.updateNeededPools, _args.signature.signer);
+    _updatesTermsOfContributionPools(
+      _args.updateNeededPools,
+      _args.signature.signer
+    );
   }
 
   // --------------------------------------------------
@@ -198,7 +201,10 @@ contract QuestryPlatform is AccessControl, ReentrancyGuard {
   /**
    * @dev Updates the terms of contribution pools.
    */
-  function _updatesTermsOfContributionPools(IContributionPool[] calldata pools, address signer) private {
+  function _updatesTermsOfContributionPools(
+    IContributionPool[] calldata pools,
+    address signer
+  ) private {
     for (uint256 i = 0; i < pools.length; i++) {
       pools[i].incrementTerm(signer);
     }
