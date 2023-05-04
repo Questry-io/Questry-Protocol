@@ -39,6 +39,7 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
     _setupRole(LibPJManager.PJ_MANAGEMENT_ROLE, _admin);
     _setupRole(LibPJManager.PJ_WHITELIST_ROLE, _admin);
     _setupRole(LibPJManager.PJ_DEPOSIT_ROLE, _admin);
+    _setupRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE, _admin);
 
     _setRoleAdmin(LibPJManager.PJ_MANAGEMENT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(LibPJManager.PJ_WHITELIST_ROLE, LibPJManager.PJ_ADMIN_ROLE);
@@ -120,6 +121,20 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
     );
     emit UpdateBusinessOwner(_businessOwner.recipient, _businessOwner.share);
   }
+
+  //PJManager Signature verifier Nonce Increment function
+  function IncrementNonce()
+    external
+    onlyRole(LibPJManager.PJ_ADMIN_ROLE) {
+    _incrementNonce();
+  }
+
+  //Signature verify threshold setting for multisig
+  function setThreshold(uint256 _threshold)
+    external
+    onlyRole(LibPJManager.PJ_ADMIN_ROLE){
+      _setThreshold(_threshold);
+    }
 
   // --------------------------------------------------
   // TODO: REGISTER_BOARD_ROLE

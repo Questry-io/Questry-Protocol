@@ -37,6 +37,11 @@ interface IPJManager is ISignatureVerifier {
     external
     view
     returns (uint256);
+  
+  /**
+   * @dev Increment nonce for signature.
+   */
+  function IncrementNonce() external;
 
   /**
    * @dev Returns businessOwners.

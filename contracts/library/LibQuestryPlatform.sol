@@ -13,6 +13,9 @@ library LibQuestryPlatform {
   bytes4 public constant NATIVE_PAYMENT_MODE = bytes4(keccak256("NATIVE"));
   bytes4 public constant ERC20_PAYMENT_MODE = bytes4(keccak256("ERC20"));
 
+  //Role difinition
+  
+
   struct AllocateArgs {
     IPJManager pjManager;
     bytes4 paymentMode; // determines to allocate native or ERC20 token
@@ -20,13 +23,7 @@ library LibQuestryPlatform {
     ISBT board; // allocation target board which has contributions
     CalculateDispatchArgs calculateArgs; // allocation calculation args
     IContributionPool[] updateNeededPools; // term update needed pools
-    Signature signature; // signature
-  }
-
-  struct Signature {
-    address signer;
-    bytes32 signature;
-    uint256 signedTime;
+    uint256 pjnonce;
   }
 
   /**
@@ -52,4 +49,52 @@ library LibQuestryPlatform {
     bytes4 algorithm; // calculation algorithm for the board.
     bytes args; // arguments for the calculation algorithm.
   }
+  
+  // ---- EIP712 ----
+  bytes32 private constant Allocate_TYPEHASH =
+    keccak256(
+      "AllocateArgs(address pjManager,bytes4 paymentMode,address paymentToken,address board,CalculateDispatchArgs calculateArgs,address[] updateNeededPools,uint256 pjnonce)CalculateDispatchArgs(bytes4 algorithm,bytes args)"
+    );
+  
+  bytes32 private constant CALCURATEDISPATCHARGS_TYPEHASH =
+    keccak256(
+      "CalculateDispatchArgs(bytes4 algorithm,bytes args)"
+    );
+
+  /**
+   * @dev Prepares keccak256 hash for Allocate
+   *
+   * @param _allocateargs 
+   */
+  function _hashAllocate(AllocateArgs calldata _allocateargs) internal pure returns (bytes32) {
+    return
+      keccak256(
+        abi.encode(
+          Allocate_TYPEHASH,
+          _allocateargs.pjManager,
+          _allocateargs.paymentMode,
+          _allocateargs.board,
+          _hashCalculateDispatchArgs(_allocateargs.calculateArgs),
+          _allocateargs.updateNeededPools,
+          _allocateargs.pjnonce
+        )
+      );
+  }
+
+  /**
+   * @dev Prepares keccak256 hash for CalculateDispatchArgs
+   *
+   * @param _calculatedispatchargs 
+   */
+  function _hashCalculateDispatchArgs(CalculateDispatchArgs calldata _calculatedispatchargs) internal pure returns (bytes32) {
+    return
+      keccak256(
+        abi.encode(
+          CALCURATEDISPATCHARGS_TYPEHASH,
+          _calculatedispatchargs.algorithm,
+          _calculatedispatchargs.args
+        )
+      );
+  }
+
 }

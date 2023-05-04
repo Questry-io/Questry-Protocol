@@ -12,4 +12,13 @@ interface ISignatureVerifier {
     external
     view
     returns (bool);
+  
+  /**
+   * @dev Get PJManager signature nonce
+   */
+  function getNonce() 
+    public 
+    view 
+    returns(uint256);
+
 }

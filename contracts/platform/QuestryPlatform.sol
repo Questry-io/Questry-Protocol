@@ -33,13 +33,13 @@ contract QuestryPlatform is AccessControl, ReentrancyGuard {
   /**
    * @dev Allocates tokens to business owners, boarding members and DAO treasury pool.
    */
-  function allocate(LibQuestryPlatform.AllocateArgs calldata _args)
+  function allocate(LibQuestryPlatform.AllocateArgs calldata _args, bytes[] calldata _AllcatorSigns)
     external
     nonReentrant
   {
     IPJManager pjManager = _args.pjManager;
     require(
-      pjManager.verifySignature(_args.signature),
+      pjManager.verifySignature(_args, _AllcatorSigns),
       "QuestryPlatform: signature verification failed"
     );
 
@@ -85,6 +85,8 @@ contract QuestryPlatform is AccessControl, ReentrancyGuard {
 
     // Step6. Update the terms of the contribution pools
     _updatesTermsOfContributionPools(_args.updateNeededPools, _args.signature.signer);
+    //Step7. Update the nonce of the pjmanager
+    _updatesNonceOfPJManager(_args.pjManager);
   }
 
   // --------------------------------------------------
@@ -202,6 +204,12 @@ contract QuestryPlatform is AccessControl, ReentrancyGuard {
     for (uint256 i = 0; i < pools.length; i++) {
       pools[i].incrementTerm(signer);
     }
+    
+  /**
+   * @dev Updates the nonce of pjmanager.
+   */
+  function _updatesNonceOfPJManager(IPJManager pjmanager) private {
+      pjmanager.IncrementNonce();
   }
 
   /**
