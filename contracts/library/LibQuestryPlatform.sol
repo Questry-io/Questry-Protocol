@@ -64,7 +64,7 @@ library LibQuestryPlatform {
   /**
    * @dev Prepares keccak256 hash for Allocate
    *
-   * @param _allocateargs 
+   * @param _allocateargs LibQuestryPlatform.AllocateArgs
    */
   function _hashAllocate(AllocateArgs calldata _allocateargs) internal pure returns (bytes32) {
     return
@@ -84,7 +84,7 @@ library LibQuestryPlatform {
   /**
    * @dev Prepares keccak256 hash for CalculateDispatchArgs
    *
-   * @param _calculatedispatchargs 
+   * @param _calculatedispatchargs LibQuestryPlatform.CalculateDispatchArgs
    */
   function _hashCalculateDispatchArgs(CalculateDispatchArgs calldata _calculatedispatchargs) internal pure returns (bytes32) {
     return
@@ -96,5 +96,70 @@ library LibQuestryPlatform {
         )
       );
   }
+
+  /**
+   * @dev validation check
+   */
+  function _checkParameterForAllocation(
+    AllocateArgs calldata _allocateargs
+  ) private {
+    
+    //pjmaneger validation
+    require(
+      address(_allocateargs.pjManager) != address(0),
+      "LibQuestryPlatform: PJManager is Invalid"
+    );
+    //paymnet mode validation
+    require(
+      bytes4(_allocateargs.paymentMode) != bytes4(0),
+      "LibQuestryPlatform: PaymentMode is Invalid"
+    );
+    //paymnet Token Address validation
+    require(
+      address(_allocateargs.paymentToken) != address(0),
+      "LibQuestryPlatform: payment Token Address is Invalid"
+    );
+    //Whitelist check
+    if(_allocateargs.paymentMode == ERC20_PAYMENT_MODE){
+      // Whitelist check
+      // EM: BuyOrder paymentToken not whitelisted
+      require(
+          _allocateargs.pjManager.isWhitelisted(
+          _allocateargs.paymentToken
+        ),
+        "LibQuestryPlatform: Is not PJ Whitelist token"
+      );
+    }
+    //SBT Address validation
+    require(
+      address(_allocateargs.board) != address(0),
+      "LibQuestryPlatform: Board address is invalid"
+    );
+    //calc algolithm validation
+    require(
+      bytes4(_allocateargs.calculateArgs.algorithm) != bytes4(0),
+      "LibQuestryPlatform: calculation algorithm is invalid"
+    );
+
+    //calc algolithm validation
+    require(
+      bytes(_allocateargs.calculateArgs.args) != bytes(0),
+      "LibQuestryPlatform: calculation args is invalid"
+    );
+    
+    //calcuration pool element check
+    require(_allocateargs.updateNeededPools.length > 0,'LibQuestryPlatform: contribution pool is zero');
+    //Contributioonpool check
+    for(uint idx = 0;idx < _allocateargs.updateNeededPools.length;idx++){
+      require(
+        address(_allocateargs.updateNeededPools[idx]) != address(0),
+        "LibQuestryPlatform: contribution pool address is invalid"
+      );
+    }
+
+    require(_allocateargs.pjManager.getNonce() == _allocateargs.pjnonce,"LibQuestryPlatform: message nonce is different from on-chain nonce");
+    
+  }
+    
 
 }

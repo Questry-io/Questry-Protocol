@@ -35,6 +35,9 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
     admin = _admin;
     boardingMembersProportion = _boardingMembersProportion;
 
+    //set signature threshold
+    _setThreshold(1);
+
     _setupRole(LibPJManager.PJ_ADMIN_ROLE, _admin);
     _setupRole(LibPJManager.PJ_MANAGEMENT_ROLE, _admin);
     _setupRole(LibPJManager.PJ_WHITELIST_ROLE, _admin);

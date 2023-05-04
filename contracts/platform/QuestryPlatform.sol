@@ -204,6 +204,7 @@ contract QuestryPlatform is AccessControl, ReentrancyGuard {
     for (uint256 i = 0; i < pools.length; i++) {
       pools[i].incrementTerm(signer);
     }
+  }
     
   /**
    * @dev Updates the nonce of pjmanager.

@@ -6,21 +6,22 @@ import {IAccessControl} from "@openzeppelin/contracts/access/IAccessControl.sol"
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 import {LibPJManager} from "../library/LibPJManager.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 
 
 
 import {console} from "hardhat/console.sol";
 
-abstract contract SignatureVerifier is ISignatureVerifier, IAccessControl {
+abstract contract SignatureVerifier is 
+  ISignatureVerifier,
+  IAccessControl,
+  EIP712
+{
   using Counters for Counters.Counter;
   Counters.Counter public Nonce;
 
   //Sigthreshold
   uint256 public Threshold;
-  
-
-  pjManager.verifySignature(_args, _AllcatorSign),
 
   /// @inheritdoc ISignatureVerifier
   function verifySignature(LibQuestryPlatform.AllocateArgs calldata _args, bytes[] calldata _signatures)
@@ -35,22 +36,22 @@ abstract contract SignatureVerifier is ISignatureVerifier, IAccessControl {
     _verifySignaturesForAllocation(
       _args,
       _signatures
-    )
+    );
     return true;
   }
 
   function _verifySignaturesForAllocation(
     LibQuestryPlatform.AllocateArgs calldata _args,
-    bytes[] calldata _signatures,
+    bytes[] calldata _signatures
   ) private view {
     uint256 verifycount = 0;
-    for(uint idx= 0; i < _signatures.length;idx++){
+    for(uint idx= 0; idx < _signatures.length;idx++){
       // Prepares ERC712 message hash of Allcator
       address recoverdAddress = _domainSeparatorV4()
         .toTypedDataHash(LibQuestryPlatform._hashAllocate(_args))
         .recover(_signatures[idx]);
       // EM: invalid Allocate signer
-      if(IAccessControl(asddress(this)).hasroll(LibPJManager.PJ_VERIFY_SIGNER_ROLE,recoverdAddress)){
+      if(IAccessControl(address(this)).hasroll(LibPJManager.PJ_VERIFY_SIGNER_ROLE,recoverdAddress)){
         verifycount += 1;
       }
     }
