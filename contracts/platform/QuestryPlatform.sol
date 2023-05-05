@@ -33,7 +33,6 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     address _daoTreasuryPool
   ) public initializer {
     __Ownable_init();
-    __ReentrancyGuard_init();
     __UUPSUpgradeable_init();
 
     contributionCalculator = _contributionCalculator;
