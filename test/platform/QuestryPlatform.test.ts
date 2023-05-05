@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 /* eslint-disable node/no-missing-import */
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -13,10 +13,9 @@ import {
   RandomERC20__factory,
   SBT,
   SBT__factory,
-  QuestryPlatform,
   PJManager__factory,
-  QuestryPlatform__factory,
   PJManager,
+  QuestryPlatform,
 } from "../../typechain";
 import { TestUtils, AllocationShare } from "../testUtils";
 
@@ -117,10 +116,14 @@ describe("QuestryPlatform", function () {
     cCalculator = await new ContributionCalculator__factory(deployer).deploy();
     await cCalculator.deployed();
 
-    cQuestryPlatform = await new QuestryPlatform__factory(deployer).deploy(
-      cCalculator.address,
-      daoTreasuryPool.address
+    const cfQuestryPlatform = await ethers.getContractFactory(
+      "QuestryPlatform"
     );
+    cQuestryPlatform = (await upgrades.deployProxy(
+      cfQuestryPlatform,
+      [cCalculator.address, daoTreasuryPool.address],
+      { kind: "uups" }
+    )) as QuestryPlatform;
     await cQuestryPlatform.deployed();
 
     cContributionPool = await new ContributionPool__factory(deployer).deploy(
