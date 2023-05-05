@@ -21,6 +21,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   IPJManager public immutable pjManager;
   string private _baseTokenURI;
   address[] private _boardingMembers;
+  mapping(address => bool) private _isBoardingMember;
   Counters.Counter private _tokenIdTracker;
 
   /**
@@ -150,7 +151,11 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
       "SBT: must have minter role to mint"
     );
 
-    _boardingMembers.push(to);
+    if (!_isBoardingMember[to]) {
+      _boardingMembers.push(to);
+      _isBoardingMember[to] = true;
+    }
+
     uint256 tokenId = _tokenIdTracker.current();
     _mint(to, tokenId);
     _tokenIdTracker.increment();
@@ -171,6 +176,21 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
       hasRole(BURNER_ROLE, _msgSender()),
       "SBT: must have burner role to burn"
     );
+
+    address owner = ownerOf(tokenId);
+    if (balanceOf(owner) == 1) {
+      _isBoardingMember[owner] = false;
+      // XXX: too much gas cost especially when tokens bulk burned
+      uint256 newIdx = 0;
+      for (uint256 i = 0; i < _boardingMembers.length; i++) {
+        if (_boardingMembers[i] != owner) {
+          _boardingMembers[newIdx++] = _boardingMembers[i];
+        }
+      }
+      require (newIdx + 1 == _boardingMembers.length, "SBT: cannot remove boarding member");
+      _boardingMembers.pop();
+    }
+
     _burn(tokenId);
   }
 
@@ -189,6 +209,14 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   /// @inheritdoc ISBT
   function boardingMembersExist() external view returns (bool) {
     return _boardingMembers.length > 0;
+  }
+
+  /**
+   * @dev Returns if `account` has the token, in other words, it is a boarding member.
+   * Note that only one token can be minted from the same SBT contract per account.
+   */
+  function isBoardingMember(address account) external view returns (bool) {
+    return _isBoardingMember[account];
   }
 
   /// @dev Overridden for SBT
