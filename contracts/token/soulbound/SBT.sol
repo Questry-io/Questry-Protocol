@@ -120,7 +120,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
    * @dev Returns Questry Protocol DID spec's schema.
    */
   function didSchema() public pure returns (string memory) {
-    return "did:kaname";
+    return "did:questry";
   }
 
   /**
