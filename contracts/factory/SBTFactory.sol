@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+import {IPJManagerFactory} from "../interface/factory/IPJManagerFactory.sol";
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {SBT, AccessControl} from "../token/soulbound/SBT.sol";
 
@@ -18,10 +19,14 @@ contract SBTFactory is AccessControl {
   /// @dev Mapping from name and symbol to basic ERC721 address.
   mapping(string => mapping(string => address)) public getSBTaddress;
 
+  IPJManagerFactory public pjManagerFactory;
+
   /// @dev Trusted forwarder for SBT contracts to be created.
   address private _trustedForwarder;
 
-  constructor(address admin) {
+  constructor(IPJManagerFactory _pjManagerFactory, address admin) {
+    pjManagerFactory = _pjManagerFactory;
+
     _setupRole(DEFAULT_ADMIN_ROLE, admin);
     _setupRole(SET_FORWARDER_ROLE, admin);
   }
@@ -39,6 +44,10 @@ contract SBTFactory is AccessControl {
     require(
       getSBTaddress[_name][_symbol] == address(0),
       "SBTFactory: must use another name and symbol"
+    );
+    require(
+      pjManagerFactory.getPJManagerAdmin(_pjManager) == _msgSender(),
+      "SBTFactory: only PJManager admin can create SBT"
     );
 
     bytes32 _salt = keccak256(abi.encodePacked(_name, _symbol));
