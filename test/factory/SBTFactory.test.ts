@@ -31,6 +31,7 @@ describe("SBTFactory", function () {
       "PJManagerFactory"
     );
     cPJManagerFactory = await cfPJManagerFactory.deploy(
+      ethers.constants.AddressZero,
       ethers.constants.AddressZero
     );
     await cPJManagerFactory.deployed();
