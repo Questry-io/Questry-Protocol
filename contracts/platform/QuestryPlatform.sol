@@ -38,10 +38,11 @@ contract QuestryPlatform is AccessControl, ReentrancyGuard {
     nonReentrant
   {
     IPJManager pjManager = _args.pjManager;
-    require(
-      pjManager.verifySignature(_args, _AllcatorSigns),
-      "QuestryPlatform: signature verification failed"
-    );
+    // Step1 : Parameters and signatures checks
+    // Check parameters
+    LibQuestryPlatform._checkParameterForAllocation(_args);
+    //EIP712 verify signature
+    pjManager.verifySignature(_args, _AllcatorSigns);
 
     LibPJManager.AllocationShare[] memory businessOwners = pjManager
       .getBusinessOwners();

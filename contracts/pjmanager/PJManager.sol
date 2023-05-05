@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {LibPJManager} from "../library/LibPJManager.sol";
+import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
 import {PJTreasuryPool} from "./PJTreasuryPool.sol";
 import {SignatureVerifier} from "./SignatureVerifier.sol";
@@ -17,6 +18,7 @@ import {console} from "hardhat/console.sol";
 contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
   /// @dev the basis points proportion of total allocation for boarding members
   uint32 public immutable boardingMembersProportion;
+  uint32 private _defaultThreshold = 1; 
   address public immutable admin;
   LibPJManager.AllocationShare[] public businessOwners;
 
@@ -36,7 +38,7 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
     boardingMembersProportion = _boardingMembersProportion;
 
     //set signature threshold
-    _setThreshold(1);
+    _setThreshold(_defaultThreshold);
 
     _setupRole(LibPJManager.PJ_ADMIN_ROLE, _admin);
     _setupRole(LibPJManager.PJ_MANAGEMENT_ROLE, _admin);
@@ -61,7 +63,7 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
   function addBusinessOwner(
     LibPJManager.AllocationShare calldata _businessOwner
   ) external onlyRole(LibPJManager.PJ_MANAGEMENT_ROLE) {
-    for (uint256 i = 0; i < businessOwners.length; i++) {
+    for (uint8 i = 0; i < businessOwners.length; i++) {
       require(
         businessOwners[i].recipient != _businessOwner.recipient,
         "PJManager: businessOwner already exists"
@@ -123,6 +125,33 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
       boardingMembersProportion
     );
     emit UpdateBusinessOwner(_businessOwner.recipient, _businessOwner.share);
+  }
+
+  // --------------------------------------------------
+  // Signature Verifier Function
+  // --------------------------------------------------
+
+  /// @inheritdoc IPJManager
+  function verifySignature(
+    LibQuestryPlatform.AllocateArgs calldata _args, 
+    bytes[] calldata _signatures
+  )
+    public
+    view
+    returns (bool)
+  {
+    uint256 _verifyCount = 0; 
+    for(uint256 idx = 0;idx < _signatures.length ;idx++){
+      // Verify signatures
+      address recoverAddress = _verifySignaturesForAllocation(
+        _args,
+        _signatures[idx]
+      );
+      if(hasRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE,recoverAddress)){
+        _verifyCount++;
+      }
+    }
+    require(_verifyCount >= getThreshold(),"PJManager: fall short of threshold for verify");  
   }
 
   //PJManager Signature verifier Nonce Increment function
