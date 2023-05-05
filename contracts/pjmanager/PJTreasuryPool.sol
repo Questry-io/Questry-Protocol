@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {LibPJManager} from "../library/LibPJManager.sol";
@@ -14,7 +15,7 @@ import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
  * @title PJTreasuryPool
  * @dev This is abstract contract that stores treasury and controls token whitelists.
  */
-abstract contract PJTreasuryPool is IPJManager, AccessControl {
+abstract contract PJTreasuryPool is IPJManager, AccessControl, ReentrancyGuard {
   QuestryPlatform public immutable questryPlatform;
 
   IERC20[] public tokenWhitelists;
@@ -39,7 +40,7 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl {
     IERC20 paymentToken,
     address receiver,
     uint256 amount
-  ) external onlyRole(LibPJManager.PJ_WITHDRAW_ROLE) {
+  ) external onlyRole(LibPJManager.PJ_WITHDRAW_ROLE) nonReentrant {
     require(
       paymentMode == LibQuestryPlatform.NATIVE_PAYMENT_MODE ||
         _isTokenWhitelisted[paymentToken],
@@ -147,7 +148,6 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl {
   function isWhitelisted(IERC20 token) external view returns (bool) {
     return _isTokenWhitelisted[token];
   }
-
 
   /// @inheritdoc IPJManager
   function getTotalBalance(bytes4 paymentMode, IERC20 paymentToken)
