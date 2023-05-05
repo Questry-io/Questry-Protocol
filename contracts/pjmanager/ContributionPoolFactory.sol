@@ -31,27 +31,27 @@ contract ContributionPoolFactory {
    * Emits a {PoolCreated} event
    */
   function createPool(
-    IContributionPool.MutationMode mode,
-    address contributionUpdater,
-    address incrementTermWhitelistAdmin,
-    address admin
+    IContributionPool.MutationMode _mode,
+    address _contributionUpdater,
+    address _incrementTermWhitelistAdmin,
+    address _admin
   )
     external
     returns (IContributionPool pool)
   {
-    pool = new ContributionPool(questryPlatform, mode, contributionUpdater, incrementTermWhitelistAdmin, admin);
+    pool = new ContributionPool(questryPlatform, _mode, _contributionUpdater, _incrementTermWhitelistAdmin, _admin);
     poolsByBusinessOwners[msg.sender].push(pool);
-    emit PoolCreated(msg.sender, address(pool), mode, contributionUpdater, admin);
+    emit PoolCreated(msg.sender, address(pool), _mode, _contributionUpdater, _admin);
   }
 
   /**
    * @dev Returns ContributionPool contracts which `businessOwner` created.
    */
-  function getPools(address businessOwner)
+  function getPools(address _businessOwner)
     external
     view
     returns (IContributionPool[] memory)
   {
-    return poolsByBusinessOwners[businessOwner];
+    return poolsByBusinessOwners[_businessOwner];
   }
 }

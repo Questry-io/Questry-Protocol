@@ -23,8 +23,8 @@ contract TokenControllProxy is
 {
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor(
-    address trustedForwarder
-  ) ERC2771ContextUpgradeable(trustedForwarder) {
+    address _trustedForwarder
+  ) ERC2771ContextUpgradeable(_trustedForwarder) {
     _disableInitializers();
   }
 

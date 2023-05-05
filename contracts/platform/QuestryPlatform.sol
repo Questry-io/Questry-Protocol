@@ -20,8 +20,8 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
   // Just a temp variable to be used as local function variable
   // as mapping declaration is not supported inside function
-  mapping(address => uint256) private _tempPayoutAmount;
-  address[] private _tempPayoutAddress;
+  mapping(address => uint256) private tempPayoutAmount;
+  address[] private tempPayoutAddress;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -40,7 +40,7 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   }
 
   /// @inheritdoc UUPSUpgradeable
-  function _authorizeUpgrade(address newImplementation)
+  function _authorizeUpgrade(address _newImplementation)
     internal
     override
     onlyOwner
@@ -110,28 +110,28 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   /**
    * @dev Simulate the DAO Treasury transfer(Not actual transfer)
    */
-  function _simulateDAOTreasuryTransfer(uint256 amount) private {
-    _registerPayout(daoTreasuryPool, amount);
+  function _simulateDAOTreasuryTransfer(uint256 _amount) private {
+    _registerPayout(daoTreasuryPool, _amount);
   }
 
   /**
    * @dev Simulate the boarding members transfer(Not actual transfer)
    */
   function _simulateBoardingMembersTransfer(
-    ISBT board,
-    LibQuestryPlatform.CalculateDispatchArgs memory calculateArgs,
-    uint256 totalAmount
+    ISBT _board,
+    LibQuestryPlatform.CalculateDispatchArgs memory _calculateArgs,
+    uint256 _totalAmount
   ) private returns (uint256) {
-    address[] memory members = board.boardingMembers();
+    address[] memory members = _board.getBoardingMembers();
     LibQuestryPlatform.SharesResult memory sharesResult = contributionCalculator
-      .calculateDispatch(members, calculateArgs);
+      .calculateDispatch(members, _calculateArgs);
     if (sharesResult.totalShare == 0) {
       return 0;
     }
 
     uint256 actualTotalAmount = 0;
     for (uint256 i = 0; i < members.length; i++) {
-      uint256 amount = (totalAmount * sharesResult.shares[i]) /
+      uint256 amount = (_totalAmount * sharesResult.shares[i]) /
         sharesResult.totalShare;
       actualTotalAmount += amount;
       _registerPayout(members[i], amount);
@@ -144,41 +144,41 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    * @dev Simulate the business owners transfer(Not actual transfer)
    */
   function _simulateBusinessOwnersTransfer(
-    LibPJManager.AllocationShare[] memory businessOwners,
-    uint256 totalAmount
+    LibPJManager.AllocationShare[] memory _businessOwners,
+    uint256 _totalAmount
   ) private returns (uint256) {
     uint120 totalShare = 0;
-    for (uint256 i = 0; i < businessOwners.length; i++) {
-      totalShare += businessOwners[i].share;
+    for (uint256 i = 0; i < _businessOwners.length; i++) {
+      totalShare += _businessOwners[i].share;
     }
     if (totalShare == 0) {
       return 0;
     }
 
     uint256 actualTotalAmount = 0;
-    for (uint256 i = 0; i < businessOwners.length; i++) {
-      uint256 amount = (totalAmount * businessOwners[i].share) / totalShare;
+    for (uint256 i = 0; i < _businessOwners.length; i++) {
+      uint256 amount = (_totalAmount * _businessOwners[i].share) / totalShare;
       actualTotalAmount += amount;
-      _registerPayout(businessOwners[i].recipient, amount);
+      _registerPayout(_businessOwners[i].recipient, amount);
     }
 
     return actualTotalAmount;
   }
 
   /**
-   * @dev Payout to all receivers using _tempPayoutAddress and _tempPayoutAmount
+   * @dev Payout to all receivers using tempPayoutAddress and tempPayoutAmount
    */
   function _payout(
-    IPJManager pjManager,
-    bytes4 paymentMode,
-    IERC20 paymentToken
+    IPJManager _pjManager,
+    bytes4 _paymentMode,
+    IERC20 _paymentToken
   ) private {
-    for (uint256 i = 0; i < _tempPayoutAddress.length; i++) {
-      address payable receiver = payable(_tempPayoutAddress[i]);
-      uint256 amount = _tempPayoutAmount[receiver];
-      pjManager.withdrawForAllocation(
-        paymentMode,
-        paymentToken,
+    for (uint256 i = 0; i < tempPayoutAddress.length; i++) {
+      address payable receiver = payable(tempPayoutAddress[i]);
+      uint256 amount = tempPayoutAmount[receiver];
+      _pjManager.withdrawForAllocation(
+        _paymentMode,
+        _paymentToken,
         receiver,
         amount
       );
@@ -193,10 +193,10 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    */
   function _registerPayout(address _receiver, uint256 _amount) private {
     if (_amount > 0) {
-      if (_tempPayoutAmount[_receiver] == 0) {
-        _tempPayoutAddress.push(_receiver);
+      if (tempPayoutAmount[_receiver] == 0) {
+        tempPayoutAddress.push(_receiver);
       }
-      _tempPayoutAmount[_receiver] += _amount;
+      tempPayoutAmount[_receiver] += _amount;
     }
   }
 
@@ -205,29 +205,29 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    * It is used for collective payment to pay one address only once
    */
   function _resetPayoutTemp() private {
-    for (uint256 i = 0; i < _tempPayoutAddress.length; i++) {
-      delete _tempPayoutAmount[_tempPayoutAddress[i]];
+    for (uint256 i = 0; i < tempPayoutAddress.length; i++) {
+      delete tempPayoutAmount[tempPayoutAddress[i]];
     }
-    delete _tempPayoutAddress;
+    delete tempPayoutAddress;
   }
 
   /**
    * @dev Updates the terms of contribution pools.
    */
   function _updatesTermsOfContributionPools(
-    IContributionPool[] calldata pools,
-    address signer
+    IContributionPool[] calldata _pools,
+    address _signer
   ) private {
-    for (uint256 i = 0; i < pools.length; i++) {
-      pools[i].incrementTerm(signer);
+    for (uint256 i = 0; i < _pools.length; i++) {
+      _pools[i].incrementTerm(_signer);
     }
   }
 
   /**
    * @dev Returns protocol fees deducted from `totalBalance`.
    */
-  function _protocolFee(uint256 totalBalance) private view returns (uint256) {
-    return (totalBalance * PROTOCOL_FEE_RATE) / 10000;
+  function _protocolFee(uint256 _totalBalance) private view returns (uint256) {
+    return (_totalBalance * PROTOCOL_FEE_RATE) / 10000;
   }
 
   /**
@@ -236,9 +236,9 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    * The `revenue` is the total balance with the fees deducted.
    */
   function _boardingMembersBalance(
-    uint256 revenue,
-    uint32 boardingMembersProportion
+    uint256 _revenue,
+    uint32 _boardingMembersProportion
   ) private pure returns (uint256) {
-    return (revenue * boardingMembersProportion) / 10000;
+    return (_revenue * _boardingMembersProportion) / 10000;
   }
 }

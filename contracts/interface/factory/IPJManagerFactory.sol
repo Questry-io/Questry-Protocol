@@ -5,7 +5,7 @@ import {IPJManager} from "../pjmanager/IPJManager.sol";
 
 interface IPJManagerFactory {
   /**
-   * @dev Returns the admin of `pjManager`.
+   * @dev Returns the admin of `_pjManager`.
    */
   function getPJManagerAdmin(IPJManager pjManager) external view returns (address);
 }
