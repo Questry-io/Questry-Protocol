@@ -19,11 +19,11 @@ async function main() {
     throw new Error("Please set admin");
   }
 
-  const SBTFactory = await hre.ethers.getContractFactory("SBTFactory");
-  const sbtFactory = await SBTFactory.deploy(admin);
-  await sbtFactory.deployed();
+  const BoardFactory = await hre.ethers.getContractFactory("BoardFactory");
+  const boardFactory = await BoardFactory.deploy(admin);
+  await boardFactory.deployed();
 
-  console.log("SBTFactory deployed to:", sbtFactory.address);
+  console.log("BoardFactory deployed to:", boardFactory.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

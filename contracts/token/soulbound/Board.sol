@@ -6,10 +6,10 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import {ISBT} from "../../interface/token/ISBT.sol";
+import {IBoard} from "../../interface/token/IBoard.sol";
 import {IPJManager} from "../../interface/pjmanager/IPJManager.sol";
 
-contract Board is ISBT, ERC721, AccessControl, ERC2771Context {
+contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
   using Counters for Counters.Counter;
   using Strings for uint256;
 
@@ -144,7 +144,7 @@ contract Board is ISBT, ERC721, AccessControl, ERC2771Context {
     return string(abi.encodePacked("eip155:", chainId, ":", hexMember));
   }
 
-  /// @inheritdoc ISBT
+  /// @inheritdoc IBoard
   function mint(address _to) public {
     require(
       hasRole(MINTER_ROLE, _msgSender()),
@@ -163,14 +163,14 @@ contract Board is ISBT, ERC721, AccessControl, ERC2771Context {
     IPJManager(pjManager).registerBoard(address(this), tokenId);
   }
 
-  /// @inheritdoc ISBT
+  /// @inheritdoc IBoard
   function bulkMint(address[] calldata _tos) public {
     for (uint256 i = 0; i < _tos.length; i++) {
       mint(_tos[i]);
     }
   }
 
-  /// @inheritdoc ISBT
+  /// @inheritdoc IBoard
   function burn(uint256 _tokenId) public {
     require(
       hasRole(BURNER_ROLE, _msgSender()),
@@ -194,19 +194,19 @@ contract Board is ISBT, ERC721, AccessControl, ERC2771Context {
     _burn(_tokenId);
   }
 
-  /// @inheritdoc ISBT
+  /// @inheritdoc IBoard
   function bulkBurn(uint256[] calldata _tokenIds) public {
     for (uint256 i = 0; i < _tokenIds.length; i++) {
       burn(_tokenIds[i]);
     }
   }
 
-  /// @inheritdoc ISBT
+  /// @inheritdoc IBoard
   function getBoardingMembers() external view returns (address[] memory) {
     return boardingMembers;
   }
 
-  /// @inheritdoc ISBT
+  /// @inheritdoc IBoard
   function boardingMembersExist() external view returns (bool) {
     return boardingMembers.length > 0;
   }

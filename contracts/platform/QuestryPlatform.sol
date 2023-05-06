@@ -10,7 +10,7 @@ import {IContributionCalculator} from "../interface/platform/IContributionCalcul
 import {LibPJManager} from "../library/LibPJManager.sol";
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
-import {ISBT} from "../interface/token/ISBT.sol";
+import {IBoard} from "../interface/token/IBoard.sol";
 
 contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   uint32 public constant PROTOCOL_FEE_RATE = 300;
@@ -118,7 +118,7 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    * @dev Simulate the boarding members transfer(Not actual transfer)
    */
   function _simulateBoardingMembersTransfer(
-    ISBT _board,
+    IBoard _board,
     LibQuestryPlatform.CalculateDispatchArgs memory _calculateArgs,
     uint256 _totalAmount
   ) private returns (uint256) {

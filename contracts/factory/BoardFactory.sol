@@ -5,8 +5,8 @@ import {IPJManagerFactory} from "../interface/factory/IPJManagerFactory.sol";
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {Board, AccessControl} from "../token/soulbound/Board.sol";
 
-contract SBTFactory is AccessControl {
-  event SBTCreated(
+contract BoardFactory is AccessControl {
+  event BoardCreated(
     address contractAddress,
     string name,
     string symbol,
@@ -17,7 +17,7 @@ contract SBTFactory is AccessControl {
   bytes32 public constant SET_FORWARDER_ROLE = keccak256("SET_FORWARDER_ROLE");
 
   /// @dev Mapping from name and symbol to basic ERC721 address.
-  mapping(string => mapping(string => address)) public getSBTaddress;
+  mapping(string => mapping(string => address)) public getBoardAddress;
 
   IPJManagerFactory public pjManagerFactory;
 
@@ -34,7 +34,7 @@ contract SBTFactory is AccessControl {
   /**
    * @dev Create a new Board contract for `_pjManager`.
    */
-  function createSBT(
+  function createBoard(
     string calldata _name,
     string calldata _symbol,
     string memory _baseTokenURI,
@@ -42,12 +42,12 @@ contract SBTFactory is AccessControl {
     address _admin
   ) external returns (address board) {
     require(
-      getSBTaddress[_name][_symbol] == address(0),
-      "SBTFactory: must use another name and symbol"
+      getBoardAddress[_name][_symbol] == address(0),
+      "BoardFactory: must use another name and symbol"
     );
     require(
       pjManagerFactory.getPJManagerAdmin(_pjManager) == _msgSender(),
-      "SBTFactory: only PJManager admin can create Board"
+      "BoardFactory: only PJManager admin can create Board"
     );
 
     bytes32 _salt = keccak256(abi.encodePacked(_name, _symbol));
@@ -62,8 +62,8 @@ contract SBTFactory is AccessControl {
       )
     );
 
-    getSBTaddress[_name][_symbol] = board;
-    emit SBTCreated(board, _name, _symbol, address(_pjManager), _admin);
+    getBoardAddress[_name][_symbol] = board;
+    emit BoardCreated(board, _name, _symbol, address(_pjManager), _admin);
   }
 
   /**
@@ -75,16 +75,16 @@ contract SBTFactory is AccessControl {
     view
     returns (address)
   {
-    return getSBTaddress[_name][_symbol];
+    return getBoardAddress[_name][_symbol];
   }
 
   /**
-   * @dev Set `_forwarderAddress` for SBT contracts to be created.
+   * @dev Set `_forwarderAddress` for BoardAcontracts to be created.
    */
   function setChildTrustedForwarder(address _forwarderAddress) public {
     require(
       hasRole(SET_FORWARDER_ROLE, _msgSender()),
-      "SBTFactory: must have SET_FORWARDER_ROLE"
+      "BoardFactory: must have SET_FORWARDER_ROLE"
     );
     _setChildTrustedForwarder(_forwarderAddress);
   }
