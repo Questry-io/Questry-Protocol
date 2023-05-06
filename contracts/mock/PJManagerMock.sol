@@ -101,11 +101,11 @@ contract PJManagerMock is IPJManager {
     revert("Not implemented.");
   }
 
-  function verifySignature(LibQuestryPlatform.Signature calldata)
+  /*function verifySignature(LibQuestryPlatform.Signature calldata)
     public
     view
     returns (bool)
   {
     revert("Not implemented.");
-  }
+  }*/
 }

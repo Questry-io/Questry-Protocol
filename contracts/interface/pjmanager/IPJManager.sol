@@ -3,6 +3,7 @@
 pragma solidity ^0.8.17;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {LibQuestryPlatform} from "../../library/LibQuestryPlatform.sol";
 import {LibPJManager} from "../../library/LibPJManager.sol";
 import {ISignatureVerifier} from "./ISignatureVerifier.sol";
 
@@ -37,6 +38,22 @@ interface IPJManager is ISignatureVerifier {
     external
     view
     returns (uint256);
+  
+  /**
+   * @dev Increment nonce for signature.
+   */
+  function IncrementNonce() external;
+
+  /**
+   * @dev verify signature.
+   */
+  function verifySignature(
+    LibQuestryPlatform.AllocateArgs calldata _args, 
+    bytes[] calldata _signatures
+  )
+    public
+    view
+    returns (bool);
 
   /**
    * @dev Returns businessOwners.

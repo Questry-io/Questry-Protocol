@@ -49,12 +49,14 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   /**
    * @dev Allocates tokens to business owners, boarding members and DAO treasury pool.
    */
+
   function allocate(LibQuestryPlatform.AllocateArgs calldata _args) external {
     IPJManager pjManager = _args.pjManager;
-    require(
-      pjManager.verifySignature(_args.signature),
-      "QuestryPlatform: signature verification failed"
-    );
+    // Step1 : Parameters and signatures checks
+    // Check parameters
+    LibQuestryPlatform._checkParameterForAllocation(_args);
+    //EIP712 verify signature
+    pjManager.verifySignature(_args, _AllcatorSigns);
 
     LibPJManager.AllocationShare[] memory businessOwners = pjManager
       .getBusinessOwners();
@@ -97,10 +99,14 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     _resetPayoutTemp();
 
     // Step6. Update the terms of the contribution pools
+
     _updatesTermsOfContributionPools(
       _args.updateNeededPools,
       _args.signature.signer
     );
+    //Step7. Update the nonce of the pjmanager
+    _updatesNonceOfPJManager(_args.pjManager);
+
   }
 
   // --------------------------------------------------
@@ -221,6 +227,13 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     for (uint256 i = 0; i < pools.length; i++) {
       pools[i].incrementTerm(signer);
     }
+  }
+    
+  /**
+   * @dev Updates the nonce of pjmanager.
+   */
+  function _updatesNonceOfPJManager(IPJManager pjmanager) private {
+      pjmanager.IncrementNonce();
   }
 
   /**
