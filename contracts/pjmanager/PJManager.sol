@@ -15,7 +15,11 @@ import {console} from "hardhat/console.sol";
  * @title PJManager
  * @dev This is abstract contract that stores treasury and controls token whitelists.
  */
-contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
+contract PJManager is 
+  IPJManager, 
+  PJTreasuryPool, 
+  SignatureVerifier
+{
   /// @dev the basis points proportion of total allocation for boarding members
   uint32 public immutable boardingMembersProportion;
   uint32 private _defaultThreshold = 1; 
@@ -27,7 +31,9 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
     address _admin,
     uint32 _boardingMembersProportion,
     LibPJManager.AllocationShare[] memory _businessOwners
-  ) PJTreasuryPool(_questryPlatform) {
+  ) 
+    PJTreasuryPool(_questryPlatform)
+  {
     bool ownersShareExists = _initBusinessOwners(_businessOwners);
     LibPJManager._validateAllocationSettings(
       _businessOwners,
@@ -136,9 +142,7 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
     LibQuestryPlatform.AllocateArgs calldata _args, 
     bytes[] calldata _signatures
   )
-    public
-    view
-    returns (bool)
+    external
   {
     uint256 _verifyCount = 0; 
     for(uint256 idx = 0;idx < _signatures.length ;idx++){
@@ -151,22 +155,50 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
         _verifyCount++;
       }
     }
-    require(_verifyCount >= getThreshold(),"PJManager: fall short of threshold for verify");  
+    require(
+      _verifyCount >= _getThreshold(),
+      "PJManager: fall short of threshold for verify"
+    );  
   }
+  
 
   //PJManager Signature verifier Nonce Increment function
   function IncrementNonce()
     external
-    onlyRole(LibPJManager.PJ_ADMIN_ROLE) {
+    onlyRole(LibPJManager.PJ_ADMIN_ROLE) 
+  {
     _incrementNonce();
   }
 
   //Signature verify threshold setting for multisig
-  function setThreshold(uint256 _threshold)
+  function SetThreshold(uint256 _threshold)
     external
-    onlyRole(LibPJManager.PJ_ADMIN_ROLE){
-      _setThreshold(_threshold);
-    }
+    onlyRole(LibPJManager.PJ_ADMIN_ROLE)
+  {
+    _setThreshold(_threshold);
+  }
+
+  /**
+   * @dev Get PJManager signature nonce
+   */
+  function GetNonce() 
+    external
+    view 
+    returns(uint256)
+  {
+    return _getNonce();
+  }
+
+  /**
+   * @dev Get PJManager signature verify threshold
+   */
+  function GetSigThreshold() 
+    external 
+    view 
+    returns(uint256)
+  {
+    return _getThreshold();
+  }
 
   // --------------------------------------------------
   // TODO: REGISTER_BOARD_ROLE

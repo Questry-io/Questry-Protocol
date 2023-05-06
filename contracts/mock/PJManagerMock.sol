@@ -101,11 +101,48 @@ contract PJManagerMock is IPJManager {
     revert("Not implemented.");
   }
 
-  /*function verifySignature(LibQuestryPlatform.Signature calldata)
-    public
-    view
-    returns (bool)
+  function verifySignature(
+    LibQuestryPlatform.AllocateArgs calldata _args, 
+    bytes[] calldata _signatures
+  )
+    external
   {
     revert("Not implemented.");
-  }*/
+  }
+
+  //PJManager Signature verifier Nonce Increment function
+  function IncrementNonce()
+    external
+  {
+    revert("Not implemented.");
+  }
+
+  //Signature verify threshold setting for multisig
+  function setThreshold(uint256 _threshold)
+    external
+  {
+    revert("Not implemented.");
+  }
+
+  /**
+   * @dev Get PJManager signature nonce
+   */
+  function GetNonce() 
+    external
+    view 
+    returns(uint256)
+  {
+    revert("Not implemented.");
+  }
+
+  /**
+   * @dev Get PJManager signature verify threshold
+   */
+  function GetSigThreshold() 
+    external 
+    view 
+    returns(uint256)
+  {
+    revert("Not implemented.");
+  }
 }

@@ -50,7 +50,9 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    * @dev Allocates tokens to business owners, boarding members and DAO treasury pool.
    */
 
-  function allocate(LibQuestryPlatform.AllocateArgs calldata _args) external {
+  function allocate(LibQuestryPlatform.AllocateArgs calldata _args, bytes[] calldata _AllcatorSigns)
+    external
+  {
     IPJManager pjManager = _args.pjManager;
     // Step1 : Parameters and signatures checks
     // Check parameters
@@ -99,10 +101,9 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     _resetPayoutTemp();
 
     // Step6. Update the terms of the contribution pools
-
     _updatesTermsOfContributionPools(
       _args.updateNeededPools,
-      _args.signature.signer
+      _args.ContributePoolOwner
     );
     //Step7. Update the nonce of the pjmanager
     _updatesNonceOfPJManager(_args.pjManager);
@@ -222,10 +223,10 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    */
   function _updatesTermsOfContributionPools(
     IContributionPool[] calldata pools,
-    address signer
+    address[] calldata poolowners
   ) private {
     for (uint256 i = 0; i < pools.length; i++) {
-      pools[i].incrementTerm(signer);
+      pools[i].incrementTerm(poolowners[i]);
     }
   }
     

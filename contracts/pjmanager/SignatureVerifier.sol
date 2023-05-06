@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {ISignatureVerifier} from "../interface/pjmanager/ISignatureVerifier.sol";
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
+import {EIP712,ECDSA} from "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 
 import {console} from "hardhat/console.sol";
 
 abstract contract SignatureVerifier is 
-  ISignatureVerifier,
   EIP712
 {
+  constructor() EIP712("QUESTRY PLATFORM","1.0") {}
+  using ECDSA for bytes32;
   using Counters for Counters.Counter;
   //PJ Manage sig nonce
   Counters.Counter public Nonce;
@@ -30,14 +30,18 @@ abstract contract SignatureVerifier is
     return recoverdAddress;
   }
 
-  /// @inheritdoc SignatureVerifier
+  /**
+   * @dev nonce increment
+   */
   function _incrementNonce()
     internal
   {
     Nonce.increment();
   }
 
-  /// @inheritdoc SignatureVerifier
+  /**
+   * @dev update signature threshold
+   */
   function _setThreshold(uint256 _threshold)
     internal
   {
@@ -47,8 +51,8 @@ abstract contract SignatureVerifier is
   /**
    * @dev Signature verify nonce view
    */
-  function getNonce() 
-    public 
+  function _getNonce() 
+    internal
     view 
     returns(uint256)
   {
@@ -58,8 +62,8 @@ abstract contract SignatureVerifier is
   /**
    * @dev Signature verify threshold view
    */
-  function getThreshold() 
-    public 
+  function _getThreshold() 
+    internal 
     view 
     returns(uint256)
   {

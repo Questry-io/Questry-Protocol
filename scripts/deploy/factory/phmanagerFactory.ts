@@ -12,13 +12,7 @@ async function main() {
   // If this script is run directly using `node` you may want to call compile
   // manually to make sure everything is compiled
   await hre.run("compile");
-
-  // We get the contract to deploy
-  const SBIToken = await hre.ethers.getContractFactory("SBIToken");
-  const dtxSBIToken = await SBIToken.deploy();
-  await dtxSBIToken.deployed();
-
-  console.log("SBIToken deployed to:", dtxSBIToken.address);
+  console.log("todo: pjmanagerfactory deploy script");
 }
 
 // We recommend this pattern to be able to use async/await everywhere

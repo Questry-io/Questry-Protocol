@@ -23,6 +23,7 @@ library LibQuestryPlatform {
     ISBT board; // allocation target board which has contributions
     CalculateDispatchArgs calculateArgs; // allocation calculation args
     IContributionPool[] updateNeededPools; // term update needed pools
+    address[] ContributePoolOwner; //contribute pool owners
     uint256 pjnonce;
   }
 
@@ -51,9 +52,9 @@ library LibQuestryPlatform {
   }
   
   // ---- EIP712 ----
-  bytes32 private constant Allocate_TYPEHASH =
+  bytes32 private constant AllOCATE_TYPEHASH =
     keccak256(
-      "AllocateArgs(address pjManager,bytes4 paymentMode,address paymentToken,address board,CalculateDispatchArgs calculateArgs,address[] updateNeededPools,uint256 pjnonce)CalculateDispatchArgs(bytes4 algorithm,bytes args)"
+      "AllocateArgs(address pjManager,bytes4 paymentMode,address paymentToken,address board,CalculateDispatchArgs calculateArgs,address[] updateNeededPools,address[] ContributePoolOwner,uint256 pjnonce)CalculateDispatchArgs(bytes4 algorithm,bytes args)"
     );
   
   bytes32 private constant CALCURATEDISPATCHARGS_TYPEHASH =
@@ -70,12 +71,14 @@ library LibQuestryPlatform {
     return
       keccak256(
         abi.encode(
-          Allocate_TYPEHASH,
+          AllOCATE_TYPEHASH,
           _allocateargs.pjManager,
           _allocateargs.paymentMode,
+          _allocateargs.paymentToken,
           _allocateargs.board,
           _hashCalculateDispatchArgs(_allocateargs.calculateArgs),
           _allocateargs.updateNeededPools,
+          _allocateargs.ContributePoolOwner,
           _allocateargs.pjnonce
         )
       );
@@ -92,7 +95,7 @@ library LibQuestryPlatform {
         abi.encode(
           CALCURATEDISPATCHARGS_TYPEHASH,
           _calculatedispatchargs.algorithm,
-          _calculatedispatchargs.args
+          keccak256(_calculatedispatchargs.args)
         )
       );
   }
@@ -102,7 +105,7 @@ library LibQuestryPlatform {
    */
   function _checkParameterForAllocation(
     AllocateArgs calldata _allocateargs
-  ) private {
+  ) internal {
     
     //pjmaneger validation
     require(
@@ -135,31 +138,33 @@ library LibQuestryPlatform {
       address(_allocateargs.board) != address(0),
       "LibQuestryPlatform: Board address is invalid"
     );
-    //calc algolithm validation
-    require(
-      bytes4(_allocateargs.calculateArgs.algorithm) != bytes4(0),
-      "LibQuestryPlatform: calculation algorithm is invalid"
-    );
 
-    //calc algolithm validation
+    /**
+     * @dev : Calcurator args is validation skip
+     */
+  
+    //calcuration pool element check &ContributePool Owner check
     require(
-      bytes(_allocateargs.calculateArgs.args) != bytes(0),
-      "LibQuestryPlatform: calculation args is invalid"
+      _allocateargs.updateNeededPools.length > 0,
+      'LibQuestryPlatform: contribution pool is zero'
     );
-    
-    //calcuration pool element check
-    require(_allocateargs.updateNeededPools.length > 0,'LibQuestryPlatform: contribution pool is zero');
+    require(
+      _allocateargs.updateNeededPools.length == _allocateargs.ContributePoolOwner.length,
+      "LibQuestryPlatform: array element is differnt"
+    );
     //Contributioonpool check
     for(uint idx = 0;idx < _allocateargs.updateNeededPools.length;idx++){
       require(
         address(_allocateargs.updateNeededPools[idx]) != address(0),
         "LibQuestryPlatform: contribution pool address is invalid"
       );
+      require(
+        address(_allocateargs.ContributePoolOwner[idx]) != address(0),
+        "LibQuestryPlatform: contribution pool owner address is invalid"
+      );
     }
-
-    require(_allocateargs.pjManager.getNonce() == _allocateargs.pjnonce,"LibQuestryPlatform: message nonce is different from on-chain nonce");
+    require(_allocateargs.pjManager.GetNonce() == _allocateargs.pjnonce,"LibQuestryPlatform: message nonce is different from on-chain nonce");
     
   }
-    
 
 }
