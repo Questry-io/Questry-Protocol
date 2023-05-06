@@ -51,7 +51,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
 
   /**
    * @dev Resolve metadata from Questry Protocol DID for the board which tokenId is `tokenId`.
-   * Example: https://example.kaname.io/did:kaname:
+   * Example: https://example.questry.io/did:questry:
    * DID spec: https://github.com/KanameProtocol/did-kaname-spec
    * See {IERC721Metadata-tokenURI}
    */
