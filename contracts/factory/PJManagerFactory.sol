@@ -26,14 +26,14 @@ contract PJManagerFactory is IPJManagerFactory, AccessControl, ERC2771Context {
    * @dev Create a new PJManager contract.
    */
   function createPJManager(
-    uint32 boardingMembersProportion,
-    LibPJManager.AllocationShare[] memory businessOwners
+    uint32 _boardingMembersProportion,
+    LibPJManager.AllocationShare[] memory _businessOwners
   ) external returns (PJManager pjManager) {
     pjManager = new PJManager(
       questryPlatform,
       _msgSender(),
-      boardingMembersProportion,
-      businessOwners
+      _boardingMembersProportion,
+      _businessOwners
     );
     pjManagersByAdmin[_msgSender()].push(pjManager);
     adminByPJManager[pjManager] = _msgSender();
@@ -41,23 +41,23 @@ contract PJManagerFactory is IPJManagerFactory, AccessControl, ERC2771Context {
   }
 
   /// @inheritdoc IPJManagerFactory
-  function getPJManagerAdmin(IPJManager pjManager)
+  function getPJManagerAdmin(IPJManager _pjManager)
     external
     view
     returns (address)
   {
-    return adminByPJManager[pjManager];
+    return adminByPJManager[_pjManager];
   }
 
   /**
    * @dev Returns PJManagers created by a business owner.
    */
-  function getPJManagers(address businessOwner)
+  function getPJManagers(address _businessOwner)
     external
     view
     returns (IPJManager[] memory)
   {
-    return pjManagersByAdmin[businessOwner];
+    return pjManagersByAdmin[_businessOwner];
   }
 
   /**

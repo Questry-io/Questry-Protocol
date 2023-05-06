@@ -31,21 +31,21 @@ contract ContributionCalculator is
   }
 
   /// @inheritdoc UUPSUpgradeable
-  function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+  function _authorizeUpgrade(address _newImplementation) internal override onlyOwner {}
 
   /// @inheritdoc IContributionCalculator
   function calculateDispatch(
-    address[] memory members,
-    LibQuestryPlatform.CalculateDispatchArgs memory calculateArgs
+    address[] memory _members,
+    LibQuestryPlatform.CalculateDispatchArgs memory _calculateArgs
   )
     external
     view
     returns (LibQuestryPlatform.SharesResult memory result)
   {
-    if (calculateArgs.algorithm == LINEAR_ALGORITHM) {
+    if (_calculateArgs.algorithm == LINEAR_ALGORITHM) {
       result = calculateSharesWithLinear(
-        members,
-        abi.decode(calculateArgs.args, (LibQuestryPlatform.SharesWithLinearArgs))
+        _members,
+        abi.decode(_calculateArgs.args, (LibQuestryPlatform.SharesWithLinearArgs))
       );
     } else {
       revert ("Calculator: unknown algorithm");
@@ -54,19 +54,19 @@ contract ContributionCalculator is
 
   /// @inheritdoc IContributionCalculator
   function calculateSharesWithLinear(
-    address[] memory members,
-    LibQuestryPlatform.SharesWithLinearArgs memory args
+    address[] memory _members,
+    LibQuestryPlatform.SharesWithLinearArgs memory _args
   )
     public
     view
     virtual
     returns (LibQuestryPlatform.SharesResult memory result)
   {
-    result.shares = new uint120[](members.length);
-    for (uint memberIdx = 0; memberIdx < members.length; memberIdx++) {
-      for (uint poolIdx = 0; poolIdx < args.pools.length; poolIdx++) {
-        IContributionPool c = IContributionPool(args.pools[poolIdx]);
-        uint120 value = args.coefs[poolIdx] * c.getContribution(members[memberIdx]);
+    result.shares = new uint120[](_members.length);
+    for (uint memberIdx = 0; memberIdx < _members.length; memberIdx++) {
+      for (uint poolIdx = 0; poolIdx < _args.pools.length; poolIdx++) {
+        IContributionPool c = IContributionPool(_args.pools[poolIdx]);
+        uint120 value = _args.coefs[poolIdx] * c.getContribution(_members[memberIdx]);
         result.shares[memberIdx] += value;
         result.totalShare += value;
       }

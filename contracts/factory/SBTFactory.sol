@@ -24,11 +24,11 @@ contract SBTFactory is AccessControl {
   /// @dev Trusted forwarder for SBT contracts to be created.
   address private _trustedForwarder;
 
-  constructor(IPJManagerFactory _pjManagerFactory, address admin) {
+  constructor(IPJManagerFactory _pjManagerFactory, address _admin) {
     pjManagerFactory = _pjManagerFactory;
 
-    _setupRole(DEFAULT_ADMIN_ROLE, admin);
-    _setupRole(SET_FORWARDER_ROLE, admin);
+    _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+    _setupRole(SET_FORWARDER_ROLE, _admin);
   }
 
   /**
@@ -79,18 +79,18 @@ contract SBTFactory is AccessControl {
   }
 
   /**
-   * @dev Set `forwarderAddress` for SBT contracts to be created.
+   * @dev Set `_forwarderAddress` for SBT contracts to be created.
    */
-  function setChildTrustedForwarder(address forwarderAddress) public {
+  function setChildTrustedForwarder(address _forwarderAddress) public {
     require(
       hasRole(SET_FORWARDER_ROLE, _msgSender()),
       "SBTFactory: must have SET_FORWARDER_ROLE"
     );
-    _setChildTrustedForwarder(forwarderAddress);
+    _setChildTrustedForwarder(_forwarderAddress);
   }
 
-  function _setChildTrustedForwarder(address forwarderAddress) internal {
-    _trustedForwarder = forwarderAddress;
+  function _setChildTrustedForwarder(address _forwarderAddress) internal {
+    _trustedForwarder = _forwarderAddress;
   }
 
   /**

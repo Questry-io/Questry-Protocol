@@ -6,9 +6,9 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 contract NFTPartnerA is ERC721 {
   constructor() ERC721("PartnerA", "PA") {}
 
-  function mint(address to, uint256 newItemId) public returns (uint256) {
-    _mint(to, newItemId);
+  function mint(address _to, uint256 _newItemId) public returns (uint256) {
+    _mint(_to, _newItemId);
 
-    return newItemId;
+    return _newItemId;
   }
 }
