@@ -93,7 +93,13 @@ describe("BoardFactory", function () {
       const board = await cBoardFactory.getContractAddress(name, symbol);
       expect(tx)
         .to.emit(cBoardFactory, "BoardCreated")
-        .withArgs(board, name, symbol, pjManagerAddress, pjManagerAdmin.address);
+        .withArgs(
+          board,
+          name,
+          symbol,
+          pjManagerAddress,
+          pjManagerAdmin.address
+        );
     });
 
     it("[R] check createBoard by not admin error", async function () {

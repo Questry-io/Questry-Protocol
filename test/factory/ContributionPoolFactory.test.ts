@@ -20,7 +20,9 @@ describe("ContributionPoolFactory", function () {
       incrementTermWhitelistAdmin,
       businessOwner,
     ] = await ethers.getSigners();
-    const cfPoolFactory = await ethers.getContractFactory("ContributionPoolFactory");
+    const cfPoolFactory = await ethers.getContractFactory(
+      "ContributionPoolFactory"
+    );
     cPoolFactory = await cfPoolFactory.deploy(ethers.constants.AddressZero);
   });
 

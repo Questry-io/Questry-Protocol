@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 /**
- * This Domain library is based on a smart contract platform of a certain marketplace, 
+ * This Domain library is based on a smart contract platform of a certain marketplace,
  * and will be modified like questry protocol in the future.
  * reference : https://polygonscan.com/address/0xb9a83eb825bbef7336e852c73a27e41f05503d65#code#F22#L1
  */
@@ -11,7 +11,6 @@ pragma solidity ^0.8.9;
  * @dev Model data related with Order
  */
 library PlatformDomain {
-
   /**
    * @dev
    * Define the MODE of the currency to allocate
@@ -24,7 +23,7 @@ library PlatformDomain {
    * @dev
    * This defines the bytes32 code for various roles of the platform
    * Organize the various roles below
-   * 
+   *
    * ・PJ_MANAGEMENT_ROLE・・・PJ-MANAGEMENT-CONTRACT State data management
    * ・ALLOCATE_RIGHT_ROLL・・・PJ-Treasully-Pool Token Allocate RIGHT
    * ・KANAME_PLATFORM_ROLE・・・PROTOCOL Rights Data Management Role
@@ -33,9 +32,12 @@ library PlatformDomain {
    */
   bytes32 public constant PJ_MANAGEMENT_ROLE = keccak256("PJ_MANAGEMENT_ROLE");
   bytes32 public constant PJ_MANAGEMENT_ROLE = keccak256("ALLOCATE_RIGHT_ROLE");
-  bytes32 public constant KANAME_PLATFORM_ROLE = keccak256("KANAME_PLATFORM_ROLE");
-  bytes32 public constant BOARD_REGISTER_ROLE = keccak256("BOARD_REGISTER_ROLE");
-  bytes32 public constant BUSINESS_OWNER_ROLE = keccak256("BUSINESS_OWNER_ROLE");
+  bytes32 public constant KANAME_PLATFORM_ROLE =
+    keccak256("KANAME_PLATFORM_ROLE");
+  bytes32 public constant BOARD_REGISTER_ROLE =
+    keccak256("BOARD_REGISTER_ROLE");
+  bytes32 public constant BUSINESS_OWNER_ROLE =
+    keccak256("BUSINESS_OWNER_ROLE");
 
   struct InitializerArgs {
     address daoTreasuryAddress;
@@ -65,18 +67,18 @@ library PlatformDomain {
   /**
    * @dev
    * Structure definition for board member registration
-   * Signature is basically designed to verify the signature 
-   * with the nonce obtained on the on-chain side and the nonce 
+   * Signature is basically designed to verify the signature
+   * with the nonce obtained on the on-chain side and the nonce
    * passed from the off-chain side.
-   * Since ETH is an account-oriented state machine, 
+   * Since ETH is an account-oriented state machine,
    * reply attacks can be controlled with nonce
    */
   struct RegistBoard {
-    address[] BoardMember;    //EOAs of boardmember for regist
-    address PJManagerCA;      //exec project management contract
-    uint256 boardCategoryId;  //board category ID
-    uint256[] nextTokenIds;   //Board Next TokenIds
-    uint32 nonce;             //Exec Struct infomation nonce 
+    address[] BoardMember; //EOAs of boardmember for regist
+    address PJManagerCA; //exec project management contract
+    uint256 boardCategoryId; //board category ID
+    uint256[] nextTokenIds; //Board Next TokenIds
+    uint32 nonce; //Exec Struct infomation nonce
   }
 
   /*struct Asset {

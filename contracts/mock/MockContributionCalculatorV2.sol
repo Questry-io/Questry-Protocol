@@ -12,4 +12,5 @@ import {ContributionCalculator} from "../platform/ContributionCalculator.sol";
  * @dev Mock V2 implementation for ContributionCalculator, which is used for upgrade testing.
  */
 contract MockContributionCalculatorV2 is ContributionCalculator {
+
 }

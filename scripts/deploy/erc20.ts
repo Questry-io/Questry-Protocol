@@ -18,10 +18,16 @@ async function main() {
   const adminAddress = "";
   const issuerAddress = "";
   if (forwarderAddress === "" || adminAddress === "" || issuerAddress === "") {
-    throw new Error("Please set forwarderAddress, adminAddress and issuerAddress");
+    throw new Error(
+      "Please set forwarderAddress, adminAddress and issuerAddress"
+    );
   }
   const QuestryErc20 = await hre.ethers.getContractFactory("QuestryERC20");
-  const questryErc20 = await QuestryErc20.deploy(forwarderAddress, adminAddress, issuerAddress);
+  const questryErc20 = await QuestryErc20.deploy(
+    forwarderAddress,
+    adminAddress,
+    issuerAddress
+  );
   await questryErc20.deployed();
 
   console.log("QuestryErc20 deployed to:", questryErc20.address);
@@ -33,4 +39,3 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
-

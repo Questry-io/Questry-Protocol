@@ -14,11 +14,19 @@ async function main() {
   await hre.run("compile");
   const ethers = hre.ethers;
   const upgrades = hre.upgrades;
-  const ContributionCalculator = await ethers.getContractFactory("ContributionCalculator");
-  
+  const ContributionCalculator = await ethers.getContractFactory(
+    "ContributionCalculator"
+  );
+
   console.log("Deploying ContributionCalculator...");
-  const contributionCalculator = await upgrades.deployProxy(ContributionCalculator, { initializer: "initialize" });
-  console.log("ContributionCalculator deployed to:", contributionCalculator.address);
+  const contributionCalculator = await upgrades.deployProxy(
+    ContributionCalculator,
+    { initializer: "initialize" }
+  );
+  console.log(
+    "ContributionCalculator deployed to:",
+    contributionCalculator.address
+  );
 }
 
 // We recommend this pattern to be able to use async/await everywhere

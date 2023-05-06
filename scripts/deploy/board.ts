@@ -14,20 +14,36 @@ async function main() {
   await hre.run("compile");
 
   // We get the contract to deploy
-  const name = ""
-  const symbol = ""
-  const baseTokenURI = ""
-  const pjmanagerContract = ""
-  const admin = ""
-  const Trustedforwarder = ""
+  const name = "";
+  const symbol = "";
+  const baseTokenURI = "";
+  const pjmanagerContract = "";
+  const admin = "";
+  const Trustedforwarder = "";
 
-  if (name == "" || symbol == "" || baseTokenURI == "" || pjmanagerContract == "" || admin == "" || Trustedforwarder == "") {
-    throw new Error("Please set all of name, symbol, baseTokenURI, pjmanagerContract, admin, Trustedforwarder");
+  if (
+    name == "" ||
+    symbol == "" ||
+    baseTokenURI == "" ||
+    pjmanagerContract == "" ||
+    admin == "" ||
+    Trustedforwarder == ""
+  ) {
+    throw new Error(
+      "Please set all of name, symbol, baseTokenURI, pjmanagerContract, admin, Trustedforwarder"
+    );
   }
 
   const Board = await hre.ethers.getContractFactory("Board");
-   
-  const board = await Board.deploy(name, symbol, baseTokenURI, pjmanagerContract, admin, Trustedforwarder);
+
+  const board = await Board.deploy(
+    name,
+    symbol,
+    baseTokenURI,
+    pjmanagerContract,
+    admin,
+    Trustedforwarder
+  );
   await board.deployed();
 
   console.log("Board deployed to:", board.address);

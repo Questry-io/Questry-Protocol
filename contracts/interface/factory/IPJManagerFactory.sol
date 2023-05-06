@@ -7,5 +7,8 @@ interface IPJManagerFactory {
   /**
    * @dev Returns the admin of `_pjManager`.
    */
-  function getPJManagerAdmin(IPJManager _pjManager) external view returns (address);
+  function getPJManagerAdmin(IPJManager _pjManager)
+    external
+    view
+    returns (address);
 }

@@ -18,7 +18,7 @@ contract ContributionPoolFactory {
   );
 
   QuestryPlatform public questryPlatform;
-  mapping (address => IContributionPool[]) public poolsByBusinessOwners;
+  mapping(address => IContributionPool[]) public poolsByBusinessOwners;
 
   constructor(QuestryPlatform _questryPlatform) {
     questryPlatform = _questryPlatform;
@@ -35,13 +35,22 @@ contract ContributionPoolFactory {
     address _contributionUpdater,
     address _incrementTermWhitelistAdmin,
     address _admin
-  )
-    external
-    returns (IContributionPool pool)
-  {
-    pool = new ContributionPool(questryPlatform, _mode, _contributionUpdater, _incrementTermWhitelistAdmin, _admin);
+  ) external returns (IContributionPool pool) {
+    pool = new ContributionPool(
+      questryPlatform,
+      _mode,
+      _contributionUpdater,
+      _incrementTermWhitelistAdmin,
+      _admin
+    );
     poolsByBusinessOwners[msg.sender].push(pool);
-    emit PoolCreated(msg.sender, address(pool), _mode, _contributionUpdater, _admin);
+    emit PoolCreated(
+      msg.sender,
+      address(pool),
+      _mode,
+      _contributionUpdater,
+      _admin
+    );
   }
 
   /**
