@@ -440,7 +440,7 @@ describe("PJManager", function () {
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
         board: cSBT.address,
-        calcurateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
+        calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
         ContributePoolOwner: [signer.address,signer.address],
         pjnonce: await cPJManager.GetNonce() 
@@ -460,7 +460,7 @@ describe("PJManager", function () {
           { name: "paymentMode", type: "bytes4" },
           { name: "paymentToken", type: "address" },
           { name: "board", type: "address" },
-          { name: "calcurateArgs", type: "CalculateDispatchArgs" },
+          { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "ContributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" }
@@ -475,6 +475,7 @@ describe("PJManager", function () {
       expect(
         await cPJManager.verifySignature(args ,[message])
       ).to.be.equal(true)
+
 
     });
   });

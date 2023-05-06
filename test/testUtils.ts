@@ -9,7 +9,7 @@ export type AllocateArgs = {
   paymentMode: string; 
   paymentToken: string; 
   board: string; 
-  calculateArgs: CalculateDispatchArgs; 
+  calculateArgs:  CalculateDispatchArgs;
   updateNeededPools: string[]; 
   ContributePoolOwner: string[]; 
   pjnonce: string;
