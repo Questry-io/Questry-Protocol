@@ -2,9 +2,9 @@
 pragma solidity ^0.8.17;
 
 /**
- * @title Board SBT interface
+ * @title Board interface
  */
-interface ISBT {
+interface IBoard {
   /**
    * @dev Creates a new token for `to`. Its token ID will be automatically
    * assigned (and available on the emitted {IERC721-Transfer} event), and the token

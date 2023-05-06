@@ -2,20 +2,20 @@
 import { ethers } from "hardhat";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { SBTFactory, PJManagerFactory } from "../../typechain";
+import { BoardFactory, PJManagerFactory } from "../../typechain";
 
-describe("SBTFactory", function () {
+describe("BoardFactory", function () {
   let deployer: SignerWithAddress;
-  let sbtFactoryAdmin: SignerWithAddress;
+  let boardFactoryAdmin: SignerWithAddress;
   let setForwarderer: SignerWithAddress;
   let user: SignerWithAddress;
   let pjManagerAdmin: SignerWithAddress;
-  let cSBTFactory: SBTFactory;
+  let cBoardFactory: BoardFactory;
   let cPJManagerFactory: PJManagerFactory;
   let pjManagerAddress: string;
 
-  const sbtExistsError = "SBTFactory: must use another name and symbol";
-  const setForwarderRoleError = "SBTFactory: must have SET_FORWARDER_ROLE";
+  const boardExistsError = "BoardFactory: must use another name and symbol";
+  const setForwarderRoleError = "BoardFactory: must have SET_FORWARDER_ROLE";
 
   const name = "SugaiYuuka";
   const symbol = "SY";
@@ -24,7 +24,7 @@ describe("SBTFactory", function () {
   const dummyContract = "0x00E9C198af8F6a8692d83d1702e691A03F2cdc63";
 
   beforeEach(async function () {
-    [deployer, setForwarderer, user, sbtFactoryAdmin, pjManagerAdmin] =
+    [deployer, setForwarderer, user, boardFactoryAdmin, pjManagerAdmin] =
       await ethers.getSigners();
 
     const cfPJManagerFactory = await ethers.getContractFactory(
@@ -41,122 +41,122 @@ describe("SBTFactory", function () {
       await cPJManagerFactory.getPJManagers(pjManagerAdmin.address)
     )[0];
 
-    const cfSBTFactory = await ethers.getContractFactory("SBTFactory");
-    cSBTFactory = await cfSBTFactory.deploy(
+    const cfBoardFactory = await ethers.getContractFactory("BoardFactory");
+    cBoardFactory = await cfBoardFactory.deploy(
       cPJManagerFactory.address,
-      sbtFactoryAdmin.address
+      boardFactoryAdmin.address
     );
-    await cSBTFactory.deployed();
+    await cBoardFactory.deployed();
 
-    const forwarderRole = await cSBTFactory.SET_FORWARDER_ROLE();
-    await cSBTFactory
-      .connect(sbtFactoryAdmin)
+    const forwarderRole = await cBoardFactory.SET_FORWARDER_ROLE();
+    await cBoardFactory
+      .connect(boardFactoryAdmin)
       .grantRole(forwarderRole, setForwarderer.address);
   });
 
   describe("Post deployment checks", function () {
     it("Admin Role Check", async function () {
       expect(
-        await cSBTFactory.hasRole(
+        await cBoardFactory.hasRole(
           ethers.constants.HashZero,
-          sbtFactoryAdmin.address
+          boardFactoryAdmin.address
         )
       ).to.be.true;
     });
   });
 
-  describe("createSBT", function () {
-    it("[S] check SBT address stored", async function () {
-      await cSBTFactory
+  describe("createBoard", function () {
+    it("[S] check Board address stored", async function () {
+      await cBoardFactory
         .connect(pjManagerAdmin)
-        .createSBT(
+        .createBoard(
           name,
           symbol,
           baseURI,
           pjManagerAddress,
           pjManagerAdmin.address
         );
-      const sbt = await cSBTFactory.getContractAddress(name, symbol);
-      expect(sbt).not.equal(ethers.constants.AddressZero);
+      const board = await cBoardFactory.getContractAddress(name, symbol);
+      expect(board).not.equal(ethers.constants.AddressZero);
     });
 
     it("[S] check event emitted", async function () {
-      const tx = await cSBTFactory
+      const tx = await cBoardFactory
         .connect(pjManagerAdmin)
-        .createSBT(
+        .createBoard(
           name,
           symbol,
           baseURI,
           pjManagerAddress,
           pjManagerAdmin.address
         );
-      const sbt = await cSBTFactory.getContractAddress(name, symbol);
+      const board = await cBoardFactory.getContractAddress(name, symbol);
       expect(tx)
-        .to.emit(cSBTFactory, "SBTCreated")
-        .withArgs(sbt, name, symbol, pjManagerAddress, pjManagerAdmin.address);
+        .to.emit(cBoardFactory, "BoardCreated")
+        .withArgs(board, name, symbol, pjManagerAddress, pjManagerAdmin.address);
     });
 
-    it("[R] check createSBT by not admin error", async function () {
+    it("[R] check createBoard by not admin error", async function () {
       await expect(
-        cSBTFactory
+        cBoardFactory
           .connect(user)
-          .createSBT(
+          .createBoard(
             name,
             symbol,
             baseURI,
             pjManagerAddress,
             pjManagerAdmin.address
           )
-      ).revertedWith("SBTFactory: only PJManager admin can create SBT");
+      ).revertedWith("BoardFactory: only PJManager admin can create Board");
     });
 
-    it("[R] check SBT exists error", async function () {
-      await cSBTFactory
+    it("[R] check Board exists error", async function () {
+      await cBoardFactory
         .connect(pjManagerAdmin)
-        .createSBT(
+        .createBoard(
           name,
           symbol,
           baseURI,
           pjManagerAddress,
           pjManagerAdmin.address
         );
-      await cSBTFactory.getContractAddress(name, symbol);
+      await cBoardFactory.getContractAddress(name, symbol);
       await expect(
-        cSBTFactory
+        cBoardFactory
           .connect(pjManagerAdmin)
-          .createSBT(
+          .createBoard(
             name,
             symbol,
             baseURI,
             pjManagerAddress,
             pjManagerAdmin.address
           )
-      ).to.be.revertedWith(sbtExistsError);
+      ).to.be.revertedWith(boardExistsError);
     });
   });
 
   describe("setChildTrustedforwarder", function () {
     it("[S] can update forwarder by factory admin", async function () {
-      await cSBTFactory
-        .connect(sbtFactoryAdmin)
+      await cBoardFactory
+        .connect(boardFactoryAdmin)
         .setChildTrustedForwarder(dummyContract);
-      expect(await cSBTFactory.getChildTrustedForwarder()).to.be.equal(
+      expect(await cBoardFactory.getChildTrustedForwarder()).to.be.equal(
         dummyContract
       );
     });
 
     it("[S] can update forwarder by set-forwarder-role account", async function () {
-      await cSBTFactory
+      await cBoardFactory
         .connect(setForwarderer)
         .setChildTrustedForwarder(dummyContract);
-      expect(await cSBTFactory.getChildTrustedForwarder()).to.be.equal(
+      expect(await cBoardFactory.getChildTrustedForwarder()).to.be.equal(
         dummyContract
       );
     });
 
     it("[R] can not update forwarder by no role account", async function () {
       await expect(
-        cSBTFactory.connect(user).setChildTrustedForwarder(dummyContract)
+        cBoardFactory.connect(user).setChildTrustedForwarder(dummyContract)
       ).to.be.revertedWith(setForwarderRoleError);
     });
   });

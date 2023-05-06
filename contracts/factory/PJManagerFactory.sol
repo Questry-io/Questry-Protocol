@@ -7,7 +7,7 @@ import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {LibPJManager} from "../library/LibPJManager.sol";
 import {PJManager} from "../pjmanager/PJManager.sol";
 import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
-import {SBT, AccessControl} from "../token/soulbound/SBT.sol";
+import {Board, AccessControl} from "../token/soulbound/Board.sol";
 
 contract PJManagerFactory is IPJManagerFactory, AccessControl, ERC2771Context {
   event PJManagerCreated(address indexed businessOwner, address pjManager);

@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
-import {ISBT} from "../interface/token/ISBT.sol";
+import {IBoard} from "../interface/token/IBoard.sol";
 
 /**
  * @dev Library for QuestryPlatform.
@@ -17,7 +17,7 @@ library LibQuestryPlatform {
     IPJManager pjManager;
     bytes4 paymentMode; // determines to allocate native or ERC20 token
     IERC20 paymentToken; // ERC20 token to allocate. Ignored if paymentMode == NATIVE_PAYMENT_MODE
-    ISBT board; // allocation target board which has contributions
+    IBoard board; // allocation target board which has contributions
     CalculateDispatchArgs calculateArgs; // allocation calculation args
     IContributionPool[] updateNeededPools; // term update needed pools
     Signature signature; // signature

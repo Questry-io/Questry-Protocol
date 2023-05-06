@@ -26,14 +26,14 @@ interface IPJManager is ISignatureVerifier {
   ) external;
 
   /**
-   * @dev Register a new board which is identified by `sbt` and `tokenId` pair.
+   * @dev Register a new board which is identified by `_board` and `_tokenId` pair.
    */
-  function registerBoard(address _sbt, uint256 _tokenId) external;
+  function registerBoard(address _board, uint256 _tokenId) external;
 
   /**
-   * @dev Resolve unique boardId in the project from `sbt` and `tokenId` pair.
+   * @dev Resolve unique boardId in the project from `_board` and `_tokenId` pair.
    */
-  function resolveBoardId(address _sbt, uint256 _tokenId)
+  function resolveBoardId(address _board, uint256 _tokenId)
     external
     view
     returns (uint256);

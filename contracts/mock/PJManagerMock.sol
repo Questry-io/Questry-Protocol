@@ -17,21 +17,21 @@ contract PJManagerMock is IPJManager {
     boardIdTracker.increment();
   }
 
-  function registerBoard(address _sbt, uint256 _tokenId) external {
-    boardIds[_sbt][_tokenId] = boardIdTracker.current();
+  function registerBoard(address _board, uint256 _tokenId) external {
+    boardIds[_board][_tokenId] = boardIdTracker.current();
     boardIdTracker.increment();
   }
 
-  function resolveBoardId(address _sbt, uint256 _tokenId)
+  function resolveBoardId(address _board, uint256 _tokenId)
     external
     view
     returns (uint256)
   {
     require(
-      boardIds[_sbt][_tokenId] > 0,
+      boardIds[_board][_tokenId] > 0,
       "PJManagerMock: resolve for nonexistent board"
     );
-    return boardIds[_sbt][_tokenId];
+    return boardIds[_board][_tokenId];
   }
 
   function addBusinessOwner(LibPJManager.AllocationShare calldata _businessOwner) external {
