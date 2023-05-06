@@ -14,8 +14,8 @@ interface IContributionPool {
    * Anyone can never subtract boarding members' contributions if mode is AddOnlyAccess.
    */
   enum MutationMode {
-    AddOnlyAccess,  // Only `addContribution`, `bulkAddContribution` operations allowed.
-    FullControl     // All operations allowed.
+    AddOnlyAccess, // Only `addContribution`, `bulkAddContribution` operations allowed.
+    FullControl // All operations allowed.
   }
 
   /**
@@ -30,7 +30,10 @@ interface IContributionPool {
    *
    * Emits {BulkAddContribution}
    */
-  function bulkAddContribution(address[] calldata _members, uint120[] calldata _values) external;
+  function bulkAddContribution(
+    address[] calldata _members,
+    uint120[] calldata _values
+  ) external;
 
   /**
    * @dev Subtracts `contribution` from `member`.
@@ -44,7 +47,10 @@ interface IContributionPool {
    *
    * Emits {BulkSubtractContribution}
    */
-  function bulkSubtractContribution(address[] calldata _members, uint120[] calldata _values) external;
+  function bulkSubtractContribution(
+    address[] calldata _members,
+    uint120[] calldata _values
+  ) external;
 
   /**
    * @dev Sets `contribution` to `member`.
@@ -58,7 +64,10 @@ interface IContributionPool {
    *
    * Emits {BulkSetContribution}
    */
-  function bulkSetContribution(address[] calldata _members, uint120[] calldata _values) external;
+  function bulkSetContribution(
+    address[] calldata _members,
+    uint120[] calldata _values
+  ) external;
 
   /**
    * @dev Increments the accumulation period for contributions by checking if the `_permittedSigner`

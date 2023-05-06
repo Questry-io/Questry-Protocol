@@ -34,9 +34,7 @@ subtask(
     return paths.filter((solidityFilePath: string) => {
       const filename = solidityFilePath.split("/").slice(-1)[0];
       // compileから除外するコントラクトを指定
-      return ![
-        "platformDomain.sol",
-      ].includes(filename);
+      return !["platformDomain.sol"].includes(filename);
     });
   }
 );

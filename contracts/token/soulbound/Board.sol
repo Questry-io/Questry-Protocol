@@ -187,7 +187,10 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
           boardingMembers[newIdx++] = boardingMembers[i];
         }
       }
-      require (newIdx + 1 == boardingMembers.length, "Board: cannot remove boarding member");
+      require(
+        newIdx + 1 == boardingMembers.length,
+        "Board: cannot remove boarding member"
+      );
       boardingMembers.pop();
     }
 

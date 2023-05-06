@@ -22,25 +22,23 @@ contract TokenControllProxy is
   UUPSUpgradeable
 {
   /// @custom:oz-upgrades-unsafe-allow constructor
-  constructor(
-    address _trustedForwarder
-  ) ERC2771ContextUpgradeable(_trustedForwarder) {
+  constructor(address _trustedForwarder)
+    ERC2771ContextUpgradeable(_trustedForwarder)
+  {
     _disableInitializers();
   }
 
   /**
    * @dev Used instead of constructor(must be called once)
    */
-  function __TokenControlProxy_init(
-    address _RollManager
-  ) external initializer {
+  function __TokenControlProxy_init(address _RollManager) external initializer {
     __ERC165_init();
     __AccessControl_init();
     __UUPSUpgradeable_init();
     //set Token Controll Proxy Roll Manager(EOA)
     _setupRole(DEFAULT_ADMIN_ROLE, _RollManager);
   }
-  
+
   bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
 
   /**
@@ -49,18 +47,19 @@ contract TokenControllProxy is
    * Requirements:
    * - onlyAdmin can call
    */
-  function _authorizeUpgrade(
-    address _newImplementation
-  ) internal virtual override onlyRole(DEFAULT_ADMIN_ROLE) {}
+  function _authorizeUpgrade(address _newImplementation)
+    internal
+    virtual
+    override
+    onlyRole(DEFAULT_ADMIN_ROLE)
+  {}
 
   /**
    * @dev See {IERC165Upgradeable-supportsInterface}.
    *
    * @param _interfaceId bytes4
    */
-  function supportsInterface(
-    bytes4 _interfaceId
-  )
+  function supportsInterface(bytes4 _interfaceId)
     public
     view
     virtual
@@ -117,7 +116,10 @@ contract TokenControllProxy is
     address _to,
     uint256 _value
   ) external {
-    require(hasRole(EXECUTOR_ROLE, _msgSender()),'TokenControllProxy: must have executor role to exec');
+    require(
+      hasRole(EXECUTOR_ROLE, _msgSender()),
+      "TokenControllProxy: must have executor role to exec"
+    );
     _token.transferFrom(_from, _to, _value);
   }
 
@@ -140,7 +142,10 @@ contract TokenControllProxy is
     address _to,
     uint256 _tokenId
   ) external {
-    require(hasRole(EXECUTOR_ROLE, _msgSender()),'TokenControllProxy: must have executor role to exec');
+    require(
+      hasRole(EXECUTOR_ROLE, _msgSender()),
+      "TokenControllProxy: must have executor role to exec"
+    );
     _token.safeTransferFrom(_from, _to, _tokenId);
   }
 
@@ -167,7 +172,10 @@ contract TokenControllProxy is
     uint256 _value,
     bytes calldata _data
   ) external {
-    require(hasRole(EXECUTOR_ROLE, _msgSender()),'TokenControllProxy: must have executor role to exec');
+    require(
+      hasRole(EXECUTOR_ROLE, _msgSender()),
+      "TokenControllProxy: must have executor role to exec"
+    );
     _token.safeTransferFrom(_from, _to, _tokenId, _value, _data);
   }
 }

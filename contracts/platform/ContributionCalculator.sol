@@ -31,24 +31,27 @@ contract ContributionCalculator is
   }
 
   /// @inheritdoc UUPSUpgradeable
-  function _authorizeUpgrade(address _newImplementation) internal override onlyOwner {}
+  function _authorizeUpgrade(address _newImplementation)
+    internal
+    override
+    onlyOwner
+  {}
 
   /// @inheritdoc IContributionCalculator
   function calculateDispatch(
     address[] memory _members,
     LibQuestryPlatform.CalculateDispatchArgs memory _calculateArgs
-  )
-    external
-    view
-    returns (LibQuestryPlatform.SharesResult memory result)
-  {
+  ) external view returns (LibQuestryPlatform.SharesResult memory result) {
     if (_calculateArgs.algorithm == LINEAR_ALGORITHM) {
       result = calculateSharesWithLinear(
         _members,
-        abi.decode(_calculateArgs.args, (LibQuestryPlatform.SharesWithLinearArgs))
+        abi.decode(
+          _calculateArgs.args,
+          (LibQuestryPlatform.SharesWithLinearArgs)
+        )
       );
     } else {
-      revert ("Calculator: unknown algorithm");
+      revert("Calculator: unknown algorithm");
     }
   }
 
@@ -63,10 +66,11 @@ contract ContributionCalculator is
     returns (LibQuestryPlatform.SharesResult memory result)
   {
     result.shares = new uint120[](_members.length);
-    for (uint memberIdx = 0; memberIdx < _members.length; memberIdx++) {
-      for (uint poolIdx = 0; poolIdx < _args.pools.length; poolIdx++) {
+    for (uint256 memberIdx = 0; memberIdx < _members.length; memberIdx++) {
+      for (uint256 poolIdx = 0; poolIdx < _args.pools.length; poolIdx++) {
         IContributionPool c = IContributionPool(_args.pools[poolIdx]);
-        uint120 value = _args.coefs[poolIdx] * c.getContribution(_members[memberIdx]);
+        uint120 value = _args.coefs[poolIdx] *
+          c.getContribution(_members[memberIdx]);
         result.shares[memberIdx] += value;
         result.totalShare += value;
       }

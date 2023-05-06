@@ -34,7 +34,9 @@ contract PJManagerMock is IPJManager {
     return boardIds[_board][_tokenId];
   }
 
-  function addBusinessOwner(LibPJManager.AllocationShare calldata _businessOwner) external {
+  function addBusinessOwner(
+    LibPJManager.AllocationShare calldata _businessOwner
+  ) external {
     revert("Not implemented.");
   }
 
@@ -42,9 +44,9 @@ contract PJManagerMock is IPJManager {
     revert("Not implemented.");
   }
 
-  function updateBusinessOwner(LibPJManager.AllocationShare calldata _businessOwner)
-    external
-  {
+  function updateBusinessOwner(
+    LibPJManager.AllocationShare calldata _businessOwner
+  ) external {
     revert("Not implemented.");
   }
 
@@ -73,15 +75,15 @@ contract PJManagerMock is IPJManager {
     revert("Not implemented.");
   }
 
-  function getBoardingMembersProportion()
-    external
-    view
-    returns (uint32)
-  {
+  function getBoardingMembersProportion() external view returns (uint32) {
     revert("Not implemented.");
   }
 
-  function getBusinessOwners() external view returns (LibPJManager.AllocationShare[] memory) {
+  function getBusinessOwners()
+    external
+    view
+    returns (LibPJManager.AllocationShare[] memory)
+  {
     revert("Not implemented.");
   }
 

@@ -155,17 +155,21 @@ describe("Board", function () {
       expect(await cBoardMock.balanceOf(address3.address)).to.equal(1);
       expect(await cBoardMock.ownerOf(1)).to.equal(address3.address);
       expect(await cBoardMock.boardingMembersExist()).to.be.true;
-      expect(await cBoardMock.getBoardingMembers()).deep.equal([address3.address]);
+      expect(await cBoardMock.getBoardingMembers()).deep.equal([
+        address3.address,
+      ]);
       expect(await cBoardMock.getIsBoardingMember(address3.address)).to.be.true;
-      expect(await cPJManagerMock.resolveBoardId(cBoardMock.address, 1)).to.equal(
-        1
-      );
+      expect(
+        await cPJManagerMock.resolveBoardId(cBoardMock.address, 1)
+      ).to.equal(1);
     });
 
     it("[S] check adding new members sequencially", async function () {
       await cBoardMock.connect(SuperAdmin).mint(NotMinter.address);
       expect(await cBoardMock.boardingMembersExist()).to.be.true;
-      expect(await cBoardMock.getBoardingMembers()).deep.equal([NotMinter.address]);
+      expect(await cBoardMock.getBoardingMembers()).deep.equal([
+        NotMinter.address,
+      ]);
       await cBoardMock.connect(SuperAdmin).mint(NotBurner.address);
       expect(await cBoardMock.boardingMembersExist()).to.be.true;
       expect(await cBoardMock.getBoardingMembers()).deep.equal([
@@ -177,10 +181,14 @@ describe("Board", function () {
     it("[S] can mint multiple Boards to the same member", async function () {
       await cBoardMock.connect(SuperAdmin).mint(NotMinter.address);
       expect(await cBoardMock.boardingMembersExist()).to.be.true;
-      expect(await cBoardMock.getBoardingMembers()).deep.equal([NotMinter.address]);
+      expect(await cBoardMock.getBoardingMembers()).deep.equal([
+        NotMinter.address,
+      ]);
       await cBoardMock.connect(SuperAdmin).mint(NotMinter.address);
       expect(await cBoardMock.boardingMembersExist()).to.be.true;
-      expect(await cBoardMock.getBoardingMembers()).deep.equal([NotMinter.address]);
+      expect(await cBoardMock.getBoardingMembers()).deep.equal([
+        NotMinter.address,
+      ]);
       expect(await cBoardMock.balanceOf(NotMinter.address)).equals(2);
     });
 
@@ -195,11 +203,13 @@ describe("Board", function () {
       // check Not Minter address recipient
       expect(await cBoardMock.balanceOf(NotMinter.address)).to.equal(1);
       expect(await cBoardMock.ownerOf(1)).to.equal(NotMinter.address);
-      expect(await cBoardMock.getIsBoardingMember(NotMinter.address)).to.be.true;
+      expect(await cBoardMock.getIsBoardingMember(NotMinter.address)).to.be
+        .true;
       // check Not Burner address recipient
       expect(await cBoardMock.balanceOf(NotBurner.address)).to.equal(1);
       expect(await cBoardMock.ownerOf(2)).to.equal(NotBurner.address);
-      expect(await cBoardMock.getIsBoardingMember(NotBurner.address)).to.be.true;
+      expect(await cBoardMock.getIsBoardingMember(NotBurner.address)).to.be
+        .true;
       // check address3 address recipient
       expect(await cBoardMock.balanceOf(address3.address)).to.equal(1);
       expect(await cBoardMock.ownerOf(3)).to.equal(address3.address);
@@ -235,7 +245,8 @@ describe("Board", function () {
       await expect(cBoardMock.ownerOf(1)).to.be.revertedWith(
         "ERC721: owner query for nonexistent token"
       );
-      expect(await cBoardMock.getIsBoardingMember(address3.address)).to.be.false;
+      expect(await cBoardMock.getIsBoardingMember(address3.address)).to.be
+        .false;
       expect(await cBoardMock.boardingMembersExist()).to.be.false;
       expect(await cBoardMock.getBoardingMembers()).deep.equal([]);
     });
@@ -246,7 +257,9 @@ describe("Board", function () {
 
       await cBoardMock.connect(SuperAdmin).burn(1);
       expect(await cBoardMock.boardingMembersExist()).to.be.true;
-      expect(await cBoardMock.getBoardingMembers()).deep.equal([NotMinter.address]);
+      expect(await cBoardMock.getBoardingMembers()).deep.equal([
+        NotMinter.address,
+      ]);
 
       await cBoardMock.connect(SuperAdmin).burn(2);
       expect(await cBoardMock.boardingMembersExist()).to.be.false;
@@ -268,19 +281,22 @@ describe("Board", function () {
       await expect(cBoardMock.ownerOf(1)).to.be.revertedWith(
         "ERC721: owner query for nonexistent token"
       );
-      expect(await cBoardMock.getIsBoardingMember(NotMinter.address)).to.be.false;
+      expect(await cBoardMock.getIsBoardingMember(NotMinter.address)).to.be
+        .false;
       // check Not Burner address recipient
       expect(await cBoardMock.balanceOf(NotBurner.address)).to.equal(0);
       await expect(cBoardMock.ownerOf(2)).to.be.revertedWith(
         "ERC721: owner query for nonexistent token"
       );
-      expect(await cBoardMock.getIsBoardingMember(NotBurner.address)).to.be.false;
+      expect(await cBoardMock.getIsBoardingMember(NotBurner.address)).to.be
+        .false;
       // check address3 address recipient
       expect(await cBoardMock.balanceOf(address3.address)).to.equal(0);
       await expect(cBoardMock.ownerOf(3)).to.be.revertedWith(
         "ERC721: owner query for nonexistent token"
       );
-      expect(await cBoardMock.getIsBoardingMember(address3.address)).to.be.false;
+      expect(await cBoardMock.getIsBoardingMember(address3.address)).to.be
+        .false;
       expect(await cBoardMock.boardingMembersExist()).to.be.false;
       expect(await cBoardMock.getBoardingMembers()).deep.equal([]);
     });
