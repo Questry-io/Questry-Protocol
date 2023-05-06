@@ -76,8 +76,8 @@ describe("SBTFactory", function () {
           pjManagerAddress,
           pjManagerAdmin.address
         );
-      const sbt = await cSBTFactory.getContractAddress(name, symbol);
-      expect(sbt).not.equal(ethers.constants.AddressZero);
+      const board = await cSBTFactory.getContractAddress(name, symbol);
+      expect(board).not.equal(ethers.constants.AddressZero);
     });
 
     it("[S] check event emitted", async function () {
@@ -90,10 +90,10 @@ describe("SBTFactory", function () {
           pjManagerAddress,
           pjManagerAdmin.address
         );
-      const sbt = await cSBTFactory.getContractAddress(name, symbol);
+      const board = await cSBTFactory.getContractAddress(name, symbol);
       expect(tx)
         .to.emit(cSBTFactory, "SBTCreated")
-        .withArgs(sbt, name, symbol, pjManagerAddress, pjManagerAdmin.address);
+        .withArgs(board, name, symbol, pjManagerAddress, pjManagerAdmin.address);
     });
 
     it("[R] check createSBT by not admin error", async function () {
@@ -107,10 +107,10 @@ describe("SBTFactory", function () {
             pjManagerAddress,
             pjManagerAdmin.address
           )
-      ).revertedWith("SBTFactory: only PJManager admin can create SBT");
+      ).revertedWith("SBTFactory: only PJManager admin can create Board");
     });
 
-    it("[R] check SBT exists error", async function () {
+    it("[R] check Board exists error", async function () {
       await cSBTFactory
         .connect(pjManagerAdmin)
         .createSBT(

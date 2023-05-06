@@ -75,7 +75,7 @@ library PlatformDomain {
     address[] BoardMember;    //EOAs of boardmember for regist
     address PJManagerCA;      //exec project management contract
     uint256 boardCategoryId;  //board category ID
-    uint256[] nextTokenIds;   //SBT Next TokenIds
+    uint256[] nextTokenIds;   //Board Next TokenIds
     uint32 nonce;             //Exec Struct infomation nonce 
   }
 

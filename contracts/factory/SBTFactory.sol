@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import {IPJManagerFactory} from "../interface/factory/IPJManagerFactory.sol";
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
-import {SBT, AccessControl} from "../token/soulbound/SBT.sol";
+import {Board, AccessControl} from "../token/soulbound/Board.sol";
 
 contract SBTFactory is AccessControl {
   event SBTCreated(
@@ -21,7 +21,7 @@ contract SBTFactory is AccessControl {
 
   IPJManagerFactory public pjManagerFactory;
 
-  /// @dev Trusted forwarder for SBT contracts to be created.
+  /// @dev Trusted forwarder for Board contracts to be created.
   address private _trustedForwarder;
 
   constructor(IPJManagerFactory _pjManagerFactory, address _admin) {
@@ -32,7 +32,7 @@ contract SBTFactory is AccessControl {
   }
 
   /**
-   * @dev Create a new SBT contract for `_pjManager`.
+   * @dev Create a new Board contract for `_pjManager`.
    */
   function createSBT(
     string calldata _name,
@@ -40,19 +40,19 @@ contract SBTFactory is AccessControl {
     string memory _baseTokenURI,
     IPJManager _pjManager,
     address _admin
-  ) external returns (address sbt) {
+  ) external returns (address board) {
     require(
       getSBTaddress[_name][_symbol] == address(0),
       "SBTFactory: must use another name and symbol"
     );
     require(
       pjManagerFactory.getPJManagerAdmin(_pjManager) == _msgSender(),
-      "SBTFactory: only PJManager admin can create SBT"
+      "SBTFactory: only PJManager admin can create Board"
     );
 
     bytes32 _salt = keccak256(abi.encodePacked(_name, _symbol));
-    sbt = address(
-      new SBT{salt: _salt}(
+    board = address(
+      new Board{salt: _salt}(
         _name,
         _symbol,
         _baseTokenURI,
@@ -62,8 +62,8 @@ contract SBTFactory is AccessControl {
       )
     );
 
-    getSBTaddress[_name][_symbol] = sbt;
-    emit SBTCreated(sbt, _name, _symbol, address(_pjManager), _admin);
+    getSBTaddress[_name][_symbol] = board;
+    emit SBTCreated(board, _name, _symbol, address(_pjManager), _admin);
   }
 
   /**
@@ -94,7 +94,7 @@ contract SBTFactory is AccessControl {
   }
 
   /**
-   * @dev Get trusted forwarder for SBT contracts to be created.
+   * @dev Get trusted forwarder for Board contracts to be created.
    */
   function getChildTrustedForwarder() public view returns (address) {
     return _trustedForwarder;

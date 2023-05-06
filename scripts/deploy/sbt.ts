@@ -25,12 +25,12 @@ async function main() {
     throw new Error("Please set all of name, symbol, baseTokenURI, pjmanagerContract, admin, Trustedforwarder");
   }
 
-  const SBT = await hre.ethers.getContractFactory("SBT");
+  const Board = await hre.ethers.getContractFactory("Board");
    
-  const sbt = await SBT.deploy(name, symbol, baseTokenURI, pjmanagerContract, admin, Trustedforwarder);
-  await sbt.deployed();
+  const board = await Board.deploy(name, symbol, baseTokenURI, pjmanagerContract, admin, Trustedforwarder);
+  await board.deployed();
 
-  console.log("SBT deployed to:", sbt.address);
+  console.log("Board deployed to:", board.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

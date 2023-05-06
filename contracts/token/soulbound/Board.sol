@@ -9,7 +9,7 @@ import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol"
 import {ISBT} from "../../interface/token/ISBT.sol";
 import {IPJManager} from "../../interface/pjmanager/IPJManager.sol";
 
-contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
+contract Board is ISBT, ERC721, AccessControl, ERC2771Context {
   using Counters for Counters.Counter;
   using Strings for uint256;
 
@@ -89,7 +89,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   function updateBaseTokenURI(string memory _uri) external {
     require(
       hasRole(URIUPDATER_ROLE, _msgSender()),
-      "SBT: must have URI updater role to update URI"
+      "Board: must have URI updater role to update URI"
     );
     baseTokenURI = _uri;
   }
@@ -148,7 +148,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   function mint(address _to) public {
     require(
       hasRole(MINTER_ROLE, _msgSender()),
-      "SBT: must have minter role to mint"
+      "Board: must have minter role to mint"
     );
 
     if (!isBoardingMember[_to]) {
@@ -174,7 +174,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   function burn(uint256 _tokenId) public {
     require(
       hasRole(BURNER_ROLE, _msgSender()),
-      "SBT: must have burner role to burn"
+      "Board: must have burner role to burn"
     );
 
     address owner = ownerOf(_tokenId);
@@ -187,7 +187,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
           boardingMembers[newIdx++] = boardingMembers[i];
         }
       }
-      require (newIdx + 1 == boardingMembers.length, "SBT: cannot remove boarding member");
+      require (newIdx + 1 == boardingMembers.length, "Board: cannot remove boarding member");
       boardingMembers.pop();
     }
 
@@ -213,35 +213,35 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
 
   /**
    * @dev Returns if `_account` has the token, in other words, it is a boarding member.
-   * Note that only one token can be minted from the same SBT contract per account.
+   * Note that only one token can be minted from the same Board contract per account.
    */
   function getIsBoardingMember(address _account) external view returns (bool) {
     return isBoardingMember[_account];
   }
 
-  /// @dev Overridden for SBT
+  /// @dev Overridden for Board
   function _transfer(
     address _from,
     address _to,
     uint256 _tokenId
   ) internal virtual override {
-    require(isTransfable, "SBT: Err Token is SBT");
+    require(isTransfable, "Board: Err Token is Board");
     super._transfer(_from, _to, _tokenId);
   }
 
-  /// @dev Overridden for SBT
+  /// @dev Overridden for Board
   function _setApprovalForAll(
     address _owner,
     address _operator,
     bool _approved
   ) internal virtual override {
-    require(isTransfable, "SBT: Err Token is SBT");
+    require(isTransfable, "Board: Err Token is Board");
     super._setApprovalForAll(_owner, _operator, _approved);
   }
 
-  /// @dev Overridden for SBT
+  /// @dev Overridden for Board
   function _approve(address _to, uint256 _tokenId) internal virtual override {
-    require(isTransfable || _to == address(0), "SBT: Err Token is SBT");
+    require(isTransfable || _to == address(0), "Board: Err Token is Board");
     super._approve(_to, _tokenId);
   }
 

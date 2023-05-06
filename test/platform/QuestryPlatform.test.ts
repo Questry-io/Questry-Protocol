@@ -11,8 +11,8 @@ import {
   ContributionPool__factory,
   ERC20,
   RandomERC20__factory,
-  SBT,
-  SBT__factory,
+  Board,
+  Board__factory,
   PJManager__factory,
   PJManager,
   QuestryPlatform,
@@ -25,7 +25,7 @@ describe("QuestryPlatform", function () {
   let poolAdmin: SignerWithAddress;
   let whitelistController: SignerWithAddress;
   let depositer: SignerWithAddress;
-  let sbtMinter: SignerWithAddress;
+  let boardMinter: SignerWithAddress;
   let contributionUpdater: SignerWithAddress;
   let businessOwners: SignerWithAddress[];
   let boardingMembers: SignerWithAddress[];
@@ -72,16 +72,16 @@ describe("QuestryPlatform", function () {
       .connect(admin)
       .grantRole(whitelistRoleHash, whitelistController.address);
 
-    // deploy SBT associated with the project.
-    const cSBT = await new SBT__factory(deployer).deploy(
+    // deploy Board associated with the project.
+    const cBoard = await new Board__factory(deployer).deploy(
       "board",
       "BRD",
       "https://example.com",
       cPJManager.address,
-      sbtMinter.address,
+      boardMinter.address,
       ethers.constants.AddressZero
     );
-    await cSBT.deployed();
+    await cBoard.deployed();
 
     // deploy mock ERC20
     const cERC20 = await new RandomERC20__factory(deployer).deploy();
@@ -91,7 +91,7 @@ describe("QuestryPlatform", function () {
 
     return {
       cPJManager,
-      cSBT,
+      cBoard,
       cERC20,
     };
   }
@@ -104,7 +104,7 @@ describe("QuestryPlatform", function () {
       poolAdmin,
       whitelistController,
       depositer,
-      sbtMinter,
+      boardMinter,
       contributionUpdater,
       user,
       daoTreasuryPool,
@@ -142,23 +142,23 @@ describe("QuestryPlatform", function () {
 
   describe("allocate", function () {
     async function addContribution(
-      cSBT: SBT,
+      cBoard: Board,
       cContributionPool: ContributionPool,
       member: SignerWithAddress,
       contribution: number
     ) {
-      await cSBT.connect(sbtMinter).mint(member.address);
+      await cBoard.connect(boardMinter).mint(member.address);
       await cContributionPool
         .connect(contributionUpdater)
         .addContribution(member.address, contribution);
     }
 
-    async function allocateNative(cPJManager: PJManager, cSBT: SBT) {
+    async function allocateNative(cPJManager: PJManager, cBoard: Board) {
       return await cQuestryPlatform.allocate({
         pjManager: cPJManager.address,
         paymentMode: nativeMode,
         paymentToken: ethers.constants.AddressZero,
-        board: cSBT.address,
+        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear({
           pools: [cContributionPool.address],
           coefs: [1],
@@ -171,13 +171,13 @@ describe("QuestryPlatform", function () {
     async function allocateERC20(
       cPJManager: PJManager,
       cERC20: ERC20,
-      cSBT: SBT
+      cBoard: Board
     ) {
       return await cQuestryPlatform.allocate({
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
-        board: cSBT.address,
+        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear({
           pools: [cContributionPool.address],
           coefs: [1],
@@ -189,19 +189,19 @@ describe("QuestryPlatform", function () {
 
     // TODO: Implement SignatureVerifier.verifySignature()
     it.skip("[R] should not allocate if signature verification failed", async function () {
-      const { cPJManager, cSBT } = await deployPJManager(
+      const { cPJManager, cBoard } = await deployPJManager(
         4000,
         withShares(businessOwners, [1, 2])
       );
-      await addContribution(cSBT, cContributionPool, boardingMembers[0], 1);
-      await addContribution(cSBT, cContributionPool, boardingMembers[1], 2);
+      await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
+      await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(depositer).deposit({ value: 100 });
 
       const txPromise = cQuestryPlatform.connect(user).allocate({
         pjManager: cPJManager.address,
         paymentMode: nativeMode,
         paymentToken: ethers.constants.AddressZero,
-        board: cSBT.address,
+        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear({
           pools: [cContributionPool.address],
           coefs: [1],
@@ -215,27 +215,27 @@ describe("QuestryPlatform", function () {
     });
 
     it("[S] should update terms after allocate()", async function () {
-      const { cPJManager, cSBT } = await deployPJManager(
+      const { cPJManager, cBoard } = await deployPJManager(
         4000,
         withShares(businessOwners, [1, 2])
       );
-      await addContribution(cSBT, cContributionPool, boardingMembers[0], 1);
+      await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
       await cPJManager.connect(depositer).deposit({ value: 100 });
       expect(await cContributionPool.getTerm()).equals(0);
-      await allocateNative(cPJManager, cSBT);
+      await allocateNative(cPJManager, cBoard);
       expect(await cContributionPool.getTerm()).equals(1);
     });
 
     it("[S] ETH: should allocate tokens in a typical scenario", async function () {
-      const { cPJManager, cSBT } = await deployPJManager(
+      const { cPJManager, cBoard } = await deployPJManager(
         4000,
         withShares(businessOwners, [1, 2])
       );
-      await addContribution(cSBT, cContributionPool, boardingMembers[0], 1);
-      await addContribution(cSBT, cContributionPool, boardingMembers[1], 2);
+      await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
+      await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(depositer).deposit({ value: 100 });
 
-      const tx = await allocateNative(cPJManager, cSBT);
+      const tx = await allocateNative(cPJManager, cBoard);
 
       await expect(tx).to.changeEtherBalances(
         [
@@ -256,15 +256,15 @@ describe("QuestryPlatform", function () {
     });
 
     it("[S] ETH: should allocate all to businessOwners when boardingMembersProportion is 0", async function () {
-      const { cPJManager, cSBT } = await deployPJManager(
+      const { cPJManager, cBoard } = await deployPJManager(
         0,
         withShares(businessOwners, [1, 2])
       );
-      await addContribution(cSBT, cContributionPool, boardingMembers[0], 1);
-      await addContribution(cSBT, cContributionPool, boardingMembers[1], 2);
+      await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
+      await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(depositer).deposit({ value: 100 });
 
-      const tx = await allocateNative(cPJManager, cSBT);
+      const tx = await allocateNative(cPJManager, cBoard);
 
       await expect(tx).to.changeEtherBalances(
         [
@@ -285,15 +285,15 @@ describe("QuestryPlatform", function () {
     });
 
     it("[S] ETH: should allocate all to boardingMembers when boardingMembersProportion is 10000", async function () {
-      const { cPJManager, cSBT } = await deployPJManager(
+      const { cPJManager, cBoard } = await deployPJManager(
         10000,
         withShares(businessOwners, [0, 0])
       );
-      await addContribution(cSBT, cContributionPool, boardingMembers[0], 1);
-      await addContribution(cSBT, cContributionPool, boardingMembers[1], 2);
+      await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
+      await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(depositer).deposit({ value: 100 });
 
-      const tx = await allocateNative(cPJManager, cSBT);
+      const tx = await allocateNative(cPJManager, cBoard);
 
       await expect(tx).to.changeEtherBalances(
         [
@@ -314,13 +314,13 @@ describe("QuestryPlatform", function () {
     });
 
     it("[S] ETH: should allocate all to businessOwners when no boardingMember exists", async function () {
-      const { cPJManager, cSBT } = await deployPJManager(
+      const { cPJManager, cBoard } = await deployPJManager(
         4000,
         withShares(businessOwners, [1, 2])
       );
       await cPJManager.connect(depositer).deposit({ value: 100 });
 
-      const tx = await allocateNative(cPJManager, cSBT);
+      const tx = await allocateNative(cPJManager, cBoard);
 
       await expect(tx).to.changeEtherBalances(
         [
@@ -341,16 +341,16 @@ describe("QuestryPlatform", function () {
     });
 
     it("[S] ERC20: should allocate tokens in a typical scenario", async function () {
-      const { cPJManager, cERC20, cSBT } = await deployPJManager(
+      const { cPJManager, cERC20, cBoard } = await deployPJManager(
         4000,
         withShares(businessOwners, [1, 2])
       );
-      await addContribution(cSBT, cContributionPool, boardingMembers[0], 1);
-      await addContribution(cSBT, cContributionPool, boardingMembers[1], 2);
+      await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
+      await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
       await cPJManager.connect(depositer).depositERC20(cERC20.address, 100);
 
-      await allocateERC20(cPJManager, cERC20, cSBT);
+      await allocateERC20(cPJManager, cERC20, cBoard);
 
       expect(await cERC20.balanceOf(boardingMembers[0].address)).equals(12);
       expect(await cERC20.balanceOf(boardingMembers[1].address)).equals(25);
@@ -360,16 +360,16 @@ describe("QuestryPlatform", function () {
     });
 
     it("[S] ERC20: should allocate all tokens to businessOwners when boardingMembersProportion is 0", async function () {
-      const { cPJManager, cERC20, cSBT } = await deployPJManager(
+      const { cPJManager, cERC20, cBoard } = await deployPJManager(
         0,
         withShares(businessOwners, [1, 2])
       );
-      await addContribution(cSBT, cContributionPool, boardingMembers[0], 1);
-      await addContribution(cSBT, cContributionPool, boardingMembers[1], 2);
+      await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
+      await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
       await cPJManager.connect(depositer).depositERC20(cERC20.address, 100);
 
-      await allocateERC20(cPJManager, cERC20, cSBT);
+      await allocateERC20(cPJManager, cERC20, cBoard);
 
       expect(await cERC20.balanceOf(boardingMembers[0].address)).equals(0);
       expect(await cERC20.balanceOf(boardingMembers[1].address)).equals(0);
@@ -379,16 +379,16 @@ describe("QuestryPlatform", function () {
     });
 
     it("[S] ERC20: should allocate all to boardingMembers when boardingMembersProportion is 10000", async function () {
-      const { cPJManager, cERC20, cSBT } = await deployPJManager(
+      const { cPJManager, cERC20, cBoard } = await deployPJManager(
         10000,
         withShares(businessOwners, [0, 0])
       );
-      await addContribution(cSBT, cContributionPool, boardingMembers[0], 1);
-      await addContribution(cSBT, cContributionPool, boardingMembers[1], 2);
+      await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
+      await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
       await cPJManager.connect(depositer).depositERC20(cERC20.address, 100);
 
-      await allocateERC20(cPJManager, cERC20, cSBT);
+      await allocateERC20(cPJManager, cERC20, cBoard);
 
       expect(await cERC20.balanceOf(boardingMembers[0].address)).equals(32);
       expect(await cERC20.balanceOf(boardingMembers[1].address)).equals(64);
@@ -398,14 +398,14 @@ describe("QuestryPlatform", function () {
     });
 
     it("[S] ERC20: should allocate all to businessOwners when no boardingMember exists", async function () {
-      const { cPJManager, cERC20, cSBT } = await deployPJManager(
+      const { cPJManager, cERC20, cBoard } = await deployPJManager(
         4000,
         withShares(businessOwners, [1, 2])
       );
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
       await cPJManager.connect(depositer).depositERC20(cERC20.address, 100);
 
-      await allocateERC20(cPJManager, cERC20, cSBT);
+      await allocateERC20(cPJManager, cERC20, cBoard);
 
       expect(await cERC20.balanceOf(boardingMembers[0].address)).equals(0);
       expect(await cERC20.balanceOf(boardingMembers[1].address)).equals(0);
