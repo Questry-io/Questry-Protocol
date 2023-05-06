@@ -45,7 +45,9 @@ interface IPJManager {
     LibQuestryPlatform.AllocateArgs calldata _args, 
     bytes[] calldata _signatures
   )
-    external;
+    external
+    view
+    returns (bool);
 
   /**
    * @dev Get PJManager signature nonce

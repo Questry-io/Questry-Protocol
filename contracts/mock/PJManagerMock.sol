@@ -106,6 +106,8 @@ contract PJManagerMock is IPJManager {
     bytes[] calldata _signatures
   )
     external
+    view
+    returns (bool)
   {
     revert("Not implemented.");
   }

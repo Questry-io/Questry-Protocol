@@ -4,10 +4,15 @@ import { Contract, utils } from "ethers";
 import { keccak256 } from "ethers/lib/utils";
 import { MockCallerContract } from "../typechain";
 
-export type Signature = {
-  signer: string;
-  signature: string;
-  signedTime: number;
+export type AllocateArgs = {
+  pjManager: string;
+  paymentMode: string; 
+  paymentToken: string; 
+  board: string; 
+  calculateArgs: CalculateDispatchArgs; 
+  updateNeededPools: string[]; 
+  ContributePoolOwner: string[]; 
+  pjnonce: string;
 };
 
 export type SharesWithLinear = {
@@ -18,6 +23,11 @@ export type SharesWithLinear = {
 export type AllocationShare = {
   recipient: string;
   share: number;
+};
+
+export type CalculateDispatchArgs = {
+  algorithm: string;
+  args: string;
 };
 
 export class TestUtils {

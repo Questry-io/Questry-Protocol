@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 /* eslint-disable node/no-missing-import */
 import { ethers } from "hardhat";
+import * as chai from "chai";
 import { BigNumber, utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
@@ -11,6 +12,7 @@ import {
   ContributionPool__factory,
   RandomERC20,
   RandomERC20__factory,
+  SBT,
   SBT__factory,
   PJManager__factory,
   MockCallerContract__factory,
@@ -18,10 +20,16 @@ import {
   PJManager,
 } from "../../typechain";
 import { AllocationShare, TestUtils } from "../testUtils";
+import { solidity } from "ethereum-waffle";
+
+chai.use(solidity);
 
 describe("PJManager", function () {
   let deployer: SignerWithAddress;
   let admin: SignerWithAddress;
+  let signer: SignerWithAddress;
+  let signer2: SignerWithAddress;
+  let signer3: SignerWithAddress;
   let stateManager: SignerWithAddress;
   let whitelistController: SignerWithAddress;
   let depositer: SignerWithAddress;
@@ -31,6 +39,7 @@ describe("PJManager", function () {
   let cMockQuestryPlatform: MockCallerContract;
   let cCalculator: ContributionCalculator;
   let cContributionPool: ContributionPool;
+
 
   const dummyAddress = "0x90fA7809574b4f8206ec1a47aDc37eCEE57443cb";
 
@@ -42,10 +51,15 @@ describe("PJManager", function () {
   const withdrawRoleHash = utils.keccak256(
     utils.toUtf8Bytes("PJ_WITHDRAW_ROLE")
   );
+
   const managementRoleHash = utils.keccak256(
     utils.toUtf8Bytes("PJ_MANAGEMENT_ROLE")
   );
-  const depositRoleHash = utils.keccak256(utils.toUtf8Bytes("PJ_DEPOSIT_ROLE"));
+
+  const depositRoleHash = utils.keccak256(
+    utils.toUtf8Bytes("PJ_DEPOSIT_ROLE")
+  );
+
   const whitelistRoleHash = utils.keccak256(
     utils.toUtf8Bytes("PJ_WHITELIST_ROLE")
   );
@@ -119,6 +133,9 @@ describe("PJManager", function () {
     [
       deployer,
       admin,
+      signer,
+      signer2,
+      signer3,
       stateManager,
       whitelistController,
       depositer,
@@ -143,6 +160,7 @@ describe("PJManager", function () {
       ethers.constants.AddressZero
     );
     await cContributionPool.deployed();
+
   });
 
   describe("constructor", function () {
@@ -374,10 +392,98 @@ describe("PJManager", function () {
     });
   });
 
+  describe("verifysignature (unit test)", function () {
+    let cPJManager: PJManager;
+    let cERC20:  RandomERC20;
+    let cDummyERC20: RandomERC20;
+    let cSBT: SBT;
+    let cContributionPool: ContributionPool;
+    let cContributionPool2: ContributionPool;
+
+    beforeEach(async function () {
+      ({  cPJManager, 
+          cERC20 , 
+          cSBT
+        } = await deployPJManager(
+        4000,
+        withShares(businessOwners, [1, 2])
+      ));
+
+      cContributionPool = await new ContributionPool__factory(deployer).deploy(
+        cMockQuestryPlatform.address,
+        0,
+        ethers.constants.AddressZero,
+        ethers.constants.AddressZero,
+        signer.address
+      );
+      await cContributionPool.deployed();
+
+      cContributionPool2 = await new ContributionPool__factory(deployer).deploy(
+        cMockQuestryPlatform.address,
+        0,
+        ethers.constants.AddressZero,
+        ethers.constants.AddressZero,
+        signer.address
+      );
+      await cContributionPool2.deployed();
+    });
+
+    it("[S] signature verifyer success on single signature", async function () {
+      
+      const SharesWithLinearArgs = {
+        pools: [cContributionPool.address,cContributionPool2.address],
+        coefs: [2, 3]
+      }
+      
+      const args: any = { 
+        pjManager: cPJManager.address,
+        paymentMode: erc20Mode,
+        paymentToken: cERC20.address,
+        board: cSBT.address,
+        calcurateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
+        updateNeededPools: [cContributionPool.address,cContributionPool2.address],
+        ContributePoolOwner: [signer.address,signer.address],
+        pjnonce: await cPJManager.GetNonce() 
+      };
+
+      //EIP712 create domain separator
+      const domain = {
+        name: "QUESTRY PLATFORM",
+        version: "1.0",
+        chainId: await signer.getChainId(),
+        verifyingContract: cPJManager.address,
+      };
+
+      const types2 = {
+        AllocateArgs: [
+          { name: "pjManager", type: "address" },
+          { name: "paymentMode", type: "bytes4" },
+          { name: "paymentToken", type: "address" },
+          { name: "board", type: "address" },
+          { name: "calcurateArgs", type: "CalculateDispatchArgs" },
+          { name: "updateNeededPools", type: "address[]" },
+          { name: "ContributePoolOwner", type: "address[]" },
+          { name: "pjnonce", type: "uint256" }
+        ],
+        CalculateDispatchArgs:[
+          { name: "algorithm", type: "bytes4" },
+          { name: "args", type: "bytes" }
+        ]
+      };
+
+      const message = await signer._signTypedData(domain, types2, args);
+      expect(
+        await cPJManager.verifySignature(args ,[message])
+      ).to.be.equal(true)
+
+    });
+  });
+
   describe("allowERC20", function () {
     let cPJManager: PJManager;
     let cERC20: RandomERC20;
     let cDummyERC20: RandomERC20;
+    
 
     beforeEach(async function () {
       ({ cPJManager, cERC20 } = await deployDummyPJManager());

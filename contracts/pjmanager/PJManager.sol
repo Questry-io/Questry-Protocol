@@ -143,6 +143,8 @@ contract PJManager is
     bytes[] calldata _signatures
   )
     external
+    view
+    returns (bool)
   {
     uint256 _verifyCount = 0; 
     for(uint256 idx = 0;idx < _signatures.length ;idx++){
@@ -159,6 +161,7 @@ contract PJManager is
       _verifyCount >= _getThreshold(),
       "PJManager: fall short of threshold for verify"
     );  
+    return true;
   }
   
 
