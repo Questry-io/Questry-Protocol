@@ -45,7 +45,7 @@ contract PJManager is
 
     //set signature threshold
     _setThreshold(_defaultThreshold);
-
+    
     _setupRole(LibPJManager.PJ_ADMIN_ROLE, _admin);
     _setupRole(LibPJManager.PJ_MANAGEMENT_ROLE, _admin);
     _setupRole(LibPJManager.PJ_WHITELIST_ROLE, _admin);
@@ -55,6 +55,7 @@ contract PJManager is
     _setRoleAdmin(LibPJManager.PJ_MANAGEMENT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(LibPJManager.PJ_WHITELIST_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(LibPJManager.PJ_DEPOSIT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
+    _setRoleAdmin(LibPJManager.PJ_VERIFY_SIGNER_ROLE, LibPJManager.PJ_ADMIN_ROLE);
   }
 
   // --------------------------------------------------
@@ -154,13 +155,15 @@ contract PJManager is
         _signatures[idx]
       );
       if(hasRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE,recoverAddress)){
-        _verifyCount++;
+        _verifyCount += 1;
       }
     }
+
     require(
       _verifyCount >= _getThreshold(),
       "PJManager: fall short of threshold for verify"
     );  
+
     return true;
   }
 
@@ -169,6 +172,9 @@ contract PJManager is
     external
     onlyRole(LibPJManager.PJ_ADMIN_ROLE) 
   {
+    /**
+     * todo: increment roll is questry platform fix this roll
+     */
     _incrementNonce();
   }
 
@@ -177,6 +183,10 @@ contract PJManager is
     external
     onlyRole(LibPJManager.PJ_ADMIN_ROLE)
   {
+    require(
+      _threshold > 0,
+      "PJManager :threshold does not set zero"
+    );
     _setThreshold(_threshold);
   }
 
