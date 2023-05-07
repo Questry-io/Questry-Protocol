@@ -226,7 +226,7 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     address[] calldata _poolowners
   ) private {
     for (uint256 i = 0; i < _pools.length; i++) {
-      pools[i].incrementTerm(_poolowners[i]);
+      _pools[i].incrementTerm(_poolowners[i]);
     }
   }
     
