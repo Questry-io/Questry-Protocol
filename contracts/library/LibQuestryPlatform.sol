@@ -77,8 +77,8 @@ library LibQuestryPlatform {
           _allocateargs.paymentToken,
           _allocateargs.board,
           _hashCalculateDispatchArgs(_allocateargs.calculateArgs),
-          _allocateargs.updateNeededPools,
-          _allocateargs.ContributePoolOwner,
+          keccak256(abi.encodePacked(_allocateargs.updateNeededPools)),
+          keccak256(abi.encodePacked(_allocateargs.ContributePoolOwner)),
           _allocateargs.pjnonce
         )
       );

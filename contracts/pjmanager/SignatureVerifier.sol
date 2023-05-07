@@ -10,7 +10,7 @@ import {console} from "hardhat/console.sol";
 abstract contract SignatureVerifier is 
   EIP712
 {
-  constructor() EIP712("QUESTRY PLATFORM","1.0") {}
+  constructor() EIP712("QUESTRY_PLATFORM","1.0") {}
   using ECDSA for bytes32;
   using Counters for Counters.Counter;
   //PJ Manage sig nonce

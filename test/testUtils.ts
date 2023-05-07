@@ -30,6 +30,18 @@ export type CalculateDispatchArgs = {
   args: string;
 };
 
+const AllOCATE_TYPEHASH = ethers.utils.keccak256(
+  ethers.utils.toUtf8Bytes(
+    "AllocateArgs(address pjManager,bytes4 paymentMode,address paymentToken,address board,CalculateDispatchArgs calculateArgs,address[] updateNeededPools,address[] ContributePoolOwner,uint256 pjnonce)CalculateDispatchArgs(bytes4 algorithm,bytes args)"
+  )
+);
+
+const CALCURATEDISPATCHARGS_TYPEHASH = ethers.utils.keccak256(
+  ethers.utils.toUtf8Bytes(
+    "CalculateDispatchArgs(bytes4 algorithm,bytes args)"
+  )
+);
+
 export class TestUtils {
   static linearAlgorithm = keccak256(utils.toUtf8Bytes("LINEAR")).slice(0, 10);
   static dummySigner = "0x3b0Ba9F781c0c090e55E544c2252CF1037239874";
@@ -63,4 +75,11 @@ export class TestUtils {
     const signature = iface.encodeFunctionData(fname, args);
     return await caller.callFunction(callee.address, signature);
   }
+
 }
+
+
+
+
+
+

@@ -163,7 +163,6 @@ contract PJManager is
     );  
     return true;
   }
-  
 
   //PJManager Signature verifier Nonce Increment function
   function IncrementNonce()

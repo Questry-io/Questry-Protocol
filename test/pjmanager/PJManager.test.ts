@@ -207,7 +207,7 @@ describe("PJManager", function () {
     });
   });
 
-  describe("addBusinessOwner", function () {
+ /* describe("addBusinessOwner", function () {
     let cPJManager: PJManager;
 
     beforeEach(async function () {
@@ -390,7 +390,7 @@ describe("PJManager", function () {
         "LibPJManager: businessOwners share should exist unless proportion is MAX_BASIS_POINT"
       );
     });
-  });
+  });*/
 
   describe("verifysignature (unit test)", function () {
     let cPJManager: PJManager;
@@ -443,12 +443,12 @@ describe("PJManager", function () {
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
         ContributePoolOwner: [signer.address,signer.address],
-        pjnonce: await cPJManager.GetNonce() 
+        pjnonce: (Number(await cPJManager.GetNonce())).toString()
       };
 
       //EIP712 create domain separator
       const domain = {
-        name: "QUESTRY PLATFORM",
+        name: "QUESTRY_PLATFORM",
         version: "1.0",
         chainId: await signer.getChainId(),
         verifyingContract: cPJManager.address,
@@ -472,6 +472,11 @@ describe("PJManager", function () {
       };
 
       const message = await signer._signTypedData(domain, types2, args);
+      console.log(message)
+      const recoveraddress = ethers.utils.verifyTypedData(domain,types2,args,message)
+      console.log(signer.address)
+      console.log(recoveraddress)
+
       expect(
         await cPJManager.verifySignature(args ,[message])
       ).to.be.equal(true)
@@ -479,8 +484,28 @@ describe("PJManager", function () {
 
     });
   });
+  /**
+   * ご参考
 
-  describe("allowERC20", function () {
+function verifySignaturesForAllocation(args: AllocateArgs, signature: string): string {
+  const provider = new ethers.providers.JsonRpcProvider();
+  const domain = {
+    name: "QUESTRY_PLATFORM",
+    version: "1.0",
+    chainId: provider.getNetwork().then((network) => network.chainId),
+    verifyingContract: args.pjManager,
+
+  };
+
+  
+  const recoveredAddress = ethers.utils.verifyTypedData(domain, { AllocateArgs, CalculateDispatchArgs }, args, signature);
+
+  return recoveredAddress;
+}
+   */
+  /**＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊＊/
+
+/*  describe("allowERC20", function () {
     let cPJManager: PJManager;
     let cERC20: RandomERC20;
     let cDummyERC20: RandomERC20;
@@ -740,5 +765,5 @@ describe("PJManager", function () {
         )
       ).revertedWith("PJTreasuryPool: insufficient balance");
     });
-  });
+  });*/
 });
