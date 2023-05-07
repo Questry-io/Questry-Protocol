@@ -117,13 +117,14 @@ library LibQuestryPlatform {
       bytes4(_allocateargs.paymentMode) != bytes4(0),
       "LibQuestryPlatform: PaymentMode is Invalid"
     );
-    //paymnet Token Address validation
-    require(
-      address(_allocateargs.paymentToken) != address(0),
-      "LibQuestryPlatform: payment Token Address is Invalid"
-    );
+    
     //Whitelist check
     if(_allocateargs.paymentMode == ERC20_PAYMENT_MODE){
+      //paymnet Token Address validation
+      require(
+        address(_allocateargs.paymentToken) != address(0),
+        "LibQuestryPlatform: payment Token Address is Invalid"
+      );
       // Whitelist check
       // EM: BuyOrder paymentToken not whitelisted
       require(

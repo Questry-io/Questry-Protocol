@@ -26,7 +26,6 @@ abstract contract SignatureVerifier is
     address recoverdAddress = _domainSeparatorV4()
       .toTypedDataHash(LibQuestryPlatform._hashAllocate(_args))
       .recover(_signature);
-    // EM: invalid Allocate signer
     return recoverdAddress;
   }
 

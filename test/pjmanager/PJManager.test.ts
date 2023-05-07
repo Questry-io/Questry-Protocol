@@ -17,6 +17,7 @@ import {
   MockCallerContract__factory,
   MockCallerContract,
   PJManager,
+  Board,
 } from "../../typechain";
 import { AllocationShare, TestUtils } from "../testUtils";
 import { solidity } from "ethereum-waffle";
@@ -402,14 +403,14 @@ describe("PJManager", function () {
     let cPJManager: PJManager;
     let cERC20:  RandomERC20;
     let cDummyERC20: RandomERC20;
-    let cSBT: SBT;
+    let cBoard: Board;
     let cContributionPool: ContributionPool;
     let cContributionPool2: ContributionPool;
 
     beforeEach(async function () {
       ({  cPJManager, 
           cERC20 , 
-          cSBT
+          cBoard
         } = await deployPJManager(
         4000,
         withShares(businessOwners, [1, 2])
@@ -446,7 +447,7 @@ describe("PJManager", function () {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
-        board: cSBT.address,
+        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
         ContributePoolOwner: [signer.address,signer.address],
@@ -507,7 +508,7 @@ describe("PJManager", function () {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
-        board: cSBT.address,
+        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
         ContributePoolOwner: [signer.address,signer.address],
@@ -572,7 +573,7 @@ describe("PJManager", function () {
         pjManager: cPJManager.address,
         paymentMode: nativeMode,
         paymentToken: cERC20.address,
-        board: cSBT.address,
+        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
         ContributePoolOwner: [signer.address,signer.address],
@@ -583,7 +584,7 @@ describe("PJManager", function () {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
-        board: cSBT.address,
+        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
         ContributePoolOwner: [signer.address,signer.address],
@@ -649,7 +650,58 @@ describe("PJManager", function () {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
-        board: cSBT.address,
+        board: cBoard.address,
+        calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
+        updateNeededPools: [cContributionPool.address,cContributionPool2.address],
+        ContributePoolOwner: [signer.address,signer.address],
+        pjnonce: (Number(await cPJManager.GetNonce())).toString()
+      };
+
+      //EIP712 create domain separator
+      const domain = {
+        name: "QUESTRY_PLATFORM",
+        version: "1.0",
+        chainId: await signer.getChainId(),
+        verifyingContract: cPJManager.address,
+      };
+
+      const types2 = {
+        AllocateArgs: [
+          { name: "pjManager", type: "address" },
+          { name: "paymentMode", type: "bytes4" },
+          { name: "paymentToken", type: "address" },
+          { name: "board", type: "address" },
+          { name: "calculateArgs", type: "CalculateDispatchArgs" },
+          { name: "updateNeededPools", type: "address[]" },
+          { name: "ContributePoolOwner", type: "address[]" },
+          { name: "pjnonce", type: "uint256" }
+        ],
+        CalculateDispatchArgs:[
+          { name: "algorithm", type: "bytes4" },
+          { name: "args", type: "bytes" }
+        ]
+      };
+
+      const message = await signer._signTypedData(domain, types2, args);
+      await expect(
+        cPJManager.verifySignature(args ,[message])
+      ).revertedWith("PJManager: fall short of threshold for verify");
+
+    });
+
+    it("[R] signature verifyer reverted not has roll", async function () {
+      
+      expect(await cPJManager.hasRole(SignerRoleHash,signer.address)).to.be.equal(false);
+      const SharesWithLinearArgs = {
+        pools: [cContributionPool.address,cContributionPool2.address],
+        coefs: [2, 3]
+      }
+      
+      const args: any = { 
+        pjManager: cPJManager.address,
+        paymentMode: erc20Mode,
+        paymentToken: cERC20.address,
+        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
         ContributePoolOwner: [signer.address,signer.address],
@@ -688,6 +740,8 @@ describe("PJManager", function () {
 
     });
   });
+
+  
 
   describe("GetNonce", function () {
     let cPJManager: PJManager;

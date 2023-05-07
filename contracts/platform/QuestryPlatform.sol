@@ -22,6 +22,8 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   // as mapping declaration is not supported inside function
   mapping(address => uint256) private tempPayoutAmount;
   address[] private tempPayoutAddress;
+  //set veryfy signature hystory
+  mapping(bytes32 => bool) private _isCompVerifySignature;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -57,6 +59,8 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // Step1 : Parameters and signatures checks
     // Check parameters
     LibQuestryPlatform._checkParameterForAllocation(_args);
+    //signatures validation
+    _setAndcheckVerifysignature(_AllcatorSigns);
     //EIP712 verify signature
     pjManager.verifySignature(_args, _AllcatorSigns);
 
@@ -254,5 +258,22 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     uint32 _boardingMembersProportion
   ) private pure returns (uint256) {
     return (_revenue * _boardingMembersProportion) / 10000;
+  }
+
+  /**
+   * @dev Elimination of duplicate signature verification.
+   */
+  function _setAndcheckVerifysignature(
+      bytes[] calldata _signatures
+    )
+      private
+  {
+    for(uint256 idx = 0; idx >= _signatures.length; idx++){
+        require(
+          !_isCompVerifySignature[keccak256(abi.encodePacked(_signatures[idx]))],
+          "QuestryPlatform: Elimination of duplicate signature verification"
+        );
+        _isCompVerifySignature[keccak256(abi.encodePacked(_signatures[idx]))] = true;
+    }
   }
 }

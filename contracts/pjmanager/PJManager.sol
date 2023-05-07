@@ -25,6 +25,8 @@ contract PJManager is
   uint32 private _defaultThreshold = 1; 
   address public immutable admin;
   LibPJManager.AllocationShare[] public businessOwners;
+  //signature verify reply management
+  mapping(bytes => bool) private _isCompVerifySignature;
 
   constructor(
     QuestryPlatform _questryPlatform,
@@ -43,6 +45,11 @@ contract PJManager is
     admin = _admin;
     boardingMembersProportion = _boardingMembersProportion;
 
+    //set nonce increment roll
+    _setupRole(
+      LibPJManager.PJ_NONCE_INCREMENT_ROLE, 
+      address(_questryPlatform)
+    );
     //set signature threshold
     _setThreshold(_defaultThreshold);
     
@@ -149,6 +156,7 @@ contract PJManager is
   {
     uint256 _verifyCount = 0; 
     for(uint256 idx = 0;idx < _signatures.length ;idx++){
+      
       // Verify signatures
       address recoverAddress = _verifySignaturesForAllocation(
         _args,
@@ -170,7 +178,7 @@ contract PJManager is
   //PJManager Signature verifier Nonce Increment function
   function IncrementNonce()
     external
-    onlyRole(LibPJManager.PJ_ADMIN_ROLE) 
+    onlyRole(LibPJManager.PJ_NONCE_INCREMENT_ROLE) 
   {
     /**
      * todo: increment roll is questry platform fix this roll

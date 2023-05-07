@@ -138,6 +138,7 @@ describe("QuestryPlatform", function () {
     await cContributionPool
       .connect(poolAdmin)
       .grantIncrementTermRole(TestUtils.dummySigner);
+
   });
 
   describe("allocate", function () {
@@ -154,7 +155,7 @@ describe("QuestryPlatform", function () {
     }
 
     async function allocateNative(cPJManager: PJManager, cBoard: Board) {
-      return await cQuestryPlatform.allocate({
+      const args = {
         pjManager: cPJManager.address,
         paymentMode: nativeMode,
         paymentToken: ethers.constants.AddressZero,
@@ -164,16 +165,47 @@ describe("QuestryPlatform", function () {
           coefs: [1],
         }),
         updateNeededPools: [cContributionPool.address],
-        signature: await TestUtils.createDummySignature(),
-      });
+        ContributePoolOwner: [TestUtils.dummySigner],
+        pjnonce: (Number(await cPJManager.GetNonce())).toString()
+      }
+
+      //EIP712 create domain separator
+      const domain = {
+        name: "QUESTRY_PLATFORM",
+        version: "1.0",
+        chainId: await admin.getChainId(),
+        verifyingContract: cPJManager.address,
+      };
+
+      const types2 = {
+        AllocateArgs: [
+          { name: "pjManager", type: "address" },
+          { name: "paymentMode", type: "bytes4" },
+          { name: "paymentToken", type: "address" },
+          { name: "board", type: "address" },
+          { name: "calculateArgs", type: "CalculateDispatchArgs" },
+          { name: "updateNeededPools", type: "address[]" },
+          { name: "ContributePoolOwner", type: "address[]" },
+          { name: "pjnonce", type: "uint256" }
+        ],
+        CalculateDispatchArgs:[
+          { name: "algorithm", type: "bytes4" },
+          { name: "args", type: "bytes" }
+        ]
+      };
+      
+      const signature = await admin._signTypedData(domain, types2, args);
+      return await cQuestryPlatform.allocate(args, [signature]);
     }
+
 
     async function allocateERC20(
       cPJManager: PJManager,
       cERC20: ERC20,
       cBoard: Board
     ) {
-      return await cQuestryPlatform.allocate({
+
+      const args = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -183,36 +215,38 @@ describe("QuestryPlatform", function () {
           coefs: [1],
         }),
         updateNeededPools: [cContributionPool.address],
-        signature: await TestUtils.createDummySignature(),
-      });
+        ContributePoolOwner: [TestUtils.dummySigner],
+        pjnonce: (Number(await cPJManager.GetNonce())).toString()
+      }
+
+       //EIP712 create domain separator
+      const domain = {
+        name: "QUESTRY_PLATFORM",
+        version: "1.0",
+        chainId: await admin.getChainId(),
+        verifyingContract: cPJManager.address,
+      };
+
+      const types2 = {
+        AllocateArgs: [
+          { name: "pjManager", type: "address" },
+          { name: "paymentMode", type: "bytes4" },
+          { name: "paymentToken", type: "address" },
+          { name: "board", type: "address" },
+          { name: "calculateArgs", type: "CalculateDispatchArgs" },
+          { name: "updateNeededPools", type: "address[]" },
+          { name: "ContributePoolOwner", type: "address[]" },
+          { name: "pjnonce", type: "uint256" }
+        ],
+        CalculateDispatchArgs:[
+          { name: "algorithm", type: "bytes4" },
+          { name: "args", type: "bytes" }
+        ]
+      };
+
+      const signature = await admin._signTypedData(domain, types2, args);
+      return await cQuestryPlatform.allocate(args, [signature]);
     }
-
-    // TODO: Implement SignatureVerifier.verifySignature()
-    it.skip("[R] should not allocate if signature verification failed", async function () {
-      const { cPJManager, cBoard } = await deployPJManager(
-        4000,
-        withShares(businessOwners, [1, 2])
-      );
-      await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
-      await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
-      await cPJManager.connect(depositer).deposit({ value: 100 });
-
-      const txPromise = cQuestryPlatform.connect(user).allocate({
-        pjManager: cPJManager.address,
-        paymentMode: nativeMode,
-        paymentToken: ethers.constants.AddressZero,
-        board: cBoard.address,
-        calculateArgs: TestUtils.createArgsWithLinear({
-          pools: [cContributionPool.address],
-          coefs: [1],
-        }),
-        updateNeededPools: [cContributionPool.address],
-        signature: await TestUtils.createDummySignature(),
-      });
-      await expect(txPromise).revertedWith(
-        "QuestryPlatform: signature verification failed"
-      );
-    });
 
     it("[S] should update terms after allocate()", async function () {
       const { cPJManager, cBoard } = await deployPJManager(
@@ -222,8 +256,10 @@ describe("QuestryPlatform", function () {
       await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
       await cPJManager.connect(depositer).deposit({ value: 100 });
       expect(await cContributionPool.getTerm()).equals(0);
+      expect(await cPJManager.GetNonce()).equals(0);
       await allocateNative(cPJManager, cBoard);
       expect(await cContributionPool.getTerm()).equals(1);
+      expect(await cPJManager.GetNonce()).equals(1);
     });
 
     it("[S] ETH: should allocate tokens in a typical scenario", async function () {
