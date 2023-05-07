@@ -65,7 +65,7 @@ derectry構成のtreeをこちらに記述する
 │   ├── Factory
 │   │   ├── NFT-factory.test.ts
 │   │   ├── PJ-Manager-Factory.test.ts
-│   │   └── sbt-factory.test.ts
+│   │   └── board-factory.test.ts
 │   └── token
 │       ├── NFT.test.ts
 │       └── soulbound.test.ts

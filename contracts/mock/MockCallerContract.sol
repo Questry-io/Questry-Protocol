@@ -2,11 +2,11 @@
 pragma solidity ^0.8.17;
 
 contract MockCallerContract {
-  function callFunction(address c, bytes memory _encodeWithSignature)
+  function callFunction(address _c, bytes memory _encodeWithSignature)
     external
     returns (bytes memory)
   {
-    (bool success, bytes memory result) = c.call(_encodeWithSignature);
+    (bool success, bytes memory result) = _c.call(_encodeWithSignature);
     if (success == false) {
       assembly {
         let ptr := mload(0x40)

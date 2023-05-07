@@ -12,8 +12,7 @@ import {
   ContributionPool__factory,
   RandomERC20,
   RandomERC20__factory,
-  SBT,
-  SBT__factory,
+  Board__factory,
   PJManager__factory,
   MockCallerContract__factory,
   MockCallerContract,
@@ -36,7 +35,7 @@ describe("PJManager", function () {
   let stateManager: SignerWithAddress;
   let whitelistController: SignerWithAddress;
   let depositer: SignerWithAddress;
-  let sbtMinter: SignerWithAddress;
+  let boardMinter: SignerWithAddress;
   let businessOwners: SignerWithAddress[];
   let user: SignerWithAddress;
   let cMockQuestryPlatform: MockCallerContract;
@@ -107,16 +106,16 @@ describe("PJManager", function () {
       .connect(admin)
       .grantRole(whitelistRoleHash, whitelistController.address);
 
-    // deploy SBT associated with the project.
-    const cSBT = await new SBT__factory(deployer).deploy(
+    // deploy Board associated with the project.
+    const cBoard = await new Board__factory(deployer).deploy(
       "board",
       "BRD",
       "https://example.com",
       cPJManager.address,
-      sbtMinter.address,
+      boardMinter.address,
       ethers.constants.AddressZero
     );
-    await cSBT.deployed();
+    await cBoard.deployed();
 
     // deploy mock ERC20
     const cERC20 = await new RandomERC20__factory(deployer).deploy();
@@ -126,7 +125,7 @@ describe("PJManager", function () {
 
     return {
       cPJManager,
-      cSBT,
+      cBoard,
       cERC20,
     };
   }
@@ -146,7 +145,7 @@ describe("PJManager", function () {
       stateManager,
       whitelistController,
       depositer,
-      sbtMinter,
+      boardMinter,
       user,
       ...rest
     ] = await ethers.getSigners();

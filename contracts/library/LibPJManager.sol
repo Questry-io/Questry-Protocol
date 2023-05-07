@@ -13,9 +13,12 @@ library LibPJManager {
   bytes32 public constant PJ_DEPOSIT_ROLE = keccak256("PJ_DEPOSIT_ROLE");
   bytes32 public constant PJ_VERIFY_SIGNER_ROLE = keccak256("PJ_VERIFY_SIGNER");
 
-  bytes32 public constant POOL_INCREMENT_TERM_ROLE = keccak256("POOL_INCREMENT_TERM_ROLE");
-  bytes32 public constant POOL_CONTRIBUTION_UPDATER_ROLE = keccak256("POOL_CONTRIBUTION_UPDATER_ROLE");
-  bytes32 public constant POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE = keccak256("POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE");
+  bytes32 public constant POOL_INCREMENT_TERM_ROLE =
+    keccak256("POOL_INCREMENT_TERM_ROLE");
+  bytes32 public constant POOL_CONTRIBUTION_UPDATER_ROLE =
+    keccak256("POOL_CONTRIBUTION_UPDATER_ROLE");
+  bytes32 public constant POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE =
+    keccak256("POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE");
   bytes32 public constant POOL_ADMIN_ROLE = keccak256("POOL_ADMIN_ROLE");
 
   uint32 public constant MAX_BASIS_POINT = 10000;
@@ -29,22 +32,22 @@ library LibPJManager {
   }
 
   function _validateAllocationSettings(
-    AllocationShare[] memory businessOwners,
-    uint32 boardingMembersProportion
+    AllocationShare[] memory _businessOwners,
+    uint32 _boardingMembersProportion
   ) internal pure {
     bool businessOwnersShareExists = false;
-    for (uint256 i = 0; i < businessOwners.length; i++) {
-      if (businessOwners[i].share > 0) {
+    for (uint256 i = 0; i < _businessOwners.length; i++) {
+      if (_businessOwners[i].share > 0) {
         businessOwnersShareExists = true;
         break;
       }
     }
 
     require(
-      boardingMembersProportion <= MAX_BASIS_POINT,
+      _boardingMembersProportion <= MAX_BASIS_POINT,
       "LibPJManager: proportion is out of range"
     );
-    if (boardingMembersProportion < MAX_BASIS_POINT) {
+    if (_boardingMembersProportion < MAX_BASIS_POINT) {
       require(
         businessOwnersShareExists,
         "LibPJManager: businessOwners share should exist unless proportion is MAX_BASIS_POINT"
