@@ -6,10 +6,10 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import {ISBT} from "../../interface/token/ISBT.sol";
+import {IBoard} from "../../interface/token/IBoard.sol";
 import {IPJManager} from "../../interface/pjmanager/IPJManager.sol";
 
-contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
+contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
   using Counters for Counters.Counter;
   using Strings for uint256;
 
@@ -19,10 +19,10 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
 
   bool public isTransfable = false;
   IPJManager public immutable pjManager;
-  string private _baseTokenURI;
-  address[] private _boardingMembers;
-  mapping(address => bool) private _isBoardingMember;
-  Counters.Counter private _tokenIdTracker;
+  string private baseTokenURI;
+  address[] private boardingMembers;
+  mapping(address => bool) private isBoardingMember;
+  Counters.Counter private tokenIdTracker;
 
   /**
    * @dev Grants `DEFAULT_ADMIN_ROLE`, `MINTER_ROLE`, `URIUPDATETR_ROLE` and
@@ -34,14 +34,14 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   constructor(
     string memory _name,
     string memory _symbol,
-    string memory baseTokenURI,
+    string memory _baseTokenURI,
     IPJManager _pjManager,
     address _admin,
     address _trustedForwarder
   ) ERC721(_name, _symbol) ERC2771Context(_trustedForwarder) {
-    _baseTokenURI = baseTokenURI;
+    baseTokenURI = _baseTokenURI;
     pjManager = _pjManager;
-    _tokenIdTracker.increment();
+    tokenIdTracker.increment();
 
     _setupRole(DEFAULT_ADMIN_ROLE, _admin);
     _setupRole(MINTER_ROLE, _admin);
@@ -55,7 +55,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
    * DID spec: https://github.com/KanameProtocol/did-kaname-spec
    * See {IERC721Metadata-tokenURI}
    */
-  function tokenURI(uint256 tokenId)
+  function tokenURI(uint256 _tokenId)
     public
     view
     virtual
@@ -63,14 +63,14 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
     returns (string memory)
   {
     require(
-      _exists(tokenId),
+      _exists(_tokenId),
       "ERC721Metadata: URI query for nonexistent token"
     );
-    return string(abi.encodePacked(_baseURI(), did(tokenId)));
+    return string(abi.encodePacked(_baseURI(), did(_tokenId)));
   }
 
   /**
-   * @dev Return the _baseTokenURI.
+   * @dev Return the baseTokenURI.
    * See {ERC721-_baseURI}.
    */
   function _baseURI()
@@ -80,7 +80,7 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
     override(ERC721)
     returns (string memory)
   {
-    return _baseTokenURI;
+    return baseTokenURI;
   }
 
   /**
@@ -89,18 +89,18 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   function updateBaseTokenURI(string memory _uri) external {
     require(
       hasRole(URIUPDATER_ROLE, _msgSender()),
-      "SBT: must have URI updater role to update URI"
+      "Board: must have URI updater role to update URI"
     );
-    _baseTokenURI = _uri;
+    baseTokenURI = _uri;
   }
 
   /**
    * @dev Resolve Questry Protocol DID from the board which tokenId is `tokenId`.
    */
-  function did(uint256 tokenId) public view returns (string memory) {
-    address member = ownerOf(tokenId);
+  function did(uint256 _tokenId) public view returns (string memory) {
+    address member = ownerOf(_tokenId);
     string memory boardId = pjManager
-      .resolveBoardId(address(this), tokenId)
+      .resolveBoardId(address(this), _tokenId)
       .toString();
     return
       string(
@@ -138,111 +138,114 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
   /**
    * @dev Returns Questry Protocol DID spec's member.
    */
-  function didMember(address member) public view returns (string memory) {
+  function didMember(address _member) public view returns (string memory) {
     string memory chainId = block.chainid.toString();
-    string memory hexMember = Strings.toHexString(uint160(member), 20);
+    string memory hexMember = Strings.toHexString(uint160(_member), 20);
     return string(abi.encodePacked("eip155:", chainId, ":", hexMember));
   }
 
-  /// @inheritdoc ISBT
-  function mint(address to) public {
+  /// @inheritdoc IBoard
+  function mint(address _to) public {
     require(
       hasRole(MINTER_ROLE, _msgSender()),
-      "SBT: must have minter role to mint"
+      "Board: must have minter role to mint"
     );
 
-    if (!_isBoardingMember[to]) {
-      _boardingMembers.push(to);
-      _isBoardingMember[to] = true;
+    if (!isBoardingMember[_to]) {
+      boardingMembers.push(_to);
+      isBoardingMember[_to] = true;
     }
 
-    uint256 tokenId = _tokenIdTracker.current();
-    _mint(to, tokenId);
-    _tokenIdTracker.increment();
+    uint256 tokenId = tokenIdTracker.current();
+    _mint(_to, tokenId);
+    tokenIdTracker.increment();
 
     IPJManager(pjManager).registerBoard(address(this), tokenId);
   }
 
-  /// @inheritdoc ISBT
-  function bulkMint(address[] calldata tos) public {
-    for (uint256 i = 0; i < tos.length; i++) {
-      mint(tos[i]);
+  /// @inheritdoc IBoard
+  function bulkMint(address[] calldata _tos) public {
+    for (uint256 i = 0; i < _tos.length; i++) {
+      mint(_tos[i]);
     }
   }
 
-  /// @inheritdoc ISBT
-  function burn(uint256 tokenId) public {
+  /// @inheritdoc IBoard
+  function burn(uint256 _tokenId) public {
     require(
       hasRole(BURNER_ROLE, _msgSender()),
-      "SBT: must have burner role to burn"
+      "Board: must have burner role to burn"
     );
 
-    address owner = ownerOf(tokenId);
+    address owner = ownerOf(_tokenId);
     if (balanceOf(owner) == 1) {
-      _isBoardingMember[owner] = false;
+      isBoardingMember[owner] = false;
       // XXX: too much gas cost especially when tokens bulk burned
       uint256 newIdx = 0;
-      for (uint256 i = 0; i < _boardingMembers.length; i++) {
-        if (_boardingMembers[i] != owner) {
-          _boardingMembers[newIdx++] = _boardingMembers[i];
+      for (uint256 i = 0; i < boardingMembers.length; i++) {
+        if (boardingMembers[i] != owner) {
+          boardingMembers[newIdx++] = boardingMembers[i];
         }
       }
-      require (newIdx + 1 == _boardingMembers.length, "SBT: cannot remove boarding member");
-      _boardingMembers.pop();
+      require(
+        newIdx + 1 == boardingMembers.length,
+        "Board: cannot remove boarding member"
+      );
+      boardingMembers.pop();
     }
 
-    _burn(tokenId);
+    _burn(_tokenId);
   }
 
-  /// @inheritdoc ISBT
-  function bulkBurn(uint256[] calldata tokenIds) public {
-    for (uint256 i = 0; i < tokenIds.length; i++) {
-      burn(tokenIds[i]);
+  /// @inheritdoc IBoard
+  function bulkBurn(uint256[] calldata _tokenIds) public {
+    for (uint256 i = 0; i < _tokenIds.length; i++) {
+      burn(_tokenIds[i]);
     }
   }
 
-  /// @inheritdoc ISBT
-  function boardingMembers() external view returns (address[] memory) {
-    return _boardingMembers;
+  /// @inheritdoc IBoard
+  function getBoardingMembers() external view returns (address[] memory) {
+    return boardingMembers;
   }
 
-  /// @inheritdoc ISBT
+  /// @inheritdoc IBoard
   function boardingMembersExist() external view returns (bool) {
-    return _boardingMembers.length > 0;
+    return boardingMembers.length > 0;
   }
 
   /**
-   * @dev Returns if `account` has the token, in other words, it is a boarding member.
-   * Note that only one token can be minted from the same SBT contract per account.
+   * @dev Returns if `_account` has the token, in other words, it is a boarding member.
+   * Note that only one token can be minted from the same Board contract per account.
    */
-  function isBoardingMember(address account) external view returns (bool) {
-    return _isBoardingMember[account];
+  function getIsBoardingMember(address _account) external view returns (bool) {
+    return isBoardingMember[_account];
   }
 
-  /// @dev Overridden for SBT
+  /// @dev Overridden for Board
   function _transfer(
-    address from,
-    address to,
-    uint256 tokenId
+    address _from,
+    address _to,
+    uint256 _tokenId
   ) internal virtual override {
-    require(isTransfable, "SBT: Err Token is SBT");
-    super._transfer(from, to, tokenId);
+    require(isTransfable, "Board: Err Token is Board");
+    super._transfer(_from, _to, _tokenId);
   }
 
-  /// @dev Overridden for SBT
+  /// @dev Overridden for Board
   function _setApprovalForAll(
-    address owner,
-    address operator,
-    bool approved
+    address _owner,
+    address _operator,
+    bool _approved
   ) internal virtual override {
-    require(isTransfable, "SBT: Err Token is SBT");
-    super._setApprovalForAll(owner, operator, approved);
+    require(isTransfable, "Board: Err Token is Board");
+    super._setApprovalForAll(_owner, _operator, _approved);
   }
 
-  /// @dev Overridden for SBT
-  function _approve(address to, uint256 tokenId) internal virtual override {
-    require(isTransfable || to == address(0), "SBT: Err Token is SBT");
-    super._approve(to, tokenId);
+  /// @dev Overridden for Board
+  function _approve(address _to, uint256 _tokenId) internal virtual override {
+    require(isTransfable || _to == address(0), "Board: Err Token is Board");
+    super._approve(_to, _tokenId);
   }
 
   /**
@@ -279,13 +282,13 @@ contract SBT is ISBT, ERC721, AccessControl, ERC2771Context {
    *
    * - BasicERC721.supportsInterface() returns ERC721.supportsInterface();
    */
-  function supportsInterface(bytes4 interfaceId)
+  function supportsInterface(bytes4 _interfaceId)
     public
     view
     virtual
     override(AccessControl, ERC721)
     returns (bool)
   {
-    return super.supportsInterface(interfaceId);
+    return super.supportsInterface(_interfaceId);
   }
 }

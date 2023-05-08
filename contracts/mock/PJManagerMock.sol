@@ -17,24 +17,26 @@ contract PJManagerMock is IPJManager {
     boardIdTracker.increment();
   }
 
-  function registerBoard(address sbt, uint256 tokenId) external {
-    boardIds[sbt][tokenId] = boardIdTracker.current();
+  function registerBoard(address _board, uint256 _tokenId) external {
+    boardIds[_board][_tokenId] = boardIdTracker.current();
     boardIdTracker.increment();
   }
 
-  function resolveBoardId(address sbt, uint256 tokenId)
+  function resolveBoardId(address _board, uint256 _tokenId)
     external
     view
     returns (uint256)
   {
     require(
-      boardIds[sbt][tokenId] > 0,
+      boardIds[_board][_tokenId] > 0,
       "PJManagerMock: resolve for nonexistent board"
     );
-    return boardIds[sbt][tokenId];
+    return boardIds[_board][_tokenId];
   }
 
-  function addBusinessOwner(LibPJManager.AllocationShare calldata _businessOwner) external {
+  function addBusinessOwner(
+    LibPJManager.AllocationShare calldata _businessOwner
+  ) external {
     revert("Not implemented.");
   }
 
@@ -42,26 +44,26 @@ contract PJManagerMock is IPJManager {
     revert("Not implemented.");
   }
 
-  function updateBusinessOwner(LibPJManager.AllocationShare calldata _businessOwner)
-    external
-  {
-    revert("Not implemented.");
-  }
-
-  function withdrawForAllocation(
-    bytes4 paymentMode,
-    IERC20 paymentToken,
-    address receiver,
-    uint256 amount
+  function updateBusinessOwner(
+    LibPJManager.AllocationShare calldata _businessOwner
   ) external {
     revert("Not implemented.");
   }
 
-  function allowERC20(IERC20 token) external {
+  function withdrawForAllocation(
+    bytes4 _paymentMode,
+    IERC20 _paymentToken,
+    address _receiver,
+    uint256 _amount
+  ) external {
     revert("Not implemented.");
   }
 
-  function disallowERC20(IERC20 token) external {
+  function allowERC20(IERC20 _token) external {
+    revert("Not implemented.");
+  }
+
+  function disallowERC20(IERC20 _token) external {
     revert("Not implemented.");
   }
 
@@ -69,19 +71,19 @@ contract PJManagerMock is IPJManager {
     revert("Not implemented.");
   }
 
-  function depositERC20(IERC20 token, uint256 amount) external {
+  function depositERC20(IERC20 _token, uint256 _amount) external {
     revert("Not implemented.");
   }
 
-  function getBoardingMembersProportion()
+  function getBoardingMembersProportion() external view returns (uint32) {
+    revert("Not implemented.");
+  }
+
+  function getBusinessOwners()
     external
     view
-    returns (uint32)
+    returns (LibPJManager.AllocationShare[] memory)
   {
-    revert("Not implemented.");
-  }
-
-  function getBusinessOwners() external view returns (LibPJManager.AllocationShare[] memory) {
     revert("Not implemented.");
   }
 
@@ -89,11 +91,11 @@ contract PJManagerMock is IPJManager {
     revert("Not implemented.");
   }
 
-  function isWhitelisted(IERC20 token) external view returns (bool) {
+  function isWhitelisted(IERC20 _token) external view returns (bool) {
     revert("Not implemented.");
   }
 
-  function getTotalBalance(bytes4 paymentMode, IERC20 paymentToken)
+  function getTotalBalance(bytes4 _paymentMode, IERC20 _paymentToken)
     external
     view
     returns (uint256)

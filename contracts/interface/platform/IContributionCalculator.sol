@@ -9,15 +9,15 @@ interface IContributionCalculator {
    * @dev Dispatches the calculation of the allocated shares.
    */
   function calculateDispatch(
-    address[] calldata members,
-    LibQuestryPlatform.CalculateDispatchArgs memory args
+    address[] calldata _members,
+    LibQuestryPlatform.CalculateDispatchArgs memory _args
   ) external view returns (LibQuestryPlatform.SharesResult memory result);
 
   /**
    * @dev Calculates the allocated shares using a linear algorithm.
    */
   function calculateSharesWithLinear(
-    address[] calldata members,
-    LibQuestryPlatform.SharesWithLinearArgs memory args
+    address[] calldata _members,
+    LibQuestryPlatform.SharesWithLinearArgs memory _args
   ) external view returns (LibQuestryPlatform.SharesResult memory result);
 }

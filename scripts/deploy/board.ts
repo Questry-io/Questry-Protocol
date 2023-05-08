@@ -14,23 +14,39 @@ async function main() {
   await hre.run("compile");
 
   // We get the contract to deploy
-  const name = ""
-  const symbol = ""
-  const baseTokenURI = ""
-  const pjmanagerContract = ""
-  const admin = ""
-  const Trustedforwarder = ""
+  const name = "";
+  const symbol = "";
+  const baseTokenURI = "";
+  const pjmanagerContract = "";
+  const admin = "";
+  const Trustedforwarder = "";
 
-  if (name == "" || symbol == "" || baseTokenURI == "" || pjmanagerContract == "" || admin == "" || Trustedforwarder == "") {
-    throw new Error("Please set all of name, symbol, baseTokenURI, pjmanagerContract, admin, Trustedforwarder");
+  if (
+    name == "" ||
+    symbol == "" ||
+    baseTokenURI == "" ||
+    pjmanagerContract == "" ||
+    admin == "" ||
+    Trustedforwarder == ""
+  ) {
+    throw new Error(
+      "Please set all of name, symbol, baseTokenURI, pjmanagerContract, admin, Trustedforwarder"
+    );
   }
 
-  const SBT = await hre.ethers.getContractFactory("SBT");
-   
-  const sbt = await SBT.deploy(name, symbol, baseTokenURI, pjmanagerContract, admin, Trustedforwarder);
-  await sbt.deployed();
+  const Board = await hre.ethers.getContractFactory("Board");
 
-  console.log("SBT deployed to:", sbt.address);
+  const board = await Board.deploy(
+    name,
+    symbol,
+    baseTokenURI,
+    pjmanagerContract,
+    admin,
+    Trustedforwarder
+  );
+  await board.deployed();
+
+  console.log("Board deployed to:", board.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

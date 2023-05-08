@@ -14,8 +14,8 @@ interface IContributionPool {
    * Anyone can never subtract boarding members' contributions if mode is AddOnlyAccess.
    */
   enum MutationMode {
-    AddOnlyAccess,  // Only `addContribution`, `bulkAddContribution` operations allowed.
-    FullControl     // All operations allowed.
+    AddOnlyAccess, // Only `addContribution`, `bulkAddContribution` operations allowed.
+    FullControl // All operations allowed.
   }
 
   /**
@@ -23,53 +23,62 @@ interface IContributionPool {
    *
    * Emits {AddContribution}
    */
-  function addContribution(address member, uint120 value) external;
+  function addContribution(address _member, uint120 _value) external;
 
   /**
    * @dev Bulk adds `contributions` to `members`.
    *
    * Emits {BulkAddContribution}
    */
-  function bulkAddContribution(address[] calldata members, uint120[] calldata values) external;
+  function bulkAddContribution(
+    address[] calldata _members,
+    uint120[] calldata _values
+  ) external;
 
   /**
    * @dev Subtracts `contribution` from `member`.
    *
    * Emits {SubtractContribution}
    */
-  function subtractContribution(address member, uint120 value) external;
+  function subtractContribution(address _member, uint120 _value) external;
 
   /**
    * @dev Bulk subtracts `contributions` from `members`.
    *
    * Emits {BulkSubtractContribution}
    */
-  function bulkSubtractContribution(address[] calldata members, uint120[] calldata values) external;
+  function bulkSubtractContribution(
+    address[] calldata _members,
+    uint120[] calldata _values
+  ) external;
 
   /**
    * @dev Sets `contribution` to `member`.
    *
    * Emits {SetContribution}
    */
-  function setContribution(address member, uint120 value) external;
+  function setContribution(address _member, uint120 _value) external;
 
   /**
    * @dev Bulk sets `contributions` to `members`.
    *
    * Emits {BulkSetContribution}
    */
-  function bulkSetContribution(address[] calldata members, uint120[] calldata values) external;
+  function bulkSetContribution(
+    address[] calldata _members,
+    uint120[] calldata _values
+  ) external;
 
   /**
-   * @dev Increments the accumulation period for contributions by checking if the `permittedSigner`
+   * @dev Increments the accumulation period for contributions by checking if the `_permittedSigner`
    * has the execution permission.
    */
-  function incrementTerm(address permittedSigner) external;
+  function incrementTerm(address _permittedSigner) external;
 
   /**
-   * @dev Gets contribution of `member`.
+   * @dev Gets contribution of `_member`.
    */
-  function getContribution(address member) external view returns (uint120);
+  function getContribution(address _member) external view returns (uint120);
 
   /**
    * @dev Returns the accumulation period for contributions.

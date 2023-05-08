@@ -125,11 +125,11 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
   // TODO: REGISTER_BOARD_ROLE
   // --------------------------------------------------
 
-  function registerBoard(address sbt, uint256 tokenId) external {
+  function registerBoard(address _board, uint256 _tokenId) external {
     console.log("TODO: registerBoard() not implemented yet.");
   }
 
-  function resolveBoardId(address sbt, uint256 tokenId)
+  function resolveBoardId(address _board, uint256 _tokenId)
     external
     view
     returns (uint256)

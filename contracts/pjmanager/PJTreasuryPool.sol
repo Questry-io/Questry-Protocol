@@ -19,7 +19,7 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl, ReentrancyGuard {
   QuestryPlatform public immutable questryPlatform;
 
   IERC20[] public tokenWhitelists;
-  mapping(IERC20 => bool) private _isTokenWhitelisted;
+  mapping(IERC20 => bool) private isTokenWhitelisted;
 
   /// @dev The amount of ERC20 tokens deposited into the contract,
   /// excluding any tokens transferred directly via the ERC20 function.
@@ -36,28 +36,28 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl, ReentrancyGuard {
 
   /// @inheritdoc IPJManager
   function withdrawForAllocation(
-    bytes4 paymentMode,
-    IERC20 paymentToken,
-    address receiver,
-    uint256 amount
+    bytes4 _paymentMode,
+    IERC20 _paymentToken,
+    address _receiver,
+    uint256 _amount
   ) external onlyRole(LibPJManager.PJ_WITHDRAW_ROLE) nonReentrant {
     require(
-      paymentMode == LibQuestryPlatform.NATIVE_PAYMENT_MODE ||
-        _isTokenWhitelisted[paymentToken],
+      _paymentMode == LibQuestryPlatform.NATIVE_PAYMENT_MODE ||
+        isTokenWhitelisted[_paymentToken],
       "PJTreasuryPool: not whitelisted"
     );
 
-    if (paymentMode == LibQuestryPlatform.NATIVE_PAYMENT_MODE) {
+    if (_paymentMode == LibQuestryPlatform.NATIVE_PAYMENT_MODE) {
       // Sending ETH
-      Address.sendValue(payable(receiver), amount);
-    } else if (paymentMode == LibQuestryPlatform.ERC20_PAYMENT_MODE) {
+      Address.sendValue(payable(_receiver), _amount);
+    } else if (_paymentMode == LibQuestryPlatform.ERC20_PAYMENT_MODE) {
       // Sending ERC20
       require(
-        tokenBalance[paymentToken] >= amount,
+        tokenBalance[_paymentToken] >= _amount,
         "PJTreasuryPool: insufficient balance"
       );
-      tokenBalance[paymentToken] -= amount;
-      paymentToken.transfer(receiver, amount);
+      tokenBalance[_paymentToken] -= _amount;
+      _paymentToken.transfer(_receiver, _amount);
     } else {
       revert("PJTreasuryPool: unknown paymentMode");
     }
@@ -77,18 +77,18 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl, ReentrancyGuard {
   }
 
   /**
-   * @dev Deposits an `amount` of the ERC20 `token` into the pool.
+   * @dev Deposits an `_amount` of the ERC20 `_token` into the pool.
    *
    * Emits a {DepositERC20} event.
    */
-  function depositERC20(IERC20 token, uint256 amount)
+  function depositERC20(IERC20 _token, uint256 _amount)
     external
     onlyRole(LibPJManager.PJ_DEPOSIT_ROLE)
   {
-    require(_isTokenWhitelisted[token], "PJTreasuryPool: not whitelisted");
-    tokenBalance[token] += amount;
-    token.transferFrom(_msgSender(), address(this), amount);
-    emit DepositERC20(address(token), _msgSender(), amount);
+    require(isTokenWhitelisted[_token], "PJTreasuryPool: not whitelisted");
+    tokenBalance[_token] += _amount;
+    _token.transferFrom(_msgSender(), address(this), _amount);
+    emit DepositERC20(address(_token), _msgSender(), _amount);
   }
 
   // --------------------------------------------------
@@ -96,43 +96,43 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl, ReentrancyGuard {
   // --------------------------------------------------
 
   /**
-   * @dev Adds the ERC20 `token` to the whitelist.
+   * @dev Adds the ERC20 `_token` to the whitelist.
    *
    * Emits an {AllowERC20} event.
    */
-  function allowERC20(IERC20 token)
+  function allowERC20(IERC20 _token)
     external
     onlyRole(LibPJManager.PJ_WHITELIST_ROLE)
   {
     require(
-      Address.isContract(address(token)),
+      Address.isContract(address(_token)),
       "PJTreasuryPool: token is not a contract"
     );
-    require(!_isTokenWhitelisted[token], "PJTreasuryPool: already whitelisted");
-    tokenWhitelists.push(token);
-    _isTokenWhitelisted[token] = true;
-    emit AllowERC20(address(token));
+    require(!isTokenWhitelisted[_token], "PJTreasuryPool: already whitelisted");
+    tokenWhitelists.push(_token);
+    isTokenWhitelisted[_token] = true;
+    emit AllowERC20(address(_token));
   }
 
   /**
-   * @dev Removes the ERC20 `token` from the whitelist.
+   * @dev Removes the ERC20 `_token` from the whitelist.
    *
    * Emits a {DisallowERC20} event.
    */
-  function disallowERC20(IERC20 token)
+  function disallowERC20(IERC20 _token)
     external
     onlyRole(LibPJManager.PJ_WHITELIST_ROLE)
   {
-    require(_isTokenWhitelisted[token], "PJTreasuryPool: not whitelisted");
+    require(isTokenWhitelisted[_token], "PJTreasuryPool: not whitelisted");
     uint32 newIdx = 0;
     for (uint256 i = 0; i < tokenWhitelists.length; i++) {
-      if (token != tokenWhitelists[i]) {
+      if (_token != tokenWhitelists[i]) {
         tokenWhitelists[newIdx++] = tokenWhitelists[i];
       }
     }
     tokenWhitelists.pop();
-    _isTokenWhitelisted[token] = false;
-    emit DisallowERC20(address(token));
+    isTokenWhitelisted[_token] = false;
+    emit DisallowERC20(address(_token));
   }
 
   // --------------------------------------------------
@@ -145,20 +145,20 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl, ReentrancyGuard {
   }
 
   /// @inheritdoc IPJManager
-  function isWhitelisted(IERC20 token) external view returns (bool) {
-    return _isTokenWhitelisted[token];
+  function isWhitelisted(IERC20 _token) external view returns (bool) {
+    return isTokenWhitelisted[_token];
   }
 
   /// @inheritdoc IPJManager
-  function getTotalBalance(bytes4 paymentMode, IERC20 paymentToken)
+  function getTotalBalance(bytes4 _paymentMode, IERC20 _paymentToken)
     external
     view
     returns (uint256)
   {
-    if (paymentMode == LibQuestryPlatform.NATIVE_PAYMENT_MODE) {
+    if (_paymentMode == LibQuestryPlatform.NATIVE_PAYMENT_MODE) {
       return address(this).balance;
-    } else if (paymentMode == LibQuestryPlatform.ERC20_PAYMENT_MODE) {
-      return paymentToken.balanceOf(address(this));
+    } else if (_paymentMode == LibQuestryPlatform.ERC20_PAYMENT_MODE) {
+      return _paymentToken.balanceOf(address(this));
     } else {
       revert("PJTreasuryPool: unknown paymentMode");
     }
@@ -167,8 +167,8 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl, ReentrancyGuard {
   /**
    * @dev Returns the ERC20 `token` balance.
    */
-  function getTokenBalance(IERC20 token) external view returns (uint256) {
-    require(_isTokenWhitelisted[token], "PJTreasuryPool: not whitelisted");
-    return tokenBalance[token];
+  function getTokenBalance(IERC20 _token) external view returns (uint256) {
+    require(isTokenWhitelisted[_token], "PJTreasuryPool: not whitelisted");
+    return tokenBalance[_token];
   }
 }

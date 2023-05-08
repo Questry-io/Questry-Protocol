@@ -26,14 +26,14 @@ interface IPJManager is ISignatureVerifier {
   ) external;
 
   /**
-   * @dev Register a new board which is identified by `sbt` and `tokenId` pair.
+   * @dev Register a new board which is identified by `_board` and `_tokenId` pair.
    */
-  function registerBoard(address sbt, uint256 tokenId) external;
+  function registerBoard(address _board, uint256 _tokenId) external;
 
   /**
-   * @dev Resolve unique boardId in the project from `sbt` and `tokenId` pair.
+   * @dev Resolve unique boardId in the project from `_board` and `_tokenId` pair.
    */
-  function resolveBoardId(address sbt, uint256 tokenId)
+  function resolveBoardId(address _board, uint256 _tokenId)
     external
     view
     returns (uint256);
@@ -57,14 +57,14 @@ interface IPJManager is ISignatureVerifier {
   function getTokenWhitelists() external view returns (IERC20[] memory);
 
   /**
-   * @dev Returns if `token` is whitelisted or not.
+   * @dev Returns if `_token` is whitelisted or not.
    */
-  function isWhitelisted(IERC20 token) external view returns (bool);
+  function isWhitelisted(IERC20 _token) external view returns (bool);
 
   /**
    * @dev Returns the total balance based on the specified `_paymentMode` and `_paymentToken`.
    */
-  function getTotalBalance(bytes4 paymentMode, IERC20 paymentToken)
+  function getTotalBalance(bytes4 _paymentMode, IERC20 _paymentToken)
     external
     view
     returns (uint256);
