@@ -21,6 +21,12 @@ library LibQuestryPlatform {
 
   //Role difinition
 
+  struct FeeRates {
+    uint32 common;
+    uint32 investment;
+    uint32 protocol;
+  }
+
   struct AllocateArgs {
     IPJManager pjManager;
     bytes4 paymentMode; // determines to allocate native or ERC20 token

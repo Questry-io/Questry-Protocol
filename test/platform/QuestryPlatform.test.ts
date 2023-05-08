@@ -445,4 +445,27 @@ describe("QuestryPlatform", function () {
       expect(await cERC20.balanceOf(daoTreasuryPool.address)).equals(4);
     });
   });
+
+  describe("FeeRates", function () {
+    it("[S] should setCommonFeeRate", async function () {
+      await cQuestryPlatform.setCommonFeeRate(100);
+      expect(await cQuestryPlatform.getCommonFeeRate()).equals(100);
+    });
+
+    it("[S] should setInvestmentFeeRate", async function () {
+      await cQuestryPlatform.setInvestmentFeeRate(200);
+      expect(await cQuestryPlatform.getInvestmentFeeRate()).equals(200);
+    });
+
+    it("[S] should setProtocolFeeRate", async function () {
+      await cQuestryPlatform.setProtocolFeeRate(300);
+      expect(await cQuestryPlatform.getProtocolFeeRate()).equals(300);
+    });
+
+    it("[S] should be that all default fee rates are set to 300", async function () {
+      expect(await cQuestryPlatform.getCommonFeeRate()).equals(300);
+      expect(await cQuestryPlatform.getInvestmentFeeRate()).equals(300);
+      expect(await cQuestryPlatform.getProtocolFeeRate()).equals(300);
+    });
+  });
 });
