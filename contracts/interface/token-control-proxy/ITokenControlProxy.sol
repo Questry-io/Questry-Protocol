@@ -10,7 +10,7 @@ import "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol";
 /**
  * @title  SBINFT market non-native asset transfer protocol
  */
-interface ITokenControllProxy is IERC165Upgradeable {
+interface ITokenControlProxy is IERC165Upgradeable {
   /**
    * @notice Safe transfer ERC20 token
    * @dev only registered operators could call this function(i.e. Exchange)

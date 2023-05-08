@@ -8,14 +8,14 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeabl
 import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 //interface Inheritance
-import "contracts/interface/tokenControl/ItokenControl.sol";
+import "contracts/interface/token-control-proxy/ITokenControlProxy.sol";
 
 /**
  * @title
  */
-contract TokenControllProxy is
+contract TokenControlProxy is
   Initializable,
-  ITokenControllProxy,
+  ITokenControlProxy,
   ERC2771ContextUpgradeable,
   ERC165Upgradeable,
   AccessControlUpgradeable,
@@ -67,7 +67,7 @@ contract TokenControllProxy is
     returns (bool)
   {
     return
-      _interfaceId == type(ITokenControllProxy).interfaceId ||
+      _interfaceId == type(ITokenControlProxy).interfaceId ||
       super.supportsInterface(_interfaceId);
   }
 
