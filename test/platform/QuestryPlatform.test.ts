@@ -30,7 +30,6 @@ describe("QuestryPlatform", function () {
   let businessOwners: SignerWithAddress[];
   let boardingMembers: SignerWithAddress[];
   let daoTreasuryPool: SignerWithAddress;
-  let user: SignerWithAddress;
   let cQuestryPlatform: QuestryPlatform;
   let cCalculator: ContributionCalculator;
   let cContributionPool: ContributionPool;
@@ -106,7 +105,6 @@ describe("QuestryPlatform", function () {
       depositer,
       boardMinter,
       contributionUpdater,
-      user,
       daoTreasuryPool,
       ...rest
     ] = await ethers.getSigners();
@@ -138,7 +136,6 @@ describe("QuestryPlatform", function () {
     await cContributionPool
       .connect(poolAdmin)
       .grantIncrementTermRole(TestUtils.dummySigner);
-
   });
 
   describe("allocate", function () {
@@ -166,8 +163,8 @@ describe("QuestryPlatform", function () {
         }),
         updateNeededPools: [cContributionPool.address],
         contributePoolOwner: [TestUtils.dummySigner],
-        pjnonce: (Number(await cPJManager.getNonce())).toString()
-      }
+        pjnonce: Number(await cPJManager.getNonce()).toString(),
+      };
 
       //EIP712 create domain separator
       const domain = {
@@ -186,26 +183,24 @@ describe("QuestryPlatform", function () {
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "contributePoolOwner", type: "address[]" },
-          { name: "pjnonce", type: "uint256" }
+          { name: "pjnonce", type: "uint256" },
         ],
-        CalculateDispatchArgs:[
+        CalculateDispatchArgs: [
           { name: "algorithm", type: "bytes4" },
-          { name: "args", type: "bytes" }
-        ]
+          { name: "args", type: "bytes" },
+        ],
       };
-      
+
       const signature = await admin._signTypedData(domain, types2, args);
       return await cQuestryPlatform.allocate(args, [signature]);
     }
-
 
     async function allocateERC20(
       cPJManager: PJManager,
       cERC20: ERC20,
       cBoard: Board
     ) {
-
-      const args:any = {
+      const args: any = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -216,10 +211,10 @@ describe("QuestryPlatform", function () {
         }),
         updateNeededPools: [cContributionPool.address],
         contributePoolOwner: [TestUtils.dummySigner],
-        pjnonce: (Number(await cPJManager.getNonce())).toString()
-      }
+        pjnonce: Number(await cPJManager.getNonce()).toString(),
+      };
 
-       //EIP712 create domain separator
+      //EIP712 create domain separator
       const domain = {
         name: "QUESTRY_PLATFORM",
         version: "1.0",
@@ -236,12 +231,12 @@ describe("QuestryPlatform", function () {
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "contributePoolOwner", type: "address[]" },
-          { name: "pjnonce", type: "uint256" }
+          { name: "pjnonce", type: "uint256" },
         ],
-        CalculateDispatchArgs:[
+        CalculateDispatchArgs: [
           { name: "algorithm", type: "bytes4" },
-          { name: "args", type: "bytes" }
-        ]
+          { name: "args", type: "bytes" },
+        ],
       };
 
       const signature = await admin._signTypedData(domain, types2, args);

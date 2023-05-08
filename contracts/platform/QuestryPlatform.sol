@@ -56,11 +56,9 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    */
 
   function allocate(
-    LibQuestryPlatform.AllocateArgs calldata _args, 
+    LibQuestryPlatform.AllocateArgs calldata _args,
     bytes[] calldata _AllcatorSigns
-  )
-    external
-  {
+  ) external {
     IPJManager pjManager = _args.pjManager;
     // Step1 : Parameters and signatures checks
     // Check parameters
@@ -117,7 +115,6 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     );
     //Step7. Update the nonce of the pjmanager
     _updatesNonceOfPJManager(_args.pjManager);
-
   }
 
   // --------------------------------------------------
@@ -239,12 +236,12 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
       _pools[i].incrementTerm(_poolowners[i]);
     }
   }
-    
+
   /**
    * @dev Updates the nonce of pjmanager.
    */
   function _updatesNonceOfPJManager(IPJManager pjmanager) private {
-      pjmanager.incrementNonce();
+    pjmanager.incrementNonce();
   }
 
   /**
@@ -269,17 +266,13 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   /**
    * @dev Elimination of duplicate signature verification.
    */
-  function _setAndcheckVerifysignature(
-      bytes[] calldata _signatures
-    )
-      private
-  {
-    for(uint256 idx = 0; idx < _signatures.length; idx++){
-        require(
-          !_isCompVerifySignature[_signatures[idx]],
-          "QuestryPlatform: Elimination of duplicate signature verification"
-        );
-        _isCompVerifySignature[_signatures[idx]] = true;
+  function _setAndcheckVerifysignature(bytes[] calldata _signatures) private {
+    for (uint256 idx = 0; idx < _signatures.length; idx++) {
+      require(
+        !_isCompVerifySignature[_signatures[idx]],
+        "QuestryPlatform: Elimination of duplicate signature verification"
+      );
+      _isCompVerifySignature[_signatures[idx]] = true;
     }
   }
 }
