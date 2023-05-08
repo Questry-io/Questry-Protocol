@@ -309,7 +309,9 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    * @dev Returns protocol fees deducted from `totalBalance`.
    */
   function _protocolFee(uint256 _totalBalance) private view returns (uint256) {
-    return (_totalBalance * feeRates.protocol) / 10000;
+    return
+      (_totalBalance * feeRates.protocol) /
+      LibQuestryPlatform.MAX_FEE_RATES_BASIS_POINT;
   }
 
   /**
@@ -321,7 +323,9 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     uint256 _revenue,
     uint32 _boardingMembersProportion
   ) private pure returns (uint256) {
-    return (_revenue * _boardingMembersProportion) / 10000;
+    return
+      (_revenue * _boardingMembersProportion) /
+      LibPJManager.MAX_PROPORTION_BASIS_POINT;
   }
 
   /**

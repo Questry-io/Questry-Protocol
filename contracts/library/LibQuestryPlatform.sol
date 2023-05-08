@@ -19,6 +19,8 @@ library LibQuestryPlatform {
   bytes4 public constant PROTOCOL_PAYMENT =
     bytes4(keccak256("PROTOCOL_PAYMENT"));
 
+  uint32 public constant MAX_FEE_RATES_BASIS_POINT = 10000;
+
   //Role difinition
 
   struct FeeRates {
