@@ -13,6 +13,12 @@ library LibQuestryPlatform {
   bytes4 public constant NATIVE_PAYMENT_MODE = bytes4(keccak256("NATIVE"));
   bytes4 public constant ERC20_PAYMENT_MODE = bytes4(keccak256("ERC20"));
 
+  bytes4 public constant COMMON_PAYMENT = bytes4(keccak256("COMMON_PAYMENT"));
+  bytes4 public constant INVESTMENT_PAYMENT =
+    bytes4(keccak256("INVESTMENT_PAYMENT"));
+  bytes4 public constant PROTOCOL_PAYMENT =
+    bytes4(keccak256("PROTOCOL_PAYMENT"));
+
   //Role difinition
 
   struct AllocateArgs {
