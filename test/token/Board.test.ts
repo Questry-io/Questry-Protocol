@@ -90,7 +90,7 @@ describe("Board", function () {
 
   describe("did", function () {
     it("[S] check DID schema", async function () {
-      expect(await cBoardMock.didSchema()).to.equal("did:kaname");
+      expect(await cBoardMock.didSchema()).to.equal("did:questry");
     });
 
     it("[S] check DID namespace", async function () {
@@ -114,7 +114,7 @@ describe("Board", function () {
       const chainId = network.config.chainId;
       const pjmanager = cPJManagerMock.address.toLowerCase();
       const member = address3.address.toLowerCase();
-      const expected = `did:kaname:eip155:${chainId}:${pjmanager}:eip155:${chainId}:${member}:1`;
+      const expected = `did:questry:eip155:${chainId}:${pjmanager}:eip155:${chainId}:${member}:1`;
       expect(await cBoardMock.did(1)).to.equal(expected);
     });
 
@@ -135,7 +135,7 @@ describe("Board", function () {
       const chainId = network.config.chainId;
       const pjmanager = cPJManagerMock.address.toLowerCase();
       const member = address3.address.toLowerCase();
-      const did = `did:kaname:eip155:${chainId}:${pjmanager}:eip155:${chainId}:${member}:1`;
+      const did = `did:questry:eip155:${chainId}:${pjmanager}:eip155:${chainId}:${member}:1`;
       expect(await cBoardMock.tokenURI(1)).to.equal(`${baseURI}${did}`);
     });
 
