@@ -407,7 +407,7 @@ describe("QuestryForwarder", function () {
         questryForwarder
           .connect(executor)
           .verify(metaTx.message, invalidSignature)
-      ).to.be.revertedWith("ECDSA: invalid signature 'v' value");
+      ).to.be.revertedWith("ECDSA: invalid signature");
     });
 
     it("[R] should fail if there is not enough gas for the call", async function () {
