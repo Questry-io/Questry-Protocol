@@ -23,7 +23,7 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   mapping(address => uint256) private tempPayoutAmount;
   address[] private tempPayoutAddress;
   //set veryfy signature hystory
-  mapping(bytes32 => bool) private _isCompVerifySignature;
+  mapping(bytes => bool) private _isCompVerifySignature;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -107,7 +107,7 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // Step6. Update the terms of the contribution pools
     _updatesTermsOfContributionPools(
       _args.updateNeededPools,
-      _args.ContributePoolOwner
+      _args.contributePoolOwner
     );
     //Step7. Update the nonce of the pjmanager
     _updatesNonceOfPJManager(_args.pjManager);
@@ -238,7 +238,7 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    * @dev Updates the nonce of pjmanager.
    */
   function _updatesNonceOfPJManager(IPJManager pjmanager) private {
-      pjmanager.IncrementNonce();
+      pjmanager.incrementNonce();
   }
 
   /**
@@ -268,12 +268,12 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     )
       private
   {
-    for(uint256 idx = 0; idx >= _signatures.length; idx++){
+    for(uint256 idx = 0; idx < _signatures.length; idx++){
         require(
-          !_isCompVerifySignature[keccak256(abi.encodePacked(_signatures[idx]))],
+          !_isCompVerifySignature[_signatures[idx]],
           "QuestryPlatform: Elimination of duplicate signature verification"
         );
-        _isCompVerifySignature[keccak256(abi.encodePacked(_signatures[idx]))] = true;
+        _isCompVerifySignature[_signatures[idx]] = true;
     }
   }
 }

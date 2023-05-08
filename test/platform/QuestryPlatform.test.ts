@@ -155,7 +155,7 @@ describe("QuestryPlatform", function () {
     }
 
     async function allocateNative(cPJManager: PJManager, cBoard: Board) {
-      const args = {
+      const args: any = {
         pjManager: cPJManager.address,
         paymentMode: nativeMode,
         paymentToken: ethers.constants.AddressZero,
@@ -165,8 +165,8 @@ describe("QuestryPlatform", function () {
           coefs: [1],
         }),
         updateNeededPools: [cContributionPool.address],
-        ContributePoolOwner: [TestUtils.dummySigner],
-        pjnonce: (Number(await cPJManager.GetNonce())).toString()
+        contributePoolOwner: [TestUtils.dummySigner],
+        pjnonce: (Number(await cPJManager.getNonce())).toString()
       }
 
       //EIP712 create domain separator
@@ -185,7 +185,7 @@ describe("QuestryPlatform", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "ContributePoolOwner", type: "address[]" },
+          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" }
         ],
         CalculateDispatchArgs:[
@@ -205,7 +205,7 @@ describe("QuestryPlatform", function () {
       cBoard: Board
     ) {
 
-      const args = {
+      const args:any = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -215,8 +215,8 @@ describe("QuestryPlatform", function () {
           coefs: [1],
         }),
         updateNeededPools: [cContributionPool.address],
-        ContributePoolOwner: [TestUtils.dummySigner],
-        pjnonce: (Number(await cPJManager.GetNonce())).toString()
+        contributePoolOwner: [TestUtils.dummySigner],
+        pjnonce: (Number(await cPJManager.getNonce())).toString()
       }
 
        //EIP712 create domain separator
@@ -235,7 +235,7 @@ describe("QuestryPlatform", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "ContributePoolOwner", type: "address[]" },
+          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" }
         ],
         CalculateDispatchArgs:[
@@ -256,10 +256,10 @@ describe("QuestryPlatform", function () {
       await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
       await cPJManager.connect(depositer).deposit({ value: 100 });
       expect(await cContributionPool.getTerm()).equals(0);
-      expect(await cPJManager.GetNonce()).equals(0);
+      expect(await cPJManager.getNonce()).equals(0);
       await allocateNative(cPJManager, cBoard);
       expect(await cContributionPool.getTerm()).equals(1);
-      expect(await cPJManager.GetNonce()).equals(1);
+      expect(await cPJManager.getNonce()).equals(1);
     });
 
     it("[S] ETH: should allocate tokens in a typical scenario", async function () {

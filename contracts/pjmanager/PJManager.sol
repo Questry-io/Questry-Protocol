@@ -176,7 +176,7 @@ contract PJManager is
   }
 
   //PJManager Signature verifier Nonce Increment function
-  function IncrementNonce()
+  function incrementNonce()
     external
     onlyRole(LibPJManager.PJ_NONCE_INCREMENT_ROLE) 
   {
@@ -187,7 +187,7 @@ contract PJManager is
   }
 
   //Signature verify threshold setting for multisig
-  function SetThreshold(uint256 _threshold)
+  function setThreshold(uint256 _threshold)
     external
     onlyRole(LibPJManager.PJ_ADMIN_ROLE)
   {
@@ -201,7 +201,7 @@ contract PJManager is
   /**
    * @dev Get PJManager signature nonce
    */
-  function GetNonce() 
+  function getNonce() 
     external
     view 
     returns(uint256)
@@ -212,7 +212,7 @@ contract PJManager is
   /**
    * @dev Get PJManager signature verify threshold
    */
-  function GetSigThreshold() 
+  function getThreshold() 
     external 
     view 
     returns(uint256)

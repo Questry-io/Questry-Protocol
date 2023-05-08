@@ -115,7 +115,7 @@ contract PJManagerMock is IPJManager {
   }
 
   //PJManager Signature verifier Nonce Increment function
-  function IncrementNonce()
+  function incrementNonce()
     external
   {
     revert("Not implemented.");
@@ -131,7 +131,7 @@ contract PJManagerMock is IPJManager {
   /**
    * @dev Get PJManager signature nonce
    */
-  function GetNonce() 
+  function getNonce() 
     external
     view 
     returns(uint256)
@@ -142,7 +142,7 @@ contract PJManagerMock is IPJManager {
   /**
    * @dev Get PJManager signature verify threshold
    */
-  function GetSigThreshold() 
+  function getThreshold() 
     external 
     view 
     returns(uint256)

@@ -3,7 +3,7 @@ pragma solidity ^0.8.17;
 
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
-import {EIP712,ECDSA} from "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
+import {EIP712,ECDSA} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 import {console} from "hardhat/console.sol";
 

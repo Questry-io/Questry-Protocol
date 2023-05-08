@@ -52,7 +52,7 @@ interface IPJManager {
   /**
    * @dev Get PJManager signature nonce
    */
-  function GetNonce() 
+  function getNonce() 
     external
     view 
     returns(uint256);
@@ -60,7 +60,7 @@ interface IPJManager {
   /**
    * @dev Get PJManager signature verify threshold
    */
-  function GetSigThreshold() 
+  function getThreshold() 
     external 
     view 
     returns(uint256);
@@ -68,7 +68,7 @@ interface IPJManager {
   /**
    * @dev Increment nonce for signature.
    */
-  function IncrementNonce() external;
+  function incrementNonce() external;
 
   /**
    * @dev Returns businessOwners.

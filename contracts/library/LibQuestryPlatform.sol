@@ -23,7 +23,7 @@ library LibQuestryPlatform {
     IBoard board; // allocation target board which has contributions
     CalculateDispatchArgs calculateArgs; // allocation calculation args
     IContributionPool[] updateNeededPools; // term update needed pools
-    address[] ContributePoolOwner; //contribute pool owners
+    address[] contributePoolOwner; //contribute pool owners
     uint256 pjnonce;
   }
 
@@ -54,7 +54,7 @@ library LibQuestryPlatform {
   // ---- EIP712 ----
   bytes32 private constant AllOCATE_TYPEHASH =
     keccak256(
-      "AllocateArgs(address pjManager,bytes4 paymentMode,address paymentToken,address board,CalculateDispatchArgs calculateArgs,address[] updateNeededPools,address[] ContributePoolOwner,uint256 pjnonce)CalculateDispatchArgs(bytes4 algorithm,bytes args)"
+      "AllocateArgs(address pjManager,bytes4 paymentMode,address paymentToken,address board,CalculateDispatchArgs calculateArgs,address[] updateNeededPools,address[] contributePoolOwner,uint256 pjnonce)CalculateDispatchArgs(bytes4 algorithm,bytes args)"
     );
   
   bytes32 private constant CALCURATEDISPATCHARGS_TYPEHASH =
@@ -78,7 +78,7 @@ library LibQuestryPlatform {
           _allocateargs.board,
           _hashCalculateDispatchArgs(_allocateargs.calculateArgs),
           keccak256(abi.encodePacked(_allocateargs.updateNeededPools)),
-          keccak256(abi.encodePacked(_allocateargs.ContributePoolOwner)),
+          keccak256(abi.encodePacked(_allocateargs.contributePoolOwner)),
           _allocateargs.pjnonce
         )
       );
@@ -150,7 +150,7 @@ library LibQuestryPlatform {
       'LibQuestryPlatform: contribution pool is zero'
     );
     require(
-      _allocateargs.updateNeededPools.length == _allocateargs.ContributePoolOwner.length,
+      _allocateargs.updateNeededPools.length == _allocateargs.contributePoolOwner.length,
       "LibQuestryPlatform: array element is differnt"
     );
     //Contributioonpool check
@@ -160,11 +160,11 @@ library LibQuestryPlatform {
         "LibQuestryPlatform: contribution pool address is invalid"
       );
       require(
-        address(_allocateargs.ContributePoolOwner[idx]) != address(0),
+        address(_allocateargs.contributePoolOwner[idx]) != address(0),
         "LibQuestryPlatform: contribution pool owner address is invalid"
       );
     }
-    require(_allocateargs.pjManager.GetNonce() == _allocateargs.pjnonce,"LibQuestryPlatform: message nonce is different from on-chain nonce");
+    require(_allocateargs.pjManager.getNonce() == _allocateargs.pjnonce,"LibQuestryPlatform: message nonce is different from on-chain nonce");
     
   }
 

@@ -450,8 +450,8 @@ describe("PJManager", function () {
         board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
-        ContributePoolOwner: [signer.address,signer.address],
-        pjnonce: (Number(await cPJManager.GetNonce())).toString()
+        contributePoolOwner: [signer.address,signer.address],
+        pjnonce: (Number(await cPJManager.getNonce())).toString()
       };
 
       //EIP712 create domain separator
@@ -470,7 +470,7 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "ContributePoolOwner", type: "address[]" },
+          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" }
         ],
         CalculateDispatchArgs:[
@@ -494,9 +494,9 @@ describe("PJManager", function () {
       expect(await cPJManager.hasRole(SignerRoleHash,signer2.address)).to.be.equal(true);
       
       //Set sig threshold
-      expect(await cPJManager.GetSigThreshold()).to.be.equal(1);
-      await cPJManager.connect(admin).SetThreshold(2);
-      expect(await cPJManager.GetSigThreshold()).to.be.equal(2);
+      expect(await cPJManager.getThreshold()).to.be.equal(1);
+      await cPJManager.connect(admin).setThreshold(2);
+      expect(await cPJManager.getThreshold()).to.be.equal(2);
       
       //signeture message parameta
       const SharesWithLinearArgs = {
@@ -511,8 +511,8 @@ describe("PJManager", function () {
         board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
-        ContributePoolOwner: [signer.address,signer.address],
-        pjnonce: (Number(await cPJManager.GetNonce())).toString()
+        contributePoolOwner: [signer.address,signer.address],
+        pjnonce: (Number(await cPJManager.getNonce())).toString()
       };
 
       //EIP712 create domain separator
@@ -531,7 +531,7 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "ContributePoolOwner", type: "address[]" },
+          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" }
         ],
         CalculateDispatchArgs:[
@@ -558,9 +558,9 @@ describe("PJManager", function () {
       expect(await cPJManager.hasRole(SignerRoleHash,signer3.address)).to.be.equal(true);
       
       //Set sig threshold
-      expect(await cPJManager.GetSigThreshold()).to.be.equal(1);
-      await cPJManager.connect(admin).SetThreshold(2);
-      expect(await cPJManager.GetSigThreshold()).to.be.equal(2);
+      expect(await cPJManager.getThreshold()).to.be.equal(1);
+      await cPJManager.connect(admin).setThreshold(2);
+      expect(await cPJManager.getThreshold()).to.be.equal(2);
       
       //signeture message parameta
       const SharesWithLinearArgs = {
@@ -576,8 +576,8 @@ describe("PJManager", function () {
         board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
-        ContributePoolOwner: [signer.address,signer.address],
-        pjnonce: (Number(await cPJManager.GetNonce())).toString()
+        contributePoolOwner: [signer.address,signer.address],
+        pjnonce: (Number(await cPJManager.getNonce())).toString()
       }
       
       const args: any = { 
@@ -587,8 +587,8 @@ describe("PJManager", function () {
         board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
-        ContributePoolOwner: [signer.address,signer.address],
-        pjnonce: (Number(await cPJManager.GetNonce())).toString()
+        contributePoolOwner: [signer.address,signer.address],
+        pjnonce: (Number(await cPJManager.getNonce())).toString()
       };
 
       //EIP712 create domain separator
@@ -607,7 +607,7 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "ContributePoolOwner", type: "address[]" },
+          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" }
         ],
         CalculateDispatchArgs:[
@@ -653,8 +653,8 @@ describe("PJManager", function () {
         board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
-        ContributePoolOwner: [signer.address,signer.address],
-        pjnonce: (Number(await cPJManager.GetNonce())).toString()
+        contributePoolOwner: [signer.address,signer.address],
+        pjnonce: (Number(await cPJManager.getNonce())).toString()
       };
 
       //EIP712 create domain separator
@@ -673,7 +673,7 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "ContributePoolOwner", type: "address[]" },
+          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" }
         ],
         CalculateDispatchArgs:[
@@ -704,8 +704,8 @@ describe("PJManager", function () {
         board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [cContributionPool.address,cContributionPool2.address],
-        ContributePoolOwner: [signer.address,signer.address],
-        pjnonce: (Number(await cPJManager.GetNonce())).toString()
+        contributePoolOwner: [signer.address,signer.address],
+        pjnonce: (Number(await cPJManager.getNonce())).toString()
       };
 
       //EIP712 create domain separator
@@ -724,7 +724,7 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "ContributePoolOwner", type: "address[]" },
+          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" }
         ],
         CalculateDispatchArgs:[
@@ -743,7 +743,7 @@ describe("PJManager", function () {
 
   
 
-  describe("GetNonce", function () {
+  describe("getNonce", function () {
     let cPJManager: PJManager;
     
 
@@ -754,26 +754,23 @@ describe("PJManager", function () {
       ));
     });
 
-    it("[S] Not has roll signer", async function () {
+    it("[S] get nonce state", async function () {
       //Get Nonce
-      expect(await cPJManager.GetNonce()).to.be.equal(0);
+      expect(await cPJManager.getNonce()).to.be.equal(0);
     });
 
     it("[S] increment check", async function () {
-      //Get Nonce
-      expect(await cPJManager.GetNonce()).to.be.equal(0);
-      await cPJManager.connect(admin).IncrementNonce();
-      expect(await cPJManager.GetNonce()).to.be.equal(1);
+      // Questry platform test 
     });
 
     it("[R] Reverted increment check (Not has roll)", async function () {
       //Get Nonce
-      expect(await cPJManager.GetNonce()).to.be.equal(0);
-      await expect(cPJManager.connect(signer).IncrementNonce()).to.be.reverted;
+      expect(await cPJManager.getNonce()).to.be.equal(0);
+      await expect(cPJManager.connect(signer).incrementNonce()).to.be.reverted;
     });
   });
 
-  describe("SetThreshold", function () {
+  describe("setThreshold", function () {
     let cPJManager: PJManager;
     
     beforeEach(async function () {
@@ -785,16 +782,16 @@ describe("PJManager", function () {
 
     it("[S] set sig threshold check", async function () {
       //Set sig threshold
-      expect(await cPJManager.GetSigThreshold()).to.be.equal(1);
-      await cPJManager.connect(admin).SetThreshold(2);
-      expect(await cPJManager.GetSigThreshold()).to.be.equal(2);
+      expect(await cPJManager.getThreshold()).to.be.equal(1);
+      await cPJManager.connect(admin).setThreshold(2);
+      expect(await cPJManager.getThreshold()).to.be.equal(2);
     });
 
     it("[R] Not has roll signer", async function () {
       //Set sig threshold
-      expect(await cPJManager.GetSigThreshold()).to.be.equal(1);
-      await expect(cPJManager.connect(signer).SetThreshold(2)).to.be.reverted;
-      expect(await cPJManager.GetSigThreshold()).to.be.equal(1);
+      expect(await cPJManager.getThreshold()).to.be.equal(1);
+      await expect(cPJManager.connect(signer).setThreshold(2)).to.be.reverted;
+      expect(await cPJManager.getThreshold()).to.be.equal(1);
 
       /**
        * comment : The data that appears in the test in the local environment of each engineer is different, so it is to.be.reverted
@@ -803,8 +800,8 @@ describe("PJManager", function () {
 
     it("[R] reverted for zero set transaction", async function () {
       //Set sig threshold
-      expect(await cPJManager.GetSigThreshold()).to.be.equal(1);
-      await expect(cPJManager.connect(admin).SetThreshold(0)).revertedWith("PJManager :threshold does not set zero");
+      expect(await cPJManager.getThreshold()).to.be.equal(1);
+      await expect(cPJManager.connect(admin).setThreshold(0)).revertedWith("PJManager :threshold does not set zero");
     });
   });
 
