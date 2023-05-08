@@ -12,7 +12,8 @@ library LibPJManager {
   bytes32 public constant PJ_WHITELIST_ROLE = keccak256("PJ_WHITELIST_ROLE");
   bytes32 public constant PJ_DEPOSIT_ROLE = keccak256("PJ_DEPOSIT_ROLE");
   bytes32 public constant PJ_VERIFY_SIGNER_ROLE = keccak256("PJ_VERIFY_SIGNER");
-  bytes32 public constant PJ_NONCE_INCREMENT_ROLE = keccak256("PJ_NONCE_INCREMENT_ROLE");
+  bytes32 public constant PJ_NONCE_INCREMENT_ROLE =
+    keccak256("PJ_NONCE_INCREMENT_ROLE");
 
   bytes32 public constant POOL_INCREMENT_TERM_ROLE =
     keccak256("POOL_INCREMENT_TERM_ROLE");
@@ -22,7 +23,7 @@ library LibPJManager {
     keccak256("POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE");
   bytes32 public constant POOL_ADMIN_ROLE = keccak256("POOL_ADMIN_ROLE");
 
-  uint32 public constant MAX_BASIS_POINT = 10000;
+  uint32 public constant MAX_PROPORTION_BASIS_POINT = 10000;
 
   /**
    * @dev Allocation share for target address.
@@ -45,18 +46,18 @@ library LibPJManager {
     }
 
     require(
-      _boardingMembersProportion <= MAX_BASIS_POINT,
+      _boardingMembersProportion <= MAX_PROPORTION_BASIS_POINT,
       "LibPJManager: proportion is out of range"
     );
-    if (_boardingMembersProportion < MAX_BASIS_POINT) {
+    if (_boardingMembersProportion < MAX_PROPORTION_BASIS_POINT) {
       require(
         businessOwnersShareExists,
-        "LibPJManager: businessOwners share should exist unless proportion is MAX_BASIS_POINT"
+        "LibPJManager: businessOwners share should exist unless proportion is MAX_PROPORTION_BASIS_POINT"
       );
     } else {
       require(
         !businessOwnersShareExists,
-        "LibPJManager: proportion should be less than MAX_BASIS_POINT or businessOwners share should not exist"
+        "LibPJManager: proportion should be less than MAX_PROPORTION_BASIS_POINT or businessOwners share should not exist"
       );
     }
   }
