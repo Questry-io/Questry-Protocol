@@ -11,6 +11,8 @@ library LibPJManager {
   bytes32 public constant PJ_MANAGEMENT_ROLE = keccak256("PJ_MANAGEMENT_ROLE");
   bytes32 public constant PJ_WHITELIST_ROLE = keccak256("PJ_WHITELIST_ROLE");
   bytes32 public constant PJ_DEPOSIT_ROLE = keccak256("PJ_DEPOSIT_ROLE");
+  bytes32 public constant PJ_VERIFY_SIGNER_ROLE = keccak256("PJ_VERIFY_SIGNER");
+  bytes32 public constant PJ_NONCE_INCREMENT_ROLE = keccak256("PJ_NONCE_INCREMENT_ROLE");
 
   bytes32 public constant POOL_INCREMENT_TERM_ROLE =
     keccak256("POOL_INCREMENT_TERM_ROLE");

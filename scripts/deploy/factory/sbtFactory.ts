@@ -14,11 +14,16 @@ async function main() {
   await hre.run("compile");
 
   // We get the contract to deploy
-  const SBIToken = await hre.ethers.getContractFactory("SBIToken");
-  const dtxSBIToken = await SBIToken.deploy();
-  await dtxSBIToken.deployed();
+  const admin = "";
+  if (admin === "") {
+    throw new Error("Please set admin");
+  }
 
-  console.log("SBIToken deployed to:", dtxSBIToken.address);
+  const BoardFactory = await hre.ethers.getContractFactory("BoardFactory");
+  const boardFactory = await BoardFactory.deploy(admin);
+  await boardFactory.deployed();
+
+  console.log("BoardFactory deployed to:", boardFactory.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
@@ -28,4 +33,4 @@ main().catch((error) => {
   process.exitCode = 1;
 });
 
-// SBIToken deployed to: 0xF83A820626f6e2495E3fA322C8bcA86796ad29E0
+

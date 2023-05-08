@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {LibPJManager} from "../library/LibPJManager.sol";
+import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
 import {PJTreasuryPool} from "./PJTreasuryPool.sol";
 import {SignatureVerifier} from "./SignatureVerifier.sol";
@@ -14,18 +15,27 @@ import {console} from "hardhat/console.sol";
  * @title PJManager
  * @dev This is abstract contract that stores treasury and controls token whitelists.
  */
-contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
+contract PJManager is 
+  IPJManager, 
+  PJTreasuryPool, 
+  SignatureVerifier
+{
   /// @dev the basis points proportion of total allocation for boarding members
   uint32 public immutable boardingMembersProportion;
+  uint32 private _defaultThreshold = 1; 
   address public immutable admin;
   LibPJManager.AllocationShare[] public businessOwners;
+  //signature verify reply management
+  mapping(bytes => bool) private _isCompVerifySignature;
 
   constructor(
     QuestryPlatform _questryPlatform,
     address _admin,
     uint32 _boardingMembersProportion,
     LibPJManager.AllocationShare[] memory _businessOwners
-  ) PJTreasuryPool(_questryPlatform) {
+  ) 
+    PJTreasuryPool(_questryPlatform)
+  {
     bool ownersShareExists = _initBusinessOwners(_businessOwners);
     LibPJManager._validateAllocationSettings(
       _businessOwners,
@@ -35,14 +45,24 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
     admin = _admin;
     boardingMembersProportion = _boardingMembersProportion;
 
+    //set nonce increment roll
+    _setupRole(
+      LibPJManager.PJ_NONCE_INCREMENT_ROLE, 
+      address(_questryPlatform)
+    );
+    //set signature threshold
+    _setThreshold(_defaultThreshold);
+    
     _setupRole(LibPJManager.PJ_ADMIN_ROLE, _admin);
     _setupRole(LibPJManager.PJ_MANAGEMENT_ROLE, _admin);
     _setupRole(LibPJManager.PJ_WHITELIST_ROLE, _admin);
     _setupRole(LibPJManager.PJ_DEPOSIT_ROLE, _admin);
+    _setupRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE, _admin);
 
     _setRoleAdmin(LibPJManager.PJ_MANAGEMENT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(LibPJManager.PJ_WHITELIST_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(LibPJManager.PJ_DEPOSIT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
+    _setRoleAdmin(LibPJManager.PJ_VERIFY_SIGNER_ROLE, LibPJManager.PJ_ADMIN_ROLE);
   }
 
   // --------------------------------------------------
@@ -57,7 +77,7 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
   function addBusinessOwner(
     LibPJManager.AllocationShare calldata _businessOwner
   ) external onlyRole(LibPJManager.PJ_MANAGEMENT_ROLE) {
-    for (uint256 i = 0; i < businessOwners.length; i++) {
+    for (uint8 i = 0; i < businessOwners.length; i++) {
       require(
         businessOwners[i].recipient != _businessOwner.recipient,
         "PJManager: businessOwner already exists"
@@ -119,6 +139,85 @@ contract PJManager is IPJManager, PJTreasuryPool, SignatureVerifier {
       boardingMembersProportion
     );
     emit UpdateBusinessOwner(_businessOwner.recipient, _businessOwner.share);
+  }
+
+  // --------------------------------------------------
+  // Signature Verifier Function
+  // --------------------------------------------------
+
+  /// @inheritdoc IPJManager
+  function verifySignature(
+    LibQuestryPlatform.AllocateArgs calldata _args, 
+    bytes[] calldata _signatures
+  )
+    external
+    view
+    returns (bool)
+  {
+    uint256 _verifyCount = 0; 
+    for(uint256 idx = 0;idx < _signatures.length ;idx++){
+      
+      // Verify signatures
+      address recoverAddress = _verifySignaturesForAllocation(
+        _args,
+        _signatures[idx]
+      );
+      if(hasRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE,recoverAddress)){
+        _verifyCount += 1;
+      }
+    }
+
+    require(
+      _verifyCount >= _getThreshold(),
+      "PJManager: fall short of threshold for verify"
+    );  
+
+    return true;
+  }
+
+  //PJManager Signature verifier Nonce Increment function
+  function incrementNonce()
+    external
+    onlyRole(LibPJManager.PJ_NONCE_INCREMENT_ROLE) 
+  {
+    /**
+     * todo: increment roll is questry platform fix this roll
+     */
+    _incrementNonce();
+  }
+
+  //Signature verify threshold setting for multisig
+  function setThreshold(uint256 _threshold)
+    external
+    onlyRole(LibPJManager.PJ_ADMIN_ROLE)
+  {
+    require(
+      _threshold > 0,
+      "PJManager :threshold does not set zero"
+    );
+    _setThreshold(_threshold);
+  }
+
+  /**
+   * @dev Get PJManager signature nonce
+   */
+  function getNonce() 
+    external
+    view 
+    returns(uint256)
+  {
+    return _getNonce();
+  }
+
+  /**
+   * @dev Get PJManager signature verify threshold
+   */
+  function getThreshold() 
+    external 
+    view 
+    returns(uint256)
+  {
+    return _getThreshold();
   }
 
   // --------------------------------------------------

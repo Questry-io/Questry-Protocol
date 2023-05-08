@@ -22,6 +22,8 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   // as mapping declaration is not supported inside function
   mapping(address => uint256) private tempPayoutAmount;
   address[] private tempPayoutAddress;
+  //set veryfy signature hystory
+  mapping(bytes => bool) private _isCompVerifySignature;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -49,12 +51,18 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   /**
    * @dev Allocates tokens to business owners, boarding members and DAO treasury pool.
    */
-  function allocate(LibQuestryPlatform.AllocateArgs calldata _args) external {
+
+  function allocate(LibQuestryPlatform.AllocateArgs calldata _args, bytes[] calldata _AllcatorSigns)
+    external
+  {
     IPJManager pjManager = _args.pjManager;
-    require(
-      pjManager.verifySignature(_args.signature),
-      "QuestryPlatform: signature verification failed"
-    );
+    // Step1 : Parameters and signatures checks
+    // Check parameters
+    LibQuestryPlatform._checkParameterForAllocation(_args);
+    //signatures validation
+    _setAndcheckVerifysignature(_AllcatorSigns);
+    //EIP712 verify signature
+    pjManager.verifySignature(_args, _AllcatorSigns);
 
     LibPJManager.AllocationShare[] memory businessOwners = pjManager
       .getBusinessOwners();
@@ -99,8 +107,11 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     // Step6. Update the terms of the contribution pools
     _updatesTermsOfContributionPools(
       _args.updateNeededPools,
-      _args.signature.signer
+      _args.contributePoolOwner
     );
+    //Step7. Update the nonce of the pjmanager
+    _updatesNonceOfPJManager(_args.pjManager);
+
   }
 
   // --------------------------------------------------
@@ -216,11 +227,18 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    */
   function _updatesTermsOfContributionPools(
     IContributionPool[] calldata _pools,
-    address _signer
+    address[] calldata _poolowners
   ) private {
     for (uint256 i = 0; i < _pools.length; i++) {
-      _pools[i].incrementTerm(_signer);
+      _pools[i].incrementTerm(_poolowners[i]);
     }
+  }
+    
+  /**
+   * @dev Updates the nonce of pjmanager.
+   */
+  function _updatesNonceOfPJManager(IPJManager pjmanager) private {
+      pjmanager.incrementNonce();
   }
 
   /**
@@ -240,5 +258,22 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     uint32 _boardingMembersProportion
   ) private pure returns (uint256) {
     return (_revenue * _boardingMembersProportion) / 10000;
+  }
+
+  /**
+   * @dev Elimination of duplicate signature verification.
+   */
+  function _setAndcheckVerifysignature(
+      bytes[] calldata _signatures
+    )
+      private
+  {
+    for(uint256 idx = 0; idx < _signatures.length; idx++){
+        require(
+          !_isCompVerifySignature[_signatures[idx]],
+          "QuestryPlatform: Elimination of duplicate signature verification"
+        );
+        _isCompVerifySignature[_signatures[idx]] = true;
+    }
   }
 }
