@@ -120,7 +120,7 @@ describe("Board", function () {
 
     it("[R] can not resolve DID before mint", async function () {
       await expect(cBoardMock.did(1)).to.be.revertedWith(
-        "ERC721: owner query for nonexistent token"
+        "ERC721: invalid token ID"
       );
     });
   });
@@ -243,7 +243,7 @@ describe("Board", function () {
       await cBoardMock.connect(SuperAdmin).burn(1);
       expect(await cBoardMock.balanceOf(address3.address)).to.equal(0);
       await expect(cBoardMock.ownerOf(1)).to.be.revertedWith(
-        "ERC721: owner query for nonexistent token"
+        "ERC721: invalid token ID"
       );
       expect(await cBoardMock.getIsBoardingMember(address3.address)).to.be
         .false;
@@ -279,21 +279,21 @@ describe("Board", function () {
       // check Not Minter address recipent
       expect(await cBoardMock.balanceOf(NotMinter.address)).to.equal(0);
       await expect(cBoardMock.ownerOf(1)).to.be.revertedWith(
-        "ERC721: owner query for nonexistent token"
+        "ERC721: invalid token ID"
       );
       expect(await cBoardMock.getIsBoardingMember(NotMinter.address)).to.be
         .false;
       // check Not Burner address recipient
       expect(await cBoardMock.balanceOf(NotBurner.address)).to.equal(0);
       await expect(cBoardMock.ownerOf(2)).to.be.revertedWith(
-        "ERC721: owner query for nonexistent token"
+        "ERC721: invalid token ID"
       );
       expect(await cBoardMock.getIsBoardingMember(NotBurner.address)).to.be
         .false;
       // check address3 address recipient
       expect(await cBoardMock.balanceOf(address3.address)).to.equal(0);
       await expect(cBoardMock.ownerOf(3)).to.be.revertedWith(
-        "ERC721: owner query for nonexistent token"
+        "ERC721: invalid token ID"
       );
       expect(await cBoardMock.getIsBoardingMember(address3.address)).to.be
         .false;
