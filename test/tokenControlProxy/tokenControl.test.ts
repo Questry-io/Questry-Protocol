@@ -175,7 +175,7 @@ describe("TokenControllProxy", function () {
       );
     });
 
-    it("[R] should revert when transfer caller is not owner nor approved", async function () {
+    it("[R] should revert when caller is not token owner or approved", async function () {
       await erc721.connect(admin).mint(nonExecutor.address, 2);
       await erc721.connect(nonExecutor).approve(tokenControlProxy.address, 1);
       await expect(
@@ -187,7 +187,7 @@ describe("TokenControllProxy", function () {
             user.address,
             2
           )
-      ).to.be.revertedWith("ERC721: transfer caller is not owner nor approved");
+      ).to.be.revertedWith("ERC721: caller is not token owner or approved");
     });
   });
 
