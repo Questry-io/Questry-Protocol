@@ -44,7 +44,7 @@ describe("TokenControllProxy", function () {
 
     // tokenControlProxyのデプロイ
     const TokenControlProxy = await ethers.getContractFactory(
-      "TokenControllProxy"
+      "TokenControlProxy"
     );
 
     tokenControlProxy = await upgrades.deployProxy(
@@ -58,7 +58,7 @@ describe("TokenControllProxy", function () {
     await tokenControlProxy.deployed();
     await tokenControlProxy
       .connect(admin)
-      .grantRole(await tokenControlProxy.EXECUTOR_ROLE(), executor.address);
+      .grantExecutorRoleToQuestryPlatform(executor.address);
 
     // erc20, erc721, erc1155のデプロイ
     const erc20Factory = await ethers.getContractFactory("RandomERC20");
@@ -75,6 +75,28 @@ describe("TokenControllProxy", function () {
     erc1155 = await erc1155Factory.deploy();
     erc1155.deployed();
     erc1155.mint([nonExecutor.address]);
+  });
+
+  describe("grantExecutorRoleToQuestryPlatform", function () {
+    it("[S] should be that QuestryPlatform has the executor role", async function () {
+      expect(await tokenControlProxy.questryPlatform()).to.equal(
+        executor.address
+      );
+      expect(
+        await tokenControlProxy.hasRole(
+          await tokenControlProxy.EXECUTOR_ROLE(),
+          executor.address
+        )
+      ).to.equal(true);
+    });
+
+    it("[R] should not grant the executor role to another one", async function () {
+      await expect(
+        tokenControlProxy
+          .connect(admin)
+          .grantExecutorRoleToQuestryPlatform(nonExecutor.address)
+      ).revertedWith("TokenControllProxy: already granted");
+    });
   });
 
   describe("erc20safeTransferFrom", function () {
