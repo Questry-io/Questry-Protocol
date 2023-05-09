@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {IBoard} from "../interface/token/IBoard.sol";
+import {IPaymentResolver} from "../interface/platform/IPaymentResolver.sol";
 
 /**
  * @dev Library for QuestryPlatform.
@@ -13,11 +14,12 @@ library LibQuestryPlatform {
   bytes4 public constant NATIVE_PAYMENT_MODE = bytes4(keccak256("NATIVE"));
   bytes4 public constant ERC20_PAYMENT_MODE = bytes4(keccak256("ERC20"));
 
-  bytes4 public constant COMMON_PAYMENT = bytes4(keccak256("COMMON_PAYMENT"));
-  bytes4 public constant INVESTMENT_PAYMENT =
-    bytes4(keccak256("INVESTMENT_PAYMENT"));
-  bytes4 public constant PROTOCOL_PAYMENT =
-    bytes4(keccak256("PROTOCOL_PAYMENT"));
+  bytes4 public constant COMMON_PAYMENT_CATEGORY =
+    bytes4(keccak256("COMMON_PAYMENT_CATEGORY"));
+  bytes4 public constant INVESTMENT_PAYMENT_CATEGORY =
+    bytes4(keccak256("INVESTMENT_PAYMENT_CATEGORY"));
+  bytes4 public constant PROTOCOL_PAYMENT_CATEGORY =
+    bytes4(keccak256("PROTOCOL_PAYMENT_CATEGORY"));
 
   uint32 public constant MAX_FEE_RATES_BASIS_POINT = 10000;
 
@@ -32,12 +34,23 @@ library LibQuestryPlatform {
   struct AllocateArgs {
     IPJManager pjManager;
     bytes4 paymentMode; // determines to allocate native or ERC20 token
-    IERC20 paymentToken; // ERC20 token to allocate. Ignored if paymentMode == NATIVE_PAYMENT_MODE
+    IERC20 paymentToken; // ERC20 token to allocate. Ignored if paymentMode == NATIVE_PAYMENT_MODE (TODO: Check zero-address if paymentMode == NATIVE_PAYMENT_MODE)
     IBoard board; // allocation target board which has contributions
     CalculateDispatchArgs calculateArgs; // allocation calculation args
     IContributionPool[] updateNeededPools; // term update needed pools
     address[] contributePoolOwner; //contribute pool owners
     uint256 pjnonce;
+  }
+
+  struct ExecutePaymentArgs {
+    bytes4 paymentMode; // determines to pay with whether native or ERC20 token
+    IERC20 paymentToken; // ERC20 token to allocate. It must be zero-address if paymentMode == NATIVE_PAYMENT_MODE
+    bytes4 paymentCategory; // common, investment, or protocol payment
+    address from;
+    address to;
+    uint256 amount;
+    IPaymentResolver resolver; // resolver.resolveAfterPayment(_args) called after payment
+    uint256 nonce; // nonce for replay attack protection
   }
 
   /**
@@ -72,6 +85,11 @@ library LibQuestryPlatform {
 
   bytes32 private constant CALCURATEDISPATCHARGS_TYPEHASH =
     keccak256("CalculateDispatchArgs(bytes4 algorithm,bytes args)");
+
+  bytes32 private constant EXECUTEPAYMENTARGS_TYPEHASH =
+    keccak256(
+      "ExecutePaymentArgs(bytes4 paymentMode,address paymentToken,bytes4 paymentCategory,address from,address to,uint256 amount,uint256 nonce)"
+    );
 
   /**
    * @dev Prepares keccak256 hash for Allocate
@@ -113,6 +131,29 @@ library LibQuestryPlatform {
           CALCURATEDISPATCHARGS_TYPEHASH,
           _calculatedispatchargs.algorithm,
           keccak256(_calculatedispatchargs.args)
+        )
+      );
+  }
+
+  /**
+   * @dev Prepares keccak256 hash for ExecutePaymentArgs
+   *
+   * @param _executePaymentArgs LibQuestryPlatform.ExecutePaymentArgs
+   */
+  function _hashExecutePaymentArgs(
+    ExecutePaymentArgs calldata _executePaymentArgs
+  ) internal pure returns (bytes32) {
+    return
+      keccak256(
+        abi.encode(
+          EXECUTEPAYMENTARGS_TYPEHASH,
+          _executePaymentArgs.paymentMode,
+          _executePaymentArgs.paymentToken,
+          _executePaymentArgs.paymentCategory,
+          _executePaymentArgs.from,
+          _executePaymentArgs.to,
+          _executePaymentArgs.amount,
+          _executePaymentArgs.nonce
         )
       );
   }

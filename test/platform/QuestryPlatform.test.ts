@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 /* eslint-disable node/no-missing-import */
 import { ethers, upgrades } from "hardhat";
-import { utils } from "ethers";
+import { Contract, utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
@@ -16,8 +16,12 @@ import {
   PJManager__factory,
   PJManager,
   QuestryPlatform,
+  RandomERC20,
+  TokenControlProxy,
+  MockPaymentResolver,
+  MockPaymentResolver__factory,
 } from "../../typechain";
-import { TestUtils, AllocationShare } from "../testUtils";
+import { TestUtils, AllocationShare, ExecutePaymentArgs } from "../testUtils";
 
 describe("QuestryPlatform", function () {
   let deployer: SignerWithAddress;
@@ -29,13 +33,25 @@ describe("QuestryPlatform", function () {
   let contributionUpdater: SignerWithAddress;
   let businessOwners: SignerWithAddress[];
   let boardingMembers: SignerWithAddress[];
+  let signers: SignerWithAddress[];
   let daoTreasuryPool: SignerWithAddress;
+  let cTokenControlProxy: TokenControlProxy;
   let cQuestryPlatform: QuestryPlatform;
   let cCalculator: ContributionCalculator;
   let cContributionPool: ContributionPool;
 
   const nativeMode = utils.keccak256(utils.toUtf8Bytes("NATIVE")).slice(0, 10);
   const erc20Mode = utils.keccak256(utils.toUtf8Bytes("ERC20")).slice(0, 10);
+
+  const commonPaymentCategory = utils
+    .keccak256(utils.toUtf8Bytes("COMMON_PAYMENT_CATEGORY"))
+    .slice(0, 10);
+  const investmentPaymentCategory = utils
+    .keccak256(utils.toUtf8Bytes("INVESTMENT_PAYMENT_CATEGORY"))
+    .slice(0, 10);
+  const protocolPaymentCategory = utils
+    .keccak256(utils.toUtf8Bytes("PROTOCOL_PAYMENT_CATEGORY"))
+    .slice(0, 10);
 
   const depositRoleHash = utils.keccak256(utils.toUtf8Bytes("PJ_DEPOSIT_ROLE"));
   const whitelistRoleHash = utils.keccak256(
@@ -110,16 +126,34 @@ describe("QuestryPlatform", function () {
     ] = await ethers.getSigners();
     businessOwners = rest.slice(0, 2);
     boardingMembers = rest.slice(2, 4);
+    signers = rest.slice(4);
 
     cCalculator = await new ContributionCalculator__factory(deployer).deploy();
     await cCalculator.deployed();
+
+    const cfTokenControlProxy = await ethers.getContractFactory(
+      "TokenControlProxy"
+    );
+    cTokenControlProxy = (await upgrades.deployProxy(
+      cfTokenControlProxy,
+      [admin.address],
+      {
+        initializer: "__TokenControlProxy_init",
+        constructorArgs: [ethers.constants.AddressZero],
+      }
+    )) as TokenControlProxy;
+    await cTokenControlProxy.deployed();
 
     const cfQuestryPlatform = await ethers.getContractFactory(
       "QuestryPlatform"
     );
     cQuestryPlatform = (await upgrades.deployProxy(
       cfQuestryPlatform,
-      [cCalculator.address, daoTreasuryPool.address],
+      [
+        cCalculator.address,
+        daoTreasuryPool.address,
+        cTokenControlProxy.address,
+      ],
       { kind: "uups" }
     )) as QuestryPlatform;
     await cQuestryPlatform.deployed();
@@ -466,6 +500,612 @@ describe("QuestryPlatform", function () {
       expect(await cQuestryPlatform.getCommonFeeRate()).equals(300);
       expect(await cQuestryPlatform.getInvestmentFeeRate()).equals(300);
       expect(await cQuestryPlatform.getProtocolFeeRate()).equals(300);
+    });
+  });
+
+  describe("executePayment", function () {
+    let cPaymentResolver: MockPaymentResolver;
+    let cERC20: RandomERC20;
+    let initialBalance: number;
+
+    beforeEach(async function () {
+      cPaymentResolver = await new MockPaymentResolver__factory(
+        deployer
+      ).deploy();
+      cERC20 = await new RandomERC20__factory(deployer).deploy();
+      await cERC20.mint([signers[0].address]);
+      await cTokenControlProxy
+        .connect(admin)
+        .grantExecutorRoleToQuestryPlatform(cQuestryPlatform.address);
+      initialBalance = (await cERC20.balanceOf(signers[0].address)).toNumber();
+    });
+
+    describe("_checkParameters", function () {
+      describe("when paymentMode is NATIVE", function () {
+        it("[R] should revert if mismatch between _msgSender() and _args.from", async function () {
+          const args: ExecutePaymentArgs = {
+            paymentMode: nativeMode,
+            paymentToken: ethers.constants.AddressZero,
+            paymentCategory: commonPaymentCategory,
+            from: signers[0].address,
+            to: signers[1].address,
+            amount: 100,
+            resolver: cPaymentResolver.address,
+            nonce: 0,
+          };
+          const typedData = await createTypedData(args);
+
+          await expect(
+            cQuestryPlatform
+              .connect(signers[2])
+              .executePayment(args, typedData, {
+                value: args.amount,
+              })
+          ).to.be.revertedWith(
+            "PlatformPayments: mismatch between _msgSender() and _args.from"
+          );
+        });
+
+        it("[R] should revert if mismatch between msg.value and _args.amount", async function () {
+          const args: ExecutePaymentArgs = {
+            paymentMode: nativeMode,
+            paymentToken: ethers.constants.AddressZero,
+            paymentCategory: commonPaymentCategory,
+            from: signers[0].address,
+            to: signers[1].address,
+            amount: 100,
+            resolver: cPaymentResolver.address,
+            nonce: 0,
+          };
+          const typedData = await createTypedData(args);
+
+          await expect(
+            cQuestryPlatform
+              .connect(signers[0])
+              .executePayment(args, typedData, {
+                value: +args.amount + 1,
+              })
+          ).to.be.revertedWith(
+            "PlatformPayments: mismatch between msg.value and _args.amount"
+          );
+        });
+
+        it("[R] should revert if paymentToken exists", async function () {
+          const args: ExecutePaymentArgs = {
+            paymentMode: nativeMode,
+            paymentToken: cERC20.address,
+            paymentCategory: commonPaymentCategory,
+            from: signers[0].address,
+            to: signers[1].address,
+            amount: 100,
+            resolver: cPaymentResolver.address,
+            nonce: 0,
+          };
+          const typedData = await createTypedData(args);
+
+          await expect(
+            cQuestryPlatform
+              .connect(signers[0])
+              .executePayment(args, typedData, {
+                value: args.amount,
+              })
+          ).to.be.revertedWith(
+            "PlatformPayments: paymentToken exists though paymentMode is NATIVE"
+          );
+        });
+      });
+
+      describe("when paymentMode is ERC20", function () {
+        it("[R] should revert if mismatch between _msgSender() and _args.from", async function () {
+          const args: ExecutePaymentArgs = {
+            paymentMode: erc20Mode,
+            paymentToken: cERC20.address,
+            paymentCategory: commonPaymentCategory,
+            from: signers[0].address,
+            to: signers[1].address,
+            amount: 100,
+            resolver: cPaymentResolver.address,
+            nonce: 0,
+          };
+          const typedData = await createTypedData(args);
+
+          await expect(
+            cQuestryPlatform.connect(signers[2]).executePayment(args, typedData)
+          ).to.be.revertedWith(
+            "PlatformPayments: mismatch between _msgSender() and _args.from"
+          );
+        });
+
+        it("[R] should revert if msg.value != 0", async function () {
+          const args: ExecutePaymentArgs = {
+            paymentMode: erc20Mode,
+            paymentToken: cERC20.address,
+            paymentCategory: commonPaymentCategory,
+            from: signers[0].address,
+            to: signers[1].address,
+            amount: 100,
+            resolver: cPaymentResolver.address,
+            nonce: 0,
+          };
+          const typedData = await createTypedData(args);
+
+          await expect(
+            cQuestryPlatform
+              .connect(signers[0])
+              .executePayment(args, typedData, { value: 1 })
+          ).to.be.revertedWith(
+            "PlatformPayments: msg.value != 0 though paymentMode is ERC20"
+          );
+        });
+
+        it("[R] should revert if paymentToken doesn't exist", async function () {
+          const args: ExecutePaymentArgs = {
+            paymentMode: erc20Mode,
+            paymentToken: ethers.constants.AddressZero,
+            paymentCategory: commonPaymentCategory,
+            from: signers[0].address,
+            to: signers[1].address,
+            amount: 100,
+            resolver: cPaymentResolver.address,
+            nonce: 0,
+          };
+          const typedData = await createTypedData(args);
+
+          await expect(
+            cQuestryPlatform.connect(signers[0]).executePayment(args, typedData)
+          ).to.be.revertedWith(
+            "PlatformPayments: paymentToken doesn't exist though paymentMode is ERC20"
+          );
+        });
+      });
+
+      describe("when paymentMode is unknown", function () {
+        it("[R] should revert", async function () {
+          const args: ExecutePaymentArgs = {
+            paymentMode: utils
+              .keccak256(utils.toUtf8Bytes("UNKNOWN"))
+              .slice(0, 10),
+            paymentToken: ethers.constants.AddressZero,
+            paymentCategory: commonPaymentCategory,
+            from: signers[0].address,
+            to: signers[1].address,
+            amount: 100,
+            resolver: cPaymentResolver.address,
+            nonce: 0,
+          };
+          const typedData = await createTypedData(args);
+
+          await expect(
+            cQuestryPlatform.connect(signers[0]).executePayment(args, typedData)
+          ).to.be.revertedWith("PlatformPayments: unknown paymentMode");
+        });
+      });
+
+      it("[R] should revert if no resolver with invest payment", async function () {
+        const amount = 100;
+
+        await cERC20
+          .connect(signers[0])
+          .approve(cTokenControlProxy.address, amount);
+        const args: ExecutePaymentArgs = {
+          paymentMode: erc20Mode,
+          paymentToken: cERC20.address,
+          paymentCategory: investmentPaymentCategory,
+          from: signers[0].address,
+          to: signers[1].address,
+          amount,
+          resolver: ethers.constants.AddressZero,
+          nonce: 0,
+        };
+        const typedData = await createTypedData(args);
+
+        await expect(
+          cQuestryPlatform.connect(signers[0]).executePayment(args, typedData)
+        ).to.be.revertedWith("PlatformPayments: no resolver");
+      });
+
+      it("[R] should revert if no resolver with protocol payment", async function () {
+        const amount = 100;
+
+        await cERC20
+          .connect(signers[0])
+          .approve(cTokenControlProxy.address, amount);
+        const args: ExecutePaymentArgs = {
+          paymentMode: erc20Mode,
+          paymentToken: cERC20.address,
+          paymentCategory: protocolPaymentCategory,
+          from: signers[0].address,
+          to: signers[1].address,
+          amount,
+          resolver: ethers.constants.AddressZero,
+          nonce: 0,
+        };
+        const typedData = await createTypedData(args);
+
+        await expect(
+          cQuestryPlatform.connect(signers[0]).executePayment(args, typedData)
+        ).to.be.revertedWith("PlatformPayments: no resolver");
+      });
+
+      it("[R] should revert if to is zero address", async function () {
+        const amount = 100;
+
+        await cERC20
+          .connect(signers[0])
+          .approve(cTokenControlProxy.address, amount);
+        const args: ExecutePaymentArgs = {
+          paymentMode: erc20Mode,
+          paymentToken: cERC20.address,
+          paymentCategory: commonPaymentCategory,
+          from: signers[0].address,
+          to: ethers.constants.AddressZero,
+          amount,
+          resolver: cPaymentResolver.address,
+          nonce: 0,
+        };
+        const typedData = await createTypedData(args);
+
+        await expect(
+          cQuestryPlatform.connect(signers[0]).executePayment(args, typedData)
+        ).to.be.revertedWith("PlatformPayments: to is zero address");
+      });
+
+      it("[R] should revert if amount is zero", async function () {
+        const args: ExecutePaymentArgs = {
+          paymentMode: erc20Mode,
+          paymentToken: cERC20.address,
+          paymentCategory: commonPaymentCategory,
+          from: signers[0].address,
+          to: signers[1].address,
+          amount: 0,
+          resolver: cPaymentResolver.address,
+          nonce: 0,
+        };
+        const typedData = await createTypedData(args);
+
+        await expect(
+          cQuestryPlatform.connect(signers[0]).executePayment(args, typedData)
+        ).to.be.revertedWith("PlatformPayments: amount is zero");
+      });
+
+      it("[R] should revert if nonce is invalid", async function () {
+        await cERC20
+          .connect(signers[0])
+          .approve(cTokenControlProxy.address, 1000000);
+        const createArgs = (nonce: number): ExecutePaymentArgs => {
+          return {
+            paymentMode: erc20Mode,
+            paymentToken: cERC20.address,
+            paymentCategory: commonPaymentCategory,
+            from: signers[0].address,
+            to: signers[1].address,
+            amount: 1,
+            resolver: cPaymentResolver.address,
+            nonce,
+          };
+        };
+
+        let args = createArgs(1);
+        let typedData = await createTypedData(args);
+        await expect(
+          cQuestryPlatform.connect(signers[0]).executePayment(args, typedData)
+        ).to.be.revertedWith("PlatformPayments: invalid nonce");
+
+        args = createArgs(0);
+        typedData = await createTypedData(args);
+        await cQuestryPlatform
+          .connect(signers[0])
+          .executePayment(args, typedData);
+
+        args = createArgs(1);
+        typedData = await createTypedData(args);
+        await cQuestryPlatform
+          .connect(signers[0])
+          .executePayment(args, typedData);
+
+        args = createArgs(2);
+        typedData = await createTypedData(args);
+        await expect(
+          cQuestryPlatform
+            .connect(signers[0])
+            .executePayment({ ...args, nonce: 3 }, typedData)
+        ).to.be.revertedWith("PlatformPayments: invalid nonce");
+      });
+
+      it("[R] should revert if nonce is invalid (replay attack)", async function () {
+        await cERC20
+          .connect(signers[0])
+          .approve(cTokenControlProxy.address, 1000000);
+        const args: ExecutePaymentArgs = {
+          paymentMode: erc20Mode,
+          paymentToken: cERC20.address,
+          paymentCategory: commonPaymentCategory,
+          from: signers[0].address,
+          to: signers[1].address,
+          amount: 1,
+          resolver: cPaymentResolver.address,
+          nonce: 0,
+        };
+        const typedData = await createTypedData(args);
+
+        await cQuestryPlatform
+          .connect(signers[0])
+          .executePayment(args, typedData);
+        await expect(
+          cQuestryPlatform.connect(signers[0]).executePayment(args, typedData)
+        ).revertedWith("PlatformPayments: invalid nonce");
+      });
+    });
+
+    async function createTypedData(args: ExecutePaymentArgs) {
+      const domain = {
+        name: "QUESTRY_PLATFORM",
+        version: "1.0",
+        chainId: await signers[0].getChainId(),
+        verifyingContract: cQuestryPlatform.address,
+      };
+      const types = {
+        ExecutePaymentArgs: [
+          { name: "paymentMode", type: "bytes4" },
+          { name: "paymentToken", type: "address" },
+          { name: "paymentCategory", type: "bytes4" },
+          { name: "from", type: "address" },
+          { name: "to", type: "address" },
+          { name: "amount", type: "uint256" },
+          { name: "nonce", type: "uint256" },
+        ],
+      };
+      return signers[0]._signTypedData(domain, types, args);
+    }
+
+    async function executeNativePaymentAndVerify(
+      args: ExecutePaymentArgs,
+      typedData: any,
+      feeRate: number,
+      fromSigner: SignerWithAddress,
+      toSigner: SignerWithAddress
+    ) {
+      const deduction = Math.floor((+args.amount * feeRate) / 10000);
+      const tx = await cQuestryPlatform
+        .connect(fromSigner)
+        .executePayment(args, typedData, {
+          value: args.amount,
+        });
+      await expect(tx).to.changeEtherBalances(
+        [fromSigner, toSigner, daoTreasuryPool],
+        [-args.amount, +args.amount - deduction, deduction]
+      );
+    }
+
+    async function executeERC20PaymentAndVerify(
+      args: ExecutePaymentArgs,
+      typedData: any,
+      feeRate: number,
+      fromSigner: SignerWithAddress
+    ) {
+      const deduction = Math.floor((+args.amount * feeRate) / 10000);
+      await cQuestryPlatform
+        .connect(fromSigner)
+        .executePayment(args, typedData);
+      expect(await cERC20.balanceOf(args.from)).equals(
+        initialBalance - +args.amount
+      );
+      expect(await cERC20.balanceOf(args.to)).equals(+args.amount - deduction);
+      expect(await cERC20.balanceOf(daoTreasuryPool.address)).equals(deduction);
+    }
+
+    type FeeRateSetter =
+      | "setCommonFeeRate"
+      | "setInvestmentFeeRate"
+      | "setProtocolFeeRate";
+    type PaymentCategoryTestcase = {
+      categoryName: string;
+      paymentCategory: string;
+      defaultFeeRate?: number;
+      feeRateSetter?: FeeRateSetter;
+    };
+
+    [
+      {
+        categoryName: "common payment",
+        paymentCategory: commonPaymentCategory,
+        defaultFeeRate: 300,
+        feeRateSetter: "setCommonFeeRate" as FeeRateSetter,
+      },
+      {
+        categoryName: "investment payment",
+        paymentCategory: investmentPaymentCategory,
+        defaultFeeRate: 300,
+        feeRateSetter: "setInvestmentFeeRate" as FeeRateSetter,
+      },
+      {
+        categoryName: "protocol payment",
+        paymentCategory: protocolPaymentCategory,
+        defaultFeeRate: 300,
+        feeRateSetter: "setProtocolFeeRate" as FeeRateSetter,
+      },
+    ].forEach((testcase: PaymentCategoryTestcase) => {
+      it(`[S] NATIVE: should executePayment with ${testcase.categoryName} (default fee)`, async function () {
+        const amount = 100;
+
+        const args: ExecutePaymentArgs = {
+          paymentMode: nativeMode,
+          paymentToken: ethers.constants.AddressZero,
+          paymentCategory: testcase.paymentCategory,
+          from: signers[0].address,
+          to: signers[1].address,
+          amount,
+          resolver: cPaymentResolver.address,
+          nonce: 0,
+        };
+        const typedData = await createTypedData(args);
+
+        await executeNativePaymentAndVerify(
+          args,
+          typedData,
+          testcase.defaultFeeRate!,
+          signers[0],
+          signers[1]
+        );
+      });
+
+      it(`[S] NATIVE: should executePayment with ${testcase.categoryName} (fee changed)`, async function () {
+        const amount = 100;
+        const feeRate = 100;
+
+        const args: ExecutePaymentArgs = {
+          paymentMode: nativeMode,
+          paymentToken: ethers.constants.AddressZero,
+          paymentCategory: testcase.paymentCategory,
+          from: signers[0].address,
+          to: signers[1].address,
+          amount,
+          resolver: cPaymentResolver.address,
+          nonce: 0,
+        };
+        const typedData = await createTypedData(args);
+
+        await cQuestryPlatform[testcase.feeRateSetter!](feeRate);
+
+        await executeNativePaymentAndVerify(
+          args,
+          typedData,
+          feeRate,
+          signers[0],
+          signers[1]
+        );
+      });
+
+      it(`[S] ERC20: should executePayment with ${testcase.categoryName} (default fee)`, async function () {
+        const amount = 100;
+
+        await cERC20
+          .connect(signers[0])
+          .approve(cTokenControlProxy.address, amount);
+        const args: ExecutePaymentArgs = {
+          paymentMode: erc20Mode,
+          paymentToken: cERC20.address,
+          paymentCategory: testcase.paymentCategory,
+          from: signers[0].address,
+          to: signers[1].address,
+          amount,
+          resolver: cPaymentResolver.address,
+          nonce: 0,
+        };
+        const typedData = await createTypedData(args);
+
+        await executeERC20PaymentAndVerify(
+          args,
+          typedData,
+          testcase.defaultFeeRate!,
+          signers[0]
+        );
+      });
+
+      it(`[S] ERC20: should executePayment with ${testcase.categoryName} (fee changed)`, async function () {
+        const amount = 100;
+        const feeRate = 100;
+
+        await cERC20
+          .connect(signers[0])
+          .approve(cTokenControlProxy.address, amount);
+        const args: ExecutePaymentArgs = {
+          paymentMode: erc20Mode,
+          paymentToken: cERC20.address,
+          paymentCategory: testcase.paymentCategory,
+          from: signers[0].address,
+          to: signers[1].address,
+          amount,
+          resolver: cPaymentResolver.address,
+          nonce: 0,
+        };
+        const typedData = await createTypedData(args);
+
+        await cQuestryPlatform[testcase.feeRateSetter!](feeRate);
+
+        await executeERC20PaymentAndVerify(
+          args,
+          typedData,
+          feeRate,
+          signers[0]
+        );
+      });
+    });
+
+    describe("resolver", function () {
+      [
+        {
+          categoryName: "common payment",
+          paymentCategory: commonPaymentCategory,
+        },
+        {
+          categoryName: "investment payment",
+          paymentCategory: investmentPaymentCategory,
+        },
+        {
+          categoryName: "protocol payment",
+          paymentCategory: protocolPaymentCategory,
+        },
+      ].forEach((testcase: PaymentCategoryTestcase) => {
+        it(`[S] should resolveAfterPayment with ${testcase.categoryName}`, async function () {
+          const amount = 100;
+
+          await cERC20
+            .connect(signers[0])
+            .approve(cTokenControlProxy.address, amount);
+          const args: ExecutePaymentArgs = {
+            paymentMode: erc20Mode,
+            paymentToken: cERC20.address,
+            paymentCategory: testcase.paymentCategory,
+            from: signers[0].address,
+            to: signers[1].address,
+            amount,
+            resolver: cPaymentResolver.address,
+            nonce: 0,
+          };
+          const typedData = await createTypedData(args);
+
+          await cQuestryPlatform
+            .connect(signers[0])
+            .executePayment(args, typedData);
+
+          expect(
+            await cPaymentResolver.isResolved(
+              utils.keccak256(
+                utils.defaultAbiCoder.encode(
+                  [
+                    "(bytes4 paymentMode,address paymentToken,bytes4 paymentCategory,address from,address to,uint256 amount,address resolver,uint256 nonce)",
+                  ],
+                  [args]
+                )
+              )
+            )
+          ).to.be.true;
+        });
+      });
+
+      it("[S] should be ok if no resolver with common payment", async function () {
+        const amount = 100;
+
+        await cERC20
+          .connect(signers[0])
+          .approve(cTokenControlProxy.address, amount);
+        const args: ExecutePaymentArgs = {
+          paymentMode: erc20Mode,
+          paymentToken: cERC20.address,
+          paymentCategory: commonPaymentCategory,
+          from: signers[0].address,
+          to: signers[1].address,
+          amount,
+          resolver: ethers.constants.AddressZero,
+          nonce: 0,
+        };
+        const typedData = await createTypedData(args);
+
+        await cQuestryPlatform
+          .connect(signers[0])
+          .executePayment(args, typedData);
+      });
     });
   });
 });

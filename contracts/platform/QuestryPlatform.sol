@@ -14,15 +14,17 @@ import {IContributionCalculator} from "../interface/platform/IContributionCalcul
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 import {IBoard} from "../interface/token/IBoard.sol";
+import {ITokenControlProxy} from "../interface/token-control-proxy/ITokenControlProxy.sol";
+import {PlatformPayments} from "./PlatformPayments.sol";
 
-contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
-  event CommonFeeRateChanged(uint32 _rate);
-  event InvestmentFeeRateChanged(uint32 _rate);
-  event ProtocolFeeRateChanged(uint32 _rate);
-
+contract QuestryPlatform is
+  Initializable,
+  OwnableUpgradeable,
+  UUPSUpgradeable,
+  PlatformPayments
+{
   IContributionCalculator public contributionCalculator;
   address public daoTreasuryPool;
-  LibQuestryPlatform.FeeRates public feeRates;
 
   // Just a temp variable to be used as local function variable
   // as mapping declaration is not supported inside function
@@ -38,14 +40,15 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
   function initialize(
     IContributionCalculator _contributionCalculator,
-    address _daoTreasuryPool
+    address _daoTreasuryPool,
+    ITokenControlProxy _tokenControlProxy
   ) public initializer {
     __Ownable_init();
     __UUPSUpgradeable_init();
+    __PlatformPayments_init(_tokenControlProxy);
 
     contributionCalculator = _contributionCalculator;
     daoTreasuryPool = _daoTreasuryPool;
-    _setDefaultFeeRates();
   }
 
   /// @inheritdoc UUPSUpgradeable
@@ -122,60 +125,10 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   }
 
   /**
-   * @dev Sets the common fee `_rate`.
+   * @dev Returns the DAO Treasury pool address.
    */
-  function setCommonFeeRate(uint32 _rate) external onlyOwner {
-    require(
-      _rate <= 10000,
-      "QuestryPlatform: common fee rate must be less than or equal to 10000"
-    );
-    feeRates.common = _rate;
-    emit CommonFeeRateChanged(_rate);
-  }
-
-  /**
-   * @dev Sets the investment fee `_rate`.
-   */
-  function setInvestmentFeeRate(uint32 _rate) external onlyOwner {
-    require(
-      _rate <= 10000,
-      "QuestryPlatform: investment fee rate must be less than or equal to 10000"
-    );
-    feeRates.investment = _rate;
-    emit InvestmentFeeRateChanged(_rate);
-  }
-
-  /**
-   * @dev Sets the protocol fee `_rate`.
-   */
-  function setProtocolFeeRate(uint32 _rate) external onlyOwner {
-    require(
-      _rate <= 10000,
-      "QuestryPlatform: protocol fee rate must be less than or equal to 10000"
-    );
-    feeRates.protocol = _rate;
-    emit ProtocolFeeRateChanged(_rate);
-  }
-
-  /**
-   * @dev Returns the fee common rate.
-   */
-  function getCommonFeeRate() external view returns (uint32) {
-    return feeRates.common;
-  }
-
-  /**
-   * @dev Returns the fee investment rate.
-   */
-  function getInvestmentFeeRate() external view returns (uint32) {
-    return feeRates.investment;
-  }
-
-  /**
-   * @dev Returns the fee protocol rate.
-   */
-  function getProtocolFeeRate() external view returns (uint32) {
-    return feeRates.protocol;
+  function getDAOTreasuryPool() public view virtual override returns (address) {
+    return daoTreasuryPool;
   }
 
   // --------------------------------------------------
@@ -306,15 +259,6 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   }
 
   /**
-   * @dev Returns protocol fees deducted from `totalBalance`.
-   */
-  function _protocolFee(uint256 _totalBalance) private view returns (uint256) {
-    return
-      (_totalBalance * feeRates.protocol) /
-      LibQuestryPlatform.MAX_FEE_RATES_BASIS_POINT;
-  }
-
-  /**
    * @dev Returns the balance allocated to boarding members
    * based on the specified `revenue` and `boardingMembersProportion`.
    * The `revenue` is the total balance with the fees deducted.
@@ -339,14 +283,5 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
       );
       _isCompVerifySignature[_signatures[idx]] = true;
     }
-  }
-
-  /**
-   * @dev Sets the default fee rates.
-   */
-  function _setDefaultFeeRates() private {
-    feeRates.common = 300;
-    feeRates.investment = 300;
-    feeRates.protocol = 300;
   }
 }
