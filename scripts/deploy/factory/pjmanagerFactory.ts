@@ -12,7 +12,23 @@ async function main() {
   // If this script is run directly using `node` you may want to call compile
   // manually to make sure everything is compiled
   await hre.run("compile");
-  console.log("todo: pjmanagerfactory deploy script");
+  const questryPlatformAddress = "";
+  if (questryPlatformAddress == "") {
+    throw new Error(
+      "Please set questryPlatformAddress in the script before running it"
+    );
+  }
+
+  const PJManagerFactory = await hre.ethers.getContractFactory(
+    "PJManagerFactory"
+  );
+
+  const pjmanagerFactory = await PJManagerFactory.deploy(
+    questryPlatformAddress
+  );
+  await pjmanagerFactory.deployed();
+
+  console.log("PJManagerFactory deployed to:", pjmanagerFactory.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
