@@ -5,7 +5,7 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {LibPJManager} from "../library/LibPJManager.sol";
-import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
+import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 
 contract ContributionPool is IContributionPool, AccessControl {
   using Counters for Counters.Counter;
@@ -20,7 +20,7 @@ contract ContributionPool is IContributionPool, AccessControl {
   Counters.Counter public term;
 
   constructor(
-    QuestryPlatform _questryPlatform,
+    IQuestryPlatform _questryPlatform,
     IContributionPool.MutationMode _mode,
     address _contributionUpdater,
     address _incrementTermWhitelistAdmin,
