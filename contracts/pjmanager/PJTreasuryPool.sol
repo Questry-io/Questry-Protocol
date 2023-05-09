@@ -5,18 +5,20 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
+//library imported
 import {LibPJManager} from "../library/LibPJManager.sol";
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
-import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
+//interface imported
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
+import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 
 /**
  * @title PJTreasuryPool
  * @dev This is abstract contract that stores treasury and controls token whitelists.
  */
 abstract contract PJTreasuryPool is IPJManager, AccessControl, ReentrancyGuard {
-  QuestryPlatform public immutable questryPlatform;
+  IQuestryPlatform public immutable questryPlatform;
 
   IERC20[] public tokenWhitelists;
   mapping(IERC20 => bool) private isTokenWhitelisted;
@@ -25,7 +27,7 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl, ReentrancyGuard {
   /// excluding any tokens transferred directly via the ERC20 function.
   mapping(IERC20 => uint256) private tokenBalance;
 
-  constructor(QuestryPlatform _questryPlatform) {
+  constructor(IQuestryPlatform _questryPlatform) {
     questryPlatform = _questryPlatform;
     _setupRole(LibPJManager.PJ_WITHDRAW_ROLE, address(_questryPlatform));
   }

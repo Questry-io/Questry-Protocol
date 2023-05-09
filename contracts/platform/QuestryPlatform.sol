@@ -4,12 +4,15 @@ pragma solidity ^0.8.17;
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+//library import
+import {LibPJManager} from "../library/LibPJManager.sol";
+import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
+//interface import
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {IContributionCalculator} from "../interface/platform/IContributionCalculator.sol";
-import {LibPJManager} from "../library/LibPJManager.sol";
-import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
+import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 import {IBoard} from "../interface/token/IBoard.sol";
 
 contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
@@ -52,7 +55,10 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    * @dev Allocates tokens to business owners, boarding members and DAO treasury pool.
    */
 
-  function allocate(LibQuestryPlatform.AllocateArgs calldata _args, bytes[] calldata _AllcatorSigns)
+  function allocate(
+    LibQuestryPlatform.AllocateArgs calldata _args, 
+    bytes[] calldata _AllcatorSigns
+  )
     external
   {
     IPJManager pjManager = _args.pjManager;
