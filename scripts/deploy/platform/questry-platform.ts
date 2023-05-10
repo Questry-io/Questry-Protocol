@@ -6,16 +6,25 @@
 import * as hre from "hardhat";
 
 async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
   await hre.run("compile");
-  
-  console.log("todo: questry-platform deploy script");
-  
-  
+  const ethers = hre.ethers;
+  const upgrades = hre.upgrades;
+  const QuestryPlatform = await ethers.getContractFactory("QuestryPlatform");
+  const contributionCalculatorAddress = "";
+  const daoTreasuryPoolAddress = "";
+  if (contributionCalculatorAddress == "" || daoTreasuryPoolAddress == "") {
+    throw new Error(
+      "Please set contributionCalculatorAddress and daoTreasuryPoolAddress in the script before running it"
+    );
+  }
+
+  console.log("Deploying QuestryPlatform...");
+  const questryPlatform = await upgrades.deployProxy(
+    QuestryPlatform,
+    [contributionCalculatorAddress, daoTreasuryPoolAddress],
+    { initializer: "initialize" }
+  );
+  console.log("QuestryPlatform deployed to:", questryPlatform.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
