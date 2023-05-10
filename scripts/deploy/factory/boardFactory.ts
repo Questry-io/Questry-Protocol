@@ -15,12 +15,13 @@ async function main() {
 
   // We get the contract to deploy
   const admin = "";
-  if (admin === "") {
-    throw new Error("Please set admin");
+  const pjManagerAddress = "";
+  if (admin === "" || pjManagerAddress === "") {
+    throw new Error("Please set admin and pjManagerAddress");
   }
 
   const BoardFactory = await hre.ethers.getContractFactory("BoardFactory");
-  const boardFactory = await BoardFactory.deploy(admin);
+  const boardFactory = await BoardFactory.deploy(pjManagerAddress, admin);
   await boardFactory.deployed();
 
   console.log("BoardFactory deployed to:", boardFactory.address);
@@ -32,4 +33,3 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
-
