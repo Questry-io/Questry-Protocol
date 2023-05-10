@@ -21,7 +21,13 @@ library LibQuestryPlatform {
   bytes4 public constant PROTOCOL_PAYMENT_CATEGORY =
     bytes4(keccak256("PROTOCOL_PAYMENT_CATEGORY"));
 
-  //Role difinition
+  // ---- Role ----
+  bytes32 public constant PLATFORM_ADMIN_ROLE =
+    keccak256("PLATFORM_ADMIN_ROLE");
+  bytes32 public constant PLATFORM_EXECUTOR_ROLE =
+    keccak256("PLATFORM_EXECUTOR_ROLE");
+
+  // ---- Struct ----
 
   struct FeeRates {
     uint32 common;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ContextUpgradeable, ERC2771ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import {AddressUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
@@ -13,7 +13,7 @@ import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 
 abstract contract PlatformPayments is
   Initializable,
-  OwnableUpgradeable,
+  AccessControlUpgradeable,
   EIP712Upgradeable,
   ERC2771ContextUpgradeable
 {
@@ -40,11 +40,18 @@ abstract contract PlatformPayments is
     internal
     onlyInitializing
   {
-    __Ownable_init();
+    __AccessControl_init();
     __EIP712_init("QUESTRY_PLATFORM", "1.0");
 
     tokenControlProxy = _tokenControlProxy;
     _setDefaultFeeRates();
+
+    _setRoleAdmin(
+      LibQuestryPlatform.PLATFORM_EXECUTOR_ROLE,
+      LibQuestryPlatform.PLATFORM_ADMIN_ROLE
+    );
+    _setupRole(LibQuestryPlatform.PLATFORM_ADMIN_ROLE, _msgSender());
+    _setupRole(LibQuestryPlatform.PLATFORM_EXECUTOR_ROLE, _msgSender());
   }
 
   /**
@@ -107,7 +114,10 @@ abstract contract PlatformPayments is
   /**
    * @dev Sets the common fee `_rate`.
    */
-  function setCommonFeeRate(uint32 _rate) external onlyOwner {
+  function setCommonFeeRate(uint32 _rate)
+    external
+    onlyRole(LibQuestryPlatform.PLATFORM_EXECUTOR_ROLE)
+  {
     require(
       _rate <= _feeDenominator(),
       "PlatformPayments: common fee rate must be less than or equal to _feeDenominator()"
@@ -119,7 +129,10 @@ abstract contract PlatformPayments is
   /**
    * @dev Sets the investment fee `_rate`.
    */
-  function setInvestmentFeeRate(uint32 _rate) external onlyOwner {
+  function setInvestmentFeeRate(uint32 _rate)
+    external
+    onlyRole(LibQuestryPlatform.PLATFORM_EXECUTOR_ROLE)
+  {
     require(
       _rate <= _feeDenominator(),
       "PlatformPayments: investment fee rate must be less than or equal to _feeDenominator()"
@@ -131,7 +144,10 @@ abstract contract PlatformPayments is
   /**
    * @dev Sets the protocol fee `_rate`.
    */
-  function setProtocolFeeRate(uint32 _rate) external onlyOwner {
+  function setProtocolFeeRate(uint32 _rate)
+    external
+    onlyRole(LibQuestryPlatform.PLATFORM_EXECUTOR_ROLE)
+  {
     require(
       _rate <= _feeDenominator(),
       "PlatformPayments: protocol fee rate must be less than or equal to _feeDenominator()"

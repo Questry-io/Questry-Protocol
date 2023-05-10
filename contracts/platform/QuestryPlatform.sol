@@ -48,7 +48,7 @@ contract QuestryPlatform is Initializable, UUPSUpgradeable, PlatformPayments {
   function _authorizeUpgrade(address _newImplementation)
     internal
     override
-    onlyOwner
+    onlyRole(LibQuestryPlatform.PLATFORM_EXECUTOR_ROLE)
   {}
 
   /**
