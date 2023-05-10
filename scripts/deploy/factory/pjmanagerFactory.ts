@@ -8,9 +8,10 @@ import * as hre from "hardhat";
 async function main() {
   await hre.run("compile");
   const questryPlatformAddress = "";
-  if (questryPlatformAddress == "") {
+  const trustedForwarderAddress = "";
+  if (questryPlatformAddress == "" || trustedForwarderAddress == "") {
     throw new Error(
-      "Please set questryPlatformAddress in the script before running it"
+      "Please set questryPlatformAddress and trustedForwarderAddress in the script before running it"
     );
   }
 
@@ -19,7 +20,8 @@ async function main() {
   );
 
   const pjmanagerFactory = await PJManagerFactory.deploy(
-    questryPlatformAddress
+    questryPlatformAddress,
+    trustedForwarderAddress
   );
   await pjmanagerFactory.deployed();
 
