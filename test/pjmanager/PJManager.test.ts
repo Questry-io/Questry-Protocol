@@ -178,37 +178,37 @@ describe("PJManager", function () {
       await deployPJManager(4000, withShares(businessOwners, [1, 1]));
     });
 
-    it("[S] should deploy if boardingMembersProportion is MAX_PROPORTION_BASIS_POINT", async function () {
+    it("[S] should deploy if boardingMembersProportion is _feeDenominator()", async function () {
       await deployPJManager(maxBasisPoint, withShares(businessOwners, [0, 0]));
     });
 
-    it("[R] should not deploy if boardingMembersProportion is over MAX_PROPORTION_BASIS_POINT", async function () {
+    it("[R] should not deploy if boardingMembersProportion is over _feeDenominator()", async function () {
       await expect(
         deployPJManager(maxBasisPoint + 1, withShares(businessOwners, [1, 1]))
       ).revertedWith("LibPJManager: proportion is out of range");
     });
 
-    it("[R] should not deploy if boardingMembersProportion is MAX_PROPORTION_BASIS_POINT but businessOwnersShare exists", async function () {
+    it("[R] should not deploy if boardingMembersProportion is _feeDenominator() but businessOwnersShare exists", async function () {
       await expect(
         deployPJManager(maxBasisPoint, withShares(businessOwners, [1, 1]))
       ).revertedWith(
-        "PJManager: proportion should be less than MAX_PROPORTION_BASIS_POINT or businessOwners share should not exist"
+        "PJManager: proportion should be less than _feeDenominator() or businessOwners share should not exist"
       );
     });
 
-    it("[R] should not deploy if boardingMembersProportion is less than MAX_PROPORTION_BASIS_POINT (is 4000) but businessOwnersShare doesn't exist", async function () {
+    it("[R] should not deploy if boardingMembersProportion is less than _feeDenominator() (is 4000) but businessOwnersShare doesn't exist", async function () {
       await expect(
         deployPJManager(4000, withShares(businessOwners, [0, 0]))
       ).revertedWith(
-        "LibPJManager: businessOwners share should exist unless proportion is MAX_PROPORTION_BASIS_POINT"
+        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
       );
     });
 
-    it("[R] should not deploy if boardingMembersProportion is less than MAX_PROPORTION_BASIS_POINT (is 0) but businessOwnersShare doesn't exist", async function () {
+    it("[R] should not deploy if boardingMembersProportion is less than _feeDenominator() (is 0) but businessOwnersShare doesn't exist", async function () {
       await expect(
         deployPJManager(0, withShares(businessOwners, [0, 0]))
       ).revertedWith(
-        "LibPJManager: businessOwners share should exist unless proportion is MAX_PROPORTION_BASIS_POINT"
+        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
       );
     });
   });
@@ -271,7 +271,7 @@ describe("PJManager", function () {
       await expect(
         cPJManager.connect(stateManager).addBusinessOwner(arg)
       ).revertedWith(
-        "PJManager: proportion should be less than MAX_PROPORTION_BASIS_POINT or businessOwners share should not exist"
+        "PJManager: proportion should be less than _feeDenominator() or businessOwners share should not exist"
       );
     });
   });
@@ -334,7 +334,7 @@ describe("PJManager", function () {
           .connect(stateManager)
           .removeBusinessOwner(businessOwners[1].address)
       ).revertedWith(
-        "LibPJManager: businessOwners share should exist unless proportion is MAX_PROPORTION_BASIS_POINT"
+        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
       );
     });
   });
@@ -393,7 +393,7 @@ describe("PJManager", function () {
       await expect(
         cPJManager.connect(stateManager).updateBusinessOwner(arg)
       ).revertedWith(
-        "LibPJManager: businessOwners share should exist unless proportion is MAX_PROPORTION_BASIS_POINT"
+        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
       );
     });
   });

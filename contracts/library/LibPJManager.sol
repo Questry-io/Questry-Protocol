@@ -23,14 +23,19 @@ library LibPJManager {
     keccak256("POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE");
   bytes32 public constant POOL_ADMIN_ROLE = keccak256("POOL_ADMIN_ROLE");
 
-  uint32 public constant MAX_PROPORTION_BASIS_POINT = 10000;
-
   /**
    * @dev Allocation share for target address.
    */
   struct AllocationShare {
     address recipient;
     uint120 share;
+  }
+
+  /**
+   * @dev The denominator for boarding member proportion with which to interpret the fee set.
+   */
+  function _feeDenominator() internal pure returns (uint256) {
+    return 10000;
   }
 
   function _validateAllocationSettings(
@@ -46,18 +51,18 @@ library LibPJManager {
     }
 
     require(
-      _boardingMembersProportion <= MAX_PROPORTION_BASIS_POINT,
+      _boardingMembersProportion <= _feeDenominator(),
       "LibPJManager: proportion is out of range"
     );
-    if (_boardingMembersProportion < MAX_PROPORTION_BASIS_POINT) {
+    if (_boardingMembersProportion < _feeDenominator()) {
       require(
         businessOwnersShareExists,
-        "LibPJManager: businessOwners share should exist unless proportion is MAX_PROPORTION_BASIS_POINT"
+        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
       );
     } else {
       require(
         !businessOwnersShareExists,
-        "LibPJManager: proportion should be less than MAX_PROPORTION_BASIS_POINT or businessOwners share should not exist"
+        "LibPJManager: proportion should be less than _feeDenominator() or businessOwners share should not exist"
       );
     }
   }

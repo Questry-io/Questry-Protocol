@@ -268,8 +268,7 @@ contract QuestryPlatform is
     uint32 _boardingMembersProportion
   ) private pure returns (uint256) {
     return
-      (_revenue * _boardingMembersProportion) /
-      LibPJManager.MAX_PROPORTION_BASIS_POINT;
+      (_revenue * _boardingMembersProportion) / LibPJManager._feeDenominator();
   }
 
   /**
