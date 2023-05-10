@@ -63,6 +63,7 @@ async function deployQuestryPlatform(
     { initializer: "initialize" }
   );
   console.log("QuestryPlatform deployed to:", questryPlatform.address);
+  return questryPlatform.address;
 }
 
 async function deployTokenControlProxy(
