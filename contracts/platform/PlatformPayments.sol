@@ -68,8 +68,7 @@ abstract contract PlatformPayments is
       revert("PlatformPayments: unknown payment category");
     }
 
-    uint256 deduction = (_args.amount * feeRate) /
-      LibQuestryPlatform.MAX_FEE_RATES_BASIS_POINT;
+    uint256 deduction = (_args.amount * feeRate) / _feeDenominator();
 
     // Pay fees to the DAO Treasury pool
     _transfer(
@@ -101,8 +100,8 @@ abstract contract PlatformPayments is
    */
   function setCommonFeeRate(uint32 _rate) external onlyOwner {
     require(
-      _rate <= 10000,
-      "PlatformPayments: common fee rate must be less than or equal to 10000"
+      _rate <= _feeDenominator(),
+      "PlatformPayments: common fee rate must be less than or equal to _feeDenominator()"
     );
     feeRates.common = _rate;
     emit CommonFeeRateChanged(_rate);
@@ -113,8 +112,8 @@ abstract contract PlatformPayments is
    */
   function setInvestmentFeeRate(uint32 _rate) external onlyOwner {
     require(
-      _rate <= 10000,
-      "PlatformPayments: investment fee rate must be less than or equal to 10000"
+      _rate <= _feeDenominator(),
+      "PlatformPayments: investment fee rate must be less than or equal to _feeDenominator()"
     );
     feeRates.investment = _rate;
     emit InvestmentFeeRateChanged(_rate);
@@ -125,8 +124,8 @@ abstract contract PlatformPayments is
    */
   function setProtocolFeeRate(uint32 _rate) external onlyOwner {
     require(
-      _rate <= 10000,
-      "PlatformPayments: protocol fee rate must be less than or equal to 10000"
+      _rate <= _feeDenominator(),
+      "PlatformPayments: protocol fee rate must be less than or equal to _feeDenominator()"
     );
     feeRates.protocol = _rate;
     emit ProtocolFeeRateChanged(_rate);
@@ -167,9 +166,14 @@ abstract contract PlatformPayments is
    * TODO: This function is used from QuestryPlatform but not from here. Where should this function be?
    */
   function _protocolFee(uint256 _totalBalance) internal view returns (uint256) {
-    return
-      (_totalBalance * feeRates.protocol) /
-      LibQuestryPlatform.MAX_FEE_RATES_BASIS_POINT;
+    return (_totalBalance * feeRates.protocol) / _feeDenominator();
+  }
+
+  /**
+   * @dev The denominator with which to interpret the fee set.
+   */
+  function _feeDenominator() internal pure virtual returns (uint96) {
+    return 10000;
   }
 
   // --------------------------------------------------
