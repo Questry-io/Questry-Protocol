@@ -258,6 +258,11 @@ abstract contract PlatformPayments is
         _args.paymentToken != IERC20(address(0)),
         "PlatformPayments: paymentToken doesn't exist though paymentMode is ERC20"
       );
+      require(
+        _args.paymentToken.allowance(_args.from, address(tokenControlProxy)) >=
+          _args.amount,
+        "PlatformPayments: insufficient allowance"
+      );
     } else {
       revert("PlatformPayments: unknown paymentMode");
     }

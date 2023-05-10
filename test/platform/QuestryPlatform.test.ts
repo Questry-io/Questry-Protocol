@@ -657,6 +657,32 @@ describe("QuestryPlatform", function () {
             "PlatformPayments: paymentToken doesn't exist though paymentMode is ERC20"
           );
         });
+
+        it("[R] should revert if paymentToken doesn't approve tokenControlProxy", async function () {
+          cERC20.connect(signers[0]).approve(cTokenControlProxy.address, 1);
+          const args: ExecutePaymentArgs = {
+            paymentMode: erc20Mode,
+            paymentToken: cERC20.address,
+            paymentCategory: commonPaymentCategory,
+            from: signers[0].address,
+            to: signers[1].address,
+            amount: 2,
+            resolver: cPaymentResolver.address,
+            nonce: 0,
+          };
+          let typedData = await createTypedData(args);
+
+          await expect(
+            cQuestryPlatform.connect(signers[0]).executePayment(args, typedData)
+          ).to.be.revertedWith("PlatformPayments: insufficient allowance");
+
+          args.amount = 1;
+          typedData = await createTypedData(args);
+
+          await cQuestryPlatform
+            .connect(signers[0])
+            .executePayment(args, typedData);
+        });
       });
 
       describe("when paymentMode is unknown", function () {
