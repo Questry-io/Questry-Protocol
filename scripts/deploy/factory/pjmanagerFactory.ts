@@ -6,13 +6,26 @@
 import * as hre from "hardhat";
 
 async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
   await hre.run("compile");
-  console.log("todo: pjmanagerfactory deploy script");
+  const questryPlatformAddress = "";
+  const trustedForwarderAddress = "";
+  if (questryPlatformAddress == "" || trustedForwarderAddress == "") {
+    throw new Error(
+      "Please set questryPlatformAddress and trustedForwarderAddress in the script before running it"
+    );
+  }
+
+  const PJManagerFactory = await hre.ethers.getContractFactory(
+    "PJManagerFactory"
+  );
+
+  const pjmanagerFactory = await PJManagerFactory.deploy(
+    questryPlatformAddress,
+    trustedForwarderAddress
+  );
+  await pjmanagerFactory.deployed();
+
+  console.log("PJManagerFactory deployed to:", pjmanagerFactory.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
