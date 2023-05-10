@@ -60,6 +60,16 @@ describe("QuestryPlatform", function () {
   const whitelistRoleHash = utils.keccak256(
     utils.toUtf8Bytes("PJ_WHITELIST_ROLE")
   );
+  const platformAdminRole = utils.keccak256(
+    utils.toUtf8Bytes("PLATFORM_ADMIN_ROLE")
+  );
+  const platformExecutorRoleHash = utils.keccak256(
+    utils.toUtf8Bytes("PLATFORM_EXECUTOR_ROLE")
+  );
+
+  function missingRoleError(address: string, roleHash: string) {
+    return `AccessControl: account ${address.toLowerCase()} is missing role ${roleHash}`;
+  }
 
   function withShares(
     recipients: SignerWithAddress[],
@@ -195,6 +205,23 @@ describe("QuestryPlatform", function () {
     await cContributionPool
       .connect(poolAdmin)
       .grantIncrementTermRole(TestUtils.dummySigner);
+  });
+
+  describe("role check", function () {
+    it("[S] should be that deployer has PLATFORM_ADMIN_ROLE", async function () {
+      expect(
+        await cQuestryPlatform.hasRole(platformAdminRole, deployer.address)
+      ).to.equal(true);
+    });
+
+    it("[S] should be that deployer has PLATFORM_EXECUTOR_ROLE", async function () {
+      expect(
+        await cQuestryPlatform.hasRole(
+          platformExecutorRoleHash,
+          deployer.address
+        )
+      ).to.equal(true);
+    });
   });
 
   describe("allocate", function () {
@@ -525,6 +552,30 @@ describe("QuestryPlatform", function () {
       expect(await cQuestryPlatform.getCommonFeeRate()).equals(300);
       expect(await cQuestryPlatform.getInvestmentFeeRate()).equals(300);
       expect(await cQuestryPlatform.getProtocolFeeRate()).equals(300);
+    });
+
+    it("[R] should revert setCommonFeeRate by not deployer", async function () {
+      await expect(
+        cQuestryPlatform.connect(signers[0]).setCommonFeeRate(100)
+      ).revertedWith(
+        missingRoleError(signers[0].address, platformExecutorRoleHash)
+      );
+    });
+
+    it("[R] should revert setInvestmentFeeRate by not deployer", async function () {
+      await expect(
+        cQuestryPlatform.connect(signers[0]).setInvestmentFeeRate(100)
+      ).revertedWith(
+        missingRoleError(signers[0].address, platformExecutorRoleHash)
+      );
+    });
+
+    it("[R] should revert setProtocolFeeRate by not deployer", async function () {
+      await expect(
+        cQuestryPlatform.connect(signers[0]).setProtocolFeeRate(100)
+      ).revertedWith(
+        missingRoleError(signers[0].address, platformExecutorRoleHash)
+      );
     });
   });
 
