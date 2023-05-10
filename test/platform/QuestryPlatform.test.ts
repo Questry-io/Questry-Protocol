@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 /* eslint-disable node/no-missing-import */
 import { ethers, upgrades } from "hardhat";
-import { Contract, utils } from "ethers";
+import { utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
@@ -20,8 +20,10 @@ import {
   TokenControlProxy,
   MockPaymentResolver,
   MockPaymentResolver__factory,
+  QuestryForwarder,
 } from "../../typechain";
 import { TestUtils, AllocationShare, ExecutePaymentArgs } from "../testUtils";
+import { getMetaTx, getMetaTxAndSignForGas } from "../utils";
 
 describe("QuestryPlatform", function () {
   let deployer: SignerWithAddress;
@@ -37,6 +39,7 @@ describe("QuestryPlatform", function () {
   let daoTreasuryPool: SignerWithAddress;
   let cTokenControlProxy: TokenControlProxy;
   let cQuestryPlatform: QuestryPlatform;
+  let cQuestryForwarder: QuestryForwarder;
   let cCalculator: ContributionCalculator;
   let cContributionPool: ContributionPool;
 
@@ -128,9 +131,11 @@ describe("QuestryPlatform", function () {
     boardingMembers = rest.slice(2, 4);
     signers = rest.slice(4);
 
+    // Deploy ContributionCalculator
     cCalculator = await new ContributionCalculator__factory(deployer).deploy();
     await cCalculator.deployed();
 
+    // Deploy TokenControlProxy
     const cfTokenControlProxy = await ethers.getContractFactory(
       "TokenControlProxy"
     );
@@ -144,6 +149,22 @@ describe("QuestryPlatform", function () {
     )) as TokenControlProxy;
     await cTokenControlProxy.deployed();
 
+    // Deploy QuestryForwarder
+    const cfQuestryForwarder = await ethers.getContractFactory(
+      "QuestryForwarder"
+    );
+    cQuestryForwarder = await cfQuestryForwarder.deploy();
+    await cQuestryForwarder.deployed();
+    await cQuestryForwarder
+      .connect(deployer)
+      .initialize(deployer.address, admin.address);
+
+    this.name = "QuestryForwarder";
+    this.chainId = (await ethers.provider.getNetwork()).chainId;
+    this.value = "0";
+    this.gas = (await ethers.provider.getBlock("latest")).gasLimit.toString();
+
+    // Deploy QuestryPlatform
     const cfQuestryPlatform = await ethers.getContractFactory(
       "QuestryPlatform"
     );
@@ -154,10 +175,14 @@ describe("QuestryPlatform", function () {
         daoTreasuryPool.address,
         cTokenControlProxy.address,
       ],
-      { kind: "uups" }
+      {
+        constructorArgs: [cQuestryForwarder.address],
+        kind: "uups",
+      }
     )) as QuestryPlatform;
     await cQuestryPlatform.deployed();
 
+    // Deploy ContributionPool
     cContributionPool = await new ContributionPool__factory(deployer).deploy(
       cQuestryPlatform.address,
       0,
@@ -596,26 +621,6 @@ describe("QuestryPlatform", function () {
       });
 
       describe("when paymentMode is ERC20", function () {
-        it("[R] should revert if mismatch between _msgSender() and _args.from", async function () {
-          const args: ExecutePaymentArgs = {
-            paymentMode: erc20Mode,
-            paymentToken: cERC20.address,
-            paymentCategory: commonPaymentCategory,
-            from: signers[0].address,
-            to: signers[1].address,
-            amount: 100,
-            resolver: cPaymentResolver.address,
-            nonce: 0,
-          };
-          const typedData = await createTypedData(args);
-
-          await expect(
-            cQuestryPlatform.connect(signers[2]).executePayment(args, typedData)
-          ).to.be.revertedWith(
-            "PlatformPayments: mismatch between _msgSender() and _args.from"
-          );
-        });
-
         it("[R] should revert if msg.value != 0", async function () {
           const args: ExecutePaymentArgs = {
             paymentMode: erc20Mode,
@@ -1131,6 +1136,101 @@ describe("QuestryPlatform", function () {
         await cQuestryPlatform
           .connect(signers[0])
           .executePayment(args, typedData);
+      });
+    });
+
+    describe("meta-transaction", function () {
+      this.beforeEach(async function () {
+        const depositAmount = ethers.utils.parseEther("1");
+        await cQuestryForwarder
+          .connect(admin)
+          .deposit({ value: depositAmount });
+      });
+
+      it("[S] should process the meta-transaction correctly", async function () {
+        const amount = 100;
+        await cERC20
+          .connect(signers[0])
+          .approve(cTokenControlProxy.address, amount);
+        const args: ExecutePaymentArgs = {
+          paymentMode: erc20Mode,
+          paymentToken: cERC20.address,
+          paymentCategory: commonPaymentCategory,
+          from: signers[0].address,
+          to: signers[1].address,
+          amount,
+          resolver: cPaymentResolver.address,
+          nonce: 0,
+        };
+        const typedData = await createTypedData(args);
+
+        // Prepare meta-transaction
+        const data = cQuestryPlatform.interface.encodeFunctionData(
+          "executePayment",
+          [args, typedData]
+        );
+        const from = args.from;
+        const nonce: string = (
+          await cQuestryForwarder.getNonce(from)
+        ).toString();
+        const to = cQuestryPlatform.address;
+        // get proper gas to execute meta tx
+        const { metaTxForGas, signForGas } = await getMetaTxAndSignForGas(
+          this.name,
+          this.chainId,
+          cQuestryForwarder.address,
+          from,
+          to,
+          nonce,
+          data,
+          this.value,
+          this.gas
+        );
+        const estimatedGas: string = (
+          await cQuestryForwarder
+            .connect(admin)
+            .estimateGas.execute(metaTxForGas.message, signForGas)
+        ).toString();
+        // create typedData for sign meta tx
+        const metaTx = await getMetaTx(
+          this.name,
+          this.chainId,
+          cQuestryForwarder.address,
+          from,
+          to,
+          nonce,
+          data,
+          this.value,
+          estimatedGas
+        );
+        // sign meta tx
+        const signature = await ethers.provider.send("eth_signTypedData_v4", [
+          from,
+          JSON.stringify(metaTx),
+        ]);
+        expect(
+          await cQuestryForwarder
+            .connect(admin)
+            .verify(metaTx.message, signature)
+        ).to.equal(true);
+        // Relay meta-transaction
+        await cQuestryForwarder
+          .connect(admin)
+          .execute(metaTx.message, signature);
+        // Check if the meta-transaction was processed successfully
+        expect(await cQuestryForwarder.getNonce(from)).to.equal(nonce + 1);
+
+        const feeRate = 300;
+        const deduction = Math.floor((+args.amount * feeRate) / 10000);
+        expect(await cERC20.balanceOf(args.from)).equals(
+          initialBalance - +args.amount
+        );
+        expect(await cERC20.balanceOf(args.to)).equals(
+          +args.amount - deduction
+        );
+        expect(await cERC20.balanceOf(daoTreasuryPool.address)).equals(
+          deduction
+        );
       });
     });
   });

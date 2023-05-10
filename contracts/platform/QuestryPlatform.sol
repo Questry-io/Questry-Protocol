@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 //library import
@@ -17,12 +16,7 @@ import {IBoard} from "../interface/token/IBoard.sol";
 import {ITokenControlProxy} from "../interface/token-control-proxy/ITokenControlProxy.sol";
 import {PlatformPayments} from "./PlatformPayments.sol";
 
-contract QuestryPlatform is
-  Initializable,
-  OwnableUpgradeable,
-  UUPSUpgradeable,
-  PlatformPayments
-{
+contract QuestryPlatform is Initializable, UUPSUpgradeable, PlatformPayments {
   IContributionCalculator public contributionCalculator;
   address public daoTreasuryPool;
 
@@ -34,7 +28,7 @@ contract QuestryPlatform is
   mapping(bytes => bool) private _isCompVerifySignature;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
-  constructor() {
+  constructor(address _trustedForwarder) PlatformPayments(_trustedForwarder) {
     _disableInitializers();
   }
 
@@ -43,7 +37,6 @@ contract QuestryPlatform is
     address _daoTreasuryPool,
     ITokenControlProxy _tokenControlProxy
   ) public initializer {
-    __Ownable_init();
     __UUPSUpgradeable_init();
     __PlatformPayments_init(_tokenControlProxy);
 

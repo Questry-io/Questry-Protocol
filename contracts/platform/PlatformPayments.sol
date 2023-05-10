@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ContextUpgradeable, ERC2771ContextUpgradeable} from "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import {AddressUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import {EIP712Upgradeable, ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -13,7 +14,8 @@ import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 abstract contract PlatformPayments is
   Initializable,
   OwnableUpgradeable,
-  EIP712Upgradeable
+  EIP712Upgradeable,
+  ERC2771ContextUpgradeable
 {
   using ECDSAUpgradeable for bytes32;
 
@@ -26,6 +28,13 @@ abstract contract PlatformPayments is
 
   /// @dev account => nonce. for replay attack protection.
   mapping(address => uint256) public nonces;
+
+  /// @custom:oz-upgrades-unsafe-allow constructor
+  constructor(address _trustedForwarder)
+    ERC2771ContextUpgradeable(_trustedForwarder)
+  {
+    _disableInitializers();
+  }
 
   function __PlatformPayments_init(ITokenControlProxy _tokenControlProxy)
     internal
@@ -153,6 +162,13 @@ abstract contract PlatformPayments is
   }
 
   /**
+   * @dev Returns the nonce of `_account`.
+   */
+  function getNonce(address _account) public view returns (uint256) {
+    return nonces[_account];
+  }
+
+  /**
    * @dev Returns the DAO Treasury pool address.
    */
   function getDAOTreasuryPool() public view virtual returns (address);
@@ -167,6 +183,30 @@ abstract contract PlatformPayments is
    */
   function _protocolFee(uint256 _totalBalance) internal view returns (uint256) {
     return (_totalBalance * feeRates.protocol) / _feeDenominator();
+  }
+
+  /**
+   * @dev See {ERC2771ContextUpgradeable._msgSender()}
+   */
+  function _msgSender()
+    internal
+    view
+    override(ContextUpgradeable, ERC2771ContextUpgradeable)
+    returns (address)
+  {
+    return ERC2771ContextUpgradeable._msgSender();
+  }
+
+  /**
+   * @dev See {ERC2771ContextUpgradeable._msgData()}
+   */
+  function _msgData()
+    internal
+    view
+    override(ContextUpgradeable, ERC2771ContextUpgradeable)
+    returns (bytes calldata)
+  {
+    return ERC2771ContextUpgradeable._msgData();
   }
 
   /**
@@ -223,24 +263,16 @@ abstract contract PlatformPayments is
   }
 
   /**
-   * @dev Returns the nonce of `_account`.
-   */
-  function _getNonce(address _account) private view returns (uint256) {
-    return nonces[_account];
-  }
-
-  /**
    * @dev Checks parameters for executePayment.
    */
   function _checkParameters(
     LibQuestryPlatform.ExecutePaymentArgs calldata _args
   ) private view {
-    require(
-      _msgSender() == _args.from,
-      "PlatformPayments: mismatch between _msgSender() and _args.from"
-    );
-
     if (_args.paymentMode == LibQuestryPlatform.NATIVE_PAYMENT_MODE) {
+      require(
+        _msgSender() == _args.from,
+        "PlatformPayments: mismatch between _msgSender() and _args.from"
+      );
       require(
         msg.value == _args.amount,
         "PlatformPayments: mismatch between msg.value and _args.amount"
@@ -284,7 +316,7 @@ abstract contract PlatformPayments is
     require(_args.to != address(0), "PlatformPayments: to is zero address");
     require(_args.amount > 0, "PlatformPayments: amount is zero");
     require(
-      _args.nonce == _getNonce(_args.from),
+      _args.nonce == getNonce(_args.from),
       "PlatformPayments: invalid nonce"
     );
   }
