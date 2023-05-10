@@ -2,21 +2,21 @@
 pragma solidity ^0.8.17;
 
 import {Context, ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import {IPJManagerFactory} from "../interface/factory/IPJManagerFactory.sol";
-import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {LibPJManager} from "../library/LibPJManager.sol";
 import {PJManager} from "../pjmanager/PJManager.sol";
-import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
-import {Board, AccessControl} from "../token/soulbound/Board.sol";
+//interface import
+import {IPJManagerFactory} from "../interface/factory/IPJManagerFactory.sol";
+import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
+import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 
-contract PJManagerFactory is IPJManagerFactory, AccessControl, ERC2771Context {
+contract PJManagerFactory is IPJManagerFactory, ERC2771Context {
   event PJManagerCreated(address indexed businessOwner, address pjManager);
 
-  QuestryPlatform public immutable questryPlatform;
+  IQuestryPlatform public immutable questryPlatform;
   mapping(address => IPJManager[]) public pjManagersByAdmin;
   mapping(IPJManager => address) public adminByPJManager;
 
-  constructor(QuestryPlatform _questryPlatform, address _trustedForwarder)
+  constructor(IQuestryPlatform _questryPlatform, address _trustedForwarder)
     ERC2771Context(_trustedForwarder)
   {
     questryPlatform = _questryPlatform;
@@ -66,7 +66,7 @@ contract PJManagerFactory is IPJManagerFactory, AccessControl, ERC2771Context {
   function _msgSender()
     internal
     view
-    override(Context, ERC2771Context)
+    override(ERC2771Context)
     returns (address sender)
   {
     sender = ERC2771Context._msgSender();
@@ -78,7 +78,7 @@ contract PJManagerFactory is IPJManagerFactory, AccessControl, ERC2771Context {
   function _msgData()
     internal
     view
-    override(Context, ERC2771Context)
+    override(ERC2771Context)
     returns (bytes calldata)
   {
     return ERC2771Context._msgData();

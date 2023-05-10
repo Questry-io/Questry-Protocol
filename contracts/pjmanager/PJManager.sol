@@ -4,7 +4,7 @@ pragma solidity ^0.8.17;
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {LibPJManager} from "../library/LibPJManager.sol";
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
-import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
+import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 import {PJTreasuryPool} from "./PJTreasuryPool.sol";
 import {SignatureVerifier} from "./SignatureVerifier.sol";
 
@@ -29,7 +29,7 @@ contract PJManager is
   mapping(bytes => bool) private _isCompVerifySignature;
 
   constructor(
-    QuestryPlatform _questryPlatform,
+    IQuestryPlatform _questryPlatform,
     address _admin,
     uint32 _boardingMembersProportion,
     LibPJManager.AllocationShare[] memory _businessOwners

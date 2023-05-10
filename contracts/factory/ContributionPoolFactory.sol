@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {ContributionPool} from "../pjmanager/ContributionPool.sol";
-import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
+import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 
 /**
  * @dev Factory contract for ContributionPool.
@@ -17,10 +17,10 @@ contract ContributionPoolFactory {
     address indexed admin
   );
 
-  QuestryPlatform public questryPlatform;
+  IQuestryPlatform public questryPlatform;
   mapping(address => IContributionPool[]) public poolsByBusinessOwners;
 
-  constructor(QuestryPlatform _questryPlatform) {
+  constructor(IQuestryPlatform _questryPlatform) {
     questryPlatform = _questryPlatform;
   }
 
