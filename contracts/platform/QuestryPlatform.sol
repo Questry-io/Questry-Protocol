@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 //library import
@@ -14,10 +13,10 @@ import {IContributionCalculator} from "../interface/platform/IContributionCalcul
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 import {IBoard} from "../interface/token/IBoard.sol";
+import {ITokenControlProxy} from "../interface/token-control-proxy/ITokenControlProxy.sol";
+import {PlatformPayments} from "./PlatformPayments.sol";
 
-contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
-  uint32 public constant PROTOCOL_FEE_RATE = 300;
-
+contract QuestryPlatform is Initializable, UUPSUpgradeable, PlatformPayments {
   IContributionCalculator public contributionCalculator;
   address public daoTreasuryPool;
 
@@ -29,16 +28,17 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   mapping(bytes => bool) private _isCompVerifySignature;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
-  constructor() {
+  constructor(address _trustedForwarder) PlatformPayments(_trustedForwarder) {
     _disableInitializers();
   }
 
   function initialize(
     IContributionCalculator _contributionCalculator,
-    address _daoTreasuryPool
+    address _daoTreasuryPool,
+    ITokenControlProxy _tokenControlProxy
   ) public initializer {
-    __Ownable_init();
     __UUPSUpgradeable_init();
+    __PlatformPayments_init(_tokenControlProxy);
 
     contributionCalculator = _contributionCalculator;
     daoTreasuryPool = _daoTreasuryPool;
@@ -48,7 +48,7 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
   function _authorizeUpgrade(address _newImplementation)
     internal
     override
-    onlyOwner
+    onlyRole(LibQuestryPlatform.PLATFORM_EXECUTOR_ROLE)
   {}
 
   /**
@@ -56,11 +56,9 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
    */
 
   function allocate(
-    LibQuestryPlatform.AllocateArgs calldata _args, 
+    LibQuestryPlatform.AllocateArgs calldata _args,
     bytes[] calldata _AllcatorSigns
-  )
-    external
-  {
+  ) external {
     IPJManager pjManager = _args.pjManager;
     // Step1 : Parameters and signatures checks
     // Check parameters
@@ -117,7 +115,13 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     );
     //Step7. Update the nonce of the pjmanager
     _updatesNonceOfPJManager(_args.pjManager);
+  }
 
+  /**
+   * @dev Returns the DAO Treasury pool address.
+   */
+  function getDAOTreasuryPool() public view virtual override returns (address) {
+    return daoTreasuryPool;
   }
 
   // --------------------------------------------------
@@ -239,19 +243,12 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
       _pools[i].incrementTerm(_poolowners[i]);
     }
   }
-    
+
   /**
    * @dev Updates the nonce of pjmanager.
    */
   function _updatesNonceOfPJManager(IPJManager pjmanager) private {
-      pjmanager.incrementNonce();
-  }
-
-  /**
-   * @dev Returns protocol fees deducted from `totalBalance`.
-   */
-  function _protocolFee(uint256 _totalBalance) private view returns (uint256) {
-    return (_totalBalance * PROTOCOL_FEE_RATE) / 10000;
+    pjmanager.incrementNonce();
   }
 
   /**
@@ -263,23 +260,20 @@ contract QuestryPlatform is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     uint256 _revenue,
     uint32 _boardingMembersProportion
   ) private pure returns (uint256) {
-    return (_revenue * _boardingMembersProportion) / 10000;
+    return
+      (_revenue * _boardingMembersProportion) / LibPJManager._feeDenominator();
   }
 
   /**
    * @dev Elimination of duplicate signature verification.
    */
-  function _setAndcheckVerifysignature(
-      bytes[] calldata _signatures
-    )
-      private
-  {
-    for(uint256 idx = 0; idx < _signatures.length; idx++){
-        require(
-          !_isCompVerifySignature[_signatures[idx]],
-          "QuestryPlatform: Elimination of duplicate signature verification"
-        );
-        _isCompVerifySignature[_signatures[idx]] = true;
+  function _setAndcheckVerifysignature(bytes[] calldata _signatures) private {
+    for (uint256 idx = 0; idx < _signatures.length; idx++) {
+      require(
+        !_isCompVerifySignature[_signatures[idx]],
+        "QuestryPlatform: Elimination of duplicate signature verification"
+      );
+      _isCompVerifySignature[_signatures[idx]] = true;
     }
   }
 }
