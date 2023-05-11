@@ -47,20 +47,31 @@ async function deployQuestryForwarder(
 }
 
 async function deployQuestryPlatform(
+  forwarderAddress: string,
   contributionCalculatorAddress: string,
-  daoTreasuryPoolAddress: string
+  daoTreasuryPoolAddress: string,
+  tokenControlProxyAddress: string
 ): Promise<string> {
-  if (contributionCalculatorAddress == "" || daoTreasuryPoolAddress == "") {
+  if (
+    forwarderAddress == "" ||
+    contributionCalculatorAddress == "" ||
+    daoTreasuryPoolAddress == "" ||
+    tokenControlProxyAddress == ""
+  ) {
     throw new Error(
-      "Please set contributionCalculatorAddress and daoTreasuryPoolAddress in the script before running it"
+      "Please set forwarderAddress, contributionCalculatorAddress, daoTreasuryPoolAddress and tokenControlProxyAddress in the script before running it"
     );
   }
   console.log("Deploying QuestryPlatform...");
   const QuestryPlatform = await ethers.getContractFactory("QuestryPlatform");
   const questryPlatform = await upgrades.deployProxy(
     QuestryPlatform,
-    [contributionCalculatorAddress, daoTreasuryPoolAddress],
-    { initializer: "initialize" }
+    [
+      contributionCalculatorAddress,
+      daoTreasuryPoolAddress,
+      tokenControlProxyAddress,
+    ],
+    { initializer: "initialize", constructorArgs: [forwarderAddress] }
   );
   console.log("QuestryPlatform deployed to:", questryPlatform.address);
   return questryPlatform.address;
@@ -71,7 +82,7 @@ async function deployTokenControlProxy(
   forwarderAddress: string
 ): Promise<string> {
   const TokenControlProxy = await ethers.getContractFactory(
-    "TokenControllProxy"
+    "TokenControlProxy"
   );
   if (roleManagerAddress == "" || forwarderAddress == "") {
     throw new Error(
@@ -160,25 +171,14 @@ async function deployContributionPoolFactory(
 }
 
 async function main() {
-  // ・ContributionCalculator(Upgradeable)
   // ・QuestryforwarderContract(Upgradeable)
-  // ・QuestryPlatform(Upgradeable)
   // ・tokenControlProxy(Upgradeable)
+  // ・ContributionCalculator(Upgradeable)
+  // ・QuestryPlatform(Upgradeable)
   // ・PJManagerFactory
   // ・BoardFactry
   // ・ContributionPoolfactory
   await hre.run("compile");
-
-  const contributionCalculatorAddress = await deployContributionCalculator();
-
-  const daoTreasuryPoolAddress = process.env.DAO_TREASURY_POOL_ADDRESS || "";
-  const questryPlatformAddress = await deployQuestryPlatform(
-    contributionCalculatorAddress,
-    daoTreasuryPoolAddress
-  );
-  const contributionPoolFactoryAddress = await deployContributionPoolFactory(
-    questryPlatformAddress
-  );
 
   const adminAddress = process.env.ADMIN_ADDRESS || "";
   const executorAddress = process.env.EXECUTOR_ADDRESS || "";
@@ -186,14 +186,28 @@ async function main() {
     adminAddress,
     executorAddress
   );
-  const pjManagerFactoryAddress = await deployPJManagerFactory(
-    questryPlatformAddress,
-    questryForwarderAddress
-  );
 
   const roleManagerAddress = process.env.ROLE_MANAGER_ADDRESS || "";
   const tokenControlProxyAddress = await deployTokenControlProxy(
     roleManagerAddress,
+    questryForwarderAddress
+  );
+
+  const contributionCalculatorAddress = await deployContributionCalculator();
+
+  const daoTreasuryPoolAddress = process.env.DAO_TREASURY_POOL_ADDRESS || "";
+  const questryPlatformAddress = await deployQuestryPlatform(
+    questryForwarderAddress,
+    contributionCalculatorAddress,
+    daoTreasuryPoolAddress,
+    tokenControlProxyAddress
+  );
+  const contributionPoolFactoryAddress = await deployContributionPoolFactory(
+    questryPlatformAddress
+  );
+
+  const pjManagerFactoryAddress = await deployPJManagerFactory(
+    questryPlatformAddress,
     questryForwarderAddress
   );
 

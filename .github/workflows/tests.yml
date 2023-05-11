@@ -38,9 +38,7 @@ jobs:
         run: yarn run test
 
       - name: deploy script
-        run: |
-          yarn hardhat node &
-          yarn hardhat run scripts/deploy.ts --network localhost
+        run: yarn hardhat run --network hardhat scripts/deploy.ts
         env:
           # 以下のアドレスは、hardhat nodeで生成されるアドレスで、実際には使用しないでください。
           DAO_TREASURY_POOL_ADDRESS: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
