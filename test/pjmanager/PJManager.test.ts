@@ -43,7 +43,6 @@ describe("PJManager", function () {
   let cCalculator: ContributionCalculator;
   let cContributionPool: ContributionPool;
 
-
   const dummyAddress = "0x90fA7809574b4f8206ec1a47aDc37eCEE57443cb";
 
   const maxBasisPoint = 10000;
@@ -59,17 +58,13 @@ describe("PJManager", function () {
     utils.toUtf8Bytes("PJ_MANAGEMENT_ROLE")
   );
 
-  const depositRoleHash = utils.keccak256(
-    utils.toUtf8Bytes("PJ_DEPOSIT_ROLE")
-  );
+  const depositRoleHash = utils.keccak256(utils.toUtf8Bytes("PJ_DEPOSIT_ROLE"));
 
   const whitelistRoleHash = utils.keccak256(
     utils.toUtf8Bytes("PJ_WHITELIST_ROLE")
   );
 
-  const SignerRoleHash = utils.keccak256(
-    utils.toUtf8Bytes("PJ_VERIFY_SIGNER")
-  );
+  const SignerRoleHash = utils.keccak256(utils.toUtf8Bytes("PJ_VERIFY_SIGNER"));
 
   function missingRoleError(address: string, roleHash: string) {
     return `AccessControl: account ${address.toLowerCase()} is missing role ${roleHash}`;
@@ -167,7 +162,6 @@ describe("PJManager", function () {
       ethers.constants.AddressZero
     );
     await cContributionPool.deployed();
-
   });
 
   describe("constructor", function () {
@@ -179,37 +173,37 @@ describe("PJManager", function () {
       await deployPJManager(4000, withShares(businessOwners, [1, 1]));
     });
 
-    it("[S] should deploy if boardingMembersProportion is MAX_BASIS_POINT", async function () {
+    it("[S] should deploy if boardingMembersProportion is _feeDenominator()", async function () {
       await deployPJManager(maxBasisPoint, withShares(businessOwners, [0, 0]));
     });
 
-    it("[R] should not deploy if boardingMembersProportion is over MAX_BASIS_POINT", async function () {
+    it("[R] should not deploy if boardingMembersProportion is over _feeDenominator()", async function () {
       await expect(
         deployPJManager(maxBasisPoint + 1, withShares(businessOwners, [1, 1]))
       ).revertedWith("LibPJManager: proportion is out of range");
     });
 
-    it("[R] should not deploy if boardingMembersProportion is MAX_BASIS_POINT but businessOwnersShare exists", async function () {
+    it("[R] should not deploy if boardingMembersProportion is _feeDenominator() but businessOwnersShare exists", async function () {
       await expect(
         deployPJManager(maxBasisPoint, withShares(businessOwners, [1, 1]))
       ).revertedWith(
-        "PJManager: proportion should be less than MAX_BASIS_POINT or businessOwners share should not exist"
+        "PJManager: proportion should be less than _feeDenominator() or businessOwners share should not exist"
       );
     });
 
-    it("[R] should not deploy if boardingMembersProportion is less than MAX_BASIS_POINT (is 4000) but businessOwnersShare doesn't exist", async function () {
+    it("[R] should not deploy if boardingMembersProportion is less than _feeDenominator() (is 4000) but businessOwnersShare doesn't exist", async function () {
       await expect(
         deployPJManager(4000, withShares(businessOwners, [0, 0]))
       ).revertedWith(
-        "LibPJManager: businessOwners share should exist unless proportion is MAX_BASIS_POINT"
+        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
       );
     });
 
-    it("[R] should not deploy if boardingMembersProportion is less than MAX_BASIS_POINT (is 0) but businessOwnersShare doesn't exist", async function () {
+    it("[R] should not deploy if boardingMembersProportion is less than _feeDenominator() (is 0) but businessOwnersShare doesn't exist", async function () {
       await expect(
         deployPJManager(0, withShares(businessOwners, [0, 0]))
       ).revertedWith(
-        "LibPJManager: businessOwners share should exist unless proportion is MAX_BASIS_POINT"
+        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
       );
     });
   });
@@ -272,7 +266,7 @@ describe("PJManager", function () {
       await expect(
         cPJManager.connect(stateManager).addBusinessOwner(arg)
       ).revertedWith(
-        "PJManager: proportion should be less than MAX_BASIS_POINT or businessOwners share should not exist"
+        "PJManager: proportion should be less than _feeDenominator() or businessOwners share should not exist"
       );
     });
   });
@@ -335,7 +329,7 @@ describe("PJManager", function () {
           .connect(stateManager)
           .removeBusinessOwner(businessOwners[1].address)
       ).revertedWith(
-        "LibPJManager: businessOwners share should exist unless proportion is MAX_BASIS_POINT"
+        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
       );
     });
   });
@@ -394,24 +388,21 @@ describe("PJManager", function () {
       await expect(
         cPJManager.connect(stateManager).updateBusinessOwner(arg)
       ).revertedWith(
-        "LibPJManager: businessOwners share should exist unless proportion is MAX_BASIS_POINT"
+        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
       );
     });
   });
 
   describe("verifysignature (unit test)", function () {
     let cPJManager: PJManager;
-    let cERC20:  RandomERC20;
+    let cERC20: RandomERC20;
     let cDummyERC20: RandomERC20;
     let cBoard: Board;
     let cContributionPool: ContributionPool;
     let cContributionPool2: ContributionPool;
 
     beforeEach(async function () {
-      ({  cPJManager, 
-          cERC20 , 
-          cBoard
-        } = await deployPJManager(
+      ({ cPJManager, cERC20, cBoard } = await deployPJManager(
         4000,
         withShares(businessOwners, [1, 2])
       ));
@@ -436,22 +427,27 @@ describe("PJManager", function () {
     });
 
     it("[S] signature verifyer success on single signature", async function () {
-      await cPJManager.connect(admin).grantRole(SignerRoleHash,signer.address);
-      expect(await cPJManager.hasRole(SignerRoleHash,signer.address)).to.be.equal(true);
+      await cPJManager.connect(admin).grantRole(SignerRoleHash, signer.address);
+      expect(
+        await cPJManager.hasRole(SignerRoleHash, signer.address)
+      ).to.be.equal(true);
       const SharesWithLinearArgs = {
-        pools: [cContributionPool.address,cContributionPool2.address],
-        coefs: [2, 3]
-      }
-      
-      const args: any = { 
+        pools: [cContributionPool.address, cContributionPool2.address],
+        coefs: [2, 3],
+      };
+
+      const args: any = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
         board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
-        updateNeededPools: [cContributionPool.address,cContributionPool2.address],
-        contributePoolOwner: [signer.address,signer.address],
-        pjnonce: (Number(await cPJManager.getNonce())).toString()
+        updateNeededPools: [
+          cContributionPool.address,
+          cContributionPool2.address,
+        ],
+        contributePoolOwner: [signer.address, signer.address],
+        pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
       //EIP712 create domain separator
@@ -471,48 +467,61 @@ describe("PJManager", function () {
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "contributePoolOwner", type: "address[]" },
-          { name: "pjnonce", type: "uint256" }
+          { name: "pjnonce", type: "uint256" },
         ],
-        CalculateDispatchArgs:[
+        CalculateDispatchArgs: [
           { name: "algorithm", type: "bytes4" },
-          { name: "args", type: "bytes" }
-        ]
+          { name: "args", type: "bytes" },
+        ],
       };
 
       const message = await signer._signTypedData(domain, types2, args);
-      const recoveraddress = ethers.utils.verifyTypedData(domain,types2,args,message)
-      expect(
-        await cPJManager.verifySignature(args ,[message])
-      ).to.be.equal(true)
-
+      const recoveraddress = ethers.utils.verifyTypedData(
+        domain,
+        types2,
+        args,
+        message
+      );
+      expect(await cPJManager.verifySignature(args, [message])).to.be.equal(
+        true
+      );
     });
 
     it("[S] signature verifyer success on Multi signature", async function () {
-      await cPJManager.connect(admin).grantRole(SignerRoleHash,signer.address);
-      await cPJManager.connect(admin).grantRole(SignerRoleHash,signer2.address);
-      expect(await cPJManager.hasRole(SignerRoleHash,signer.address)).to.be.equal(true);
-      expect(await cPJManager.hasRole(SignerRoleHash,signer2.address)).to.be.equal(true);
-      
+      await cPJManager.connect(admin).grantRole(SignerRoleHash, signer.address);
+      await cPJManager
+        .connect(admin)
+        .grantRole(SignerRoleHash, signer2.address);
+      expect(
+        await cPJManager.hasRole(SignerRoleHash, signer.address)
+      ).to.be.equal(true);
+      expect(
+        await cPJManager.hasRole(SignerRoleHash, signer2.address)
+      ).to.be.equal(true);
+
       //Set sig threshold
       expect(await cPJManager.getThreshold()).to.be.equal(1);
       await cPJManager.connect(admin).setThreshold(2);
       expect(await cPJManager.getThreshold()).to.be.equal(2);
-      
+
       //signeture message parameta
       const SharesWithLinearArgs = {
-        pools: [cContributionPool.address,cContributionPool2.address],
-        coefs: [2, 3]
-      }
-      
-      const args: any = { 
+        pools: [cContributionPool.address, cContributionPool2.address],
+        coefs: [2, 3],
+      };
+
+      const args: any = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
         board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
-        updateNeededPools: [cContributionPool.address,cContributionPool2.address],
-        contributePoolOwner: [signer.address,signer.address],
-        pjnonce: (Number(await cPJManager.getNonce())).toString()
+        updateNeededPools: [
+          cContributionPool.address,
+          cContributionPool2.address,
+        ],
+        contributePoolOwner: [signer.address, signer.address],
+        pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
       //EIP712 create domain separator
@@ -532,63 +541,78 @@ describe("PJManager", function () {
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "contributePoolOwner", type: "address[]" },
-          { name: "pjnonce", type: "uint256" }
+          { name: "pjnonce", type: "uint256" },
         ],
-        CalculateDispatchArgs:[
+        CalculateDispatchArgs: [
           { name: "algorithm", type: "bytes4" },
-          { name: "args", type: "bytes" }
-        ]
+          { name: "args", type: "bytes" },
+        ],
       };
 
       const message = await signer._signTypedData(domain, types2, args);
       const message2 = await signer2._signTypedData(domain, types2, args);
-      
-      expect(
-        await cPJManager.verifySignature(args ,[message,message2])
-      ).to.be.equal(true)
 
+      expect(
+        await cPJManager.verifySignature(args, [message, message2])
+      ).to.be.equal(true);
     });
 
     it("[S] signature verifyer success on Multi signature (2 of 3)", async function () {
-      await cPJManager.connect(admin).grantRole(SignerRoleHash,signer.address);
-      await cPJManager.connect(admin).grantRole(SignerRoleHash,signer2.address);
-      await cPJManager.connect(admin).grantRole(SignerRoleHash,signer3.address);
-      expect(await cPJManager.hasRole(SignerRoleHash,signer.address)).to.be.equal(true);
-      expect(await cPJManager.hasRole(SignerRoleHash,signer2.address)).to.be.equal(true);
-      expect(await cPJManager.hasRole(SignerRoleHash,signer3.address)).to.be.equal(true);
-      
+      await cPJManager.connect(admin).grantRole(SignerRoleHash, signer.address);
+      await cPJManager
+        .connect(admin)
+        .grantRole(SignerRoleHash, signer2.address);
+      await cPJManager
+        .connect(admin)
+        .grantRole(SignerRoleHash, signer3.address);
+      expect(
+        await cPJManager.hasRole(SignerRoleHash, signer.address)
+      ).to.be.equal(true);
+      expect(
+        await cPJManager.hasRole(SignerRoleHash, signer2.address)
+      ).to.be.equal(true);
+      expect(
+        await cPJManager.hasRole(SignerRoleHash, signer3.address)
+      ).to.be.equal(true);
+
       //Set sig threshold
       expect(await cPJManager.getThreshold()).to.be.equal(1);
       await cPJManager.connect(admin).setThreshold(2);
       expect(await cPJManager.getThreshold()).to.be.equal(2);
-      
+
       //signeture message parameta
       const SharesWithLinearArgs = {
-        pools: [cContributionPool.address,cContributionPool2.address],
-        coefs: [2, 3]
-      }
-      
+        pools: [cContributionPool.address, cContributionPool2.address],
+        coefs: [2, 3],
+      };
+
       //diff equal paymnetmode is native
-      const dummyargs:any = {
+      const dummyargs: any = {
         pjManager: cPJManager.address,
         paymentMode: nativeMode,
         paymentToken: cERC20.address,
         board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
-        updateNeededPools: [cContributionPool.address,cContributionPool2.address],
-        contributePoolOwner: [signer.address,signer.address],
-        pjnonce: (Number(await cPJManager.getNonce())).toString()
-      }
-      
-      const args: any = { 
+        updateNeededPools: [
+          cContributionPool.address,
+          cContributionPool2.address,
+        ],
+        contributePoolOwner: [signer.address, signer.address],
+        pjnonce: Number(await cPJManager.getNonce()).toString(),
+      };
+
+      const args: any = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
         board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
-        updateNeededPools: [cContributionPool.address,cContributionPool2.address],
-        contributePoolOwner: [signer.address,signer.address],
-        pjnonce: (Number(await cPJManager.getNonce())).toString()
+        updateNeededPools: [
+          cContributionPool.address,
+          cContributionPool2.address,
+        ],
+        contributePoolOwner: [signer.address, signer.address],
+        pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
       //EIP712 create domain separator
@@ -608,53 +632,72 @@ describe("PJManager", function () {
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "contributePoolOwner", type: "address[]" },
-          { name: "pjnonce", type: "uint256" }
+          { name: "pjnonce", type: "uint256" },
         ],
-        CalculateDispatchArgs:[
+        CalculateDispatchArgs: [
           { name: "algorithm", type: "bytes4" },
-          { name: "args", type: "bytes" }
-        ]
+          { name: "args", type: "bytes" },
+        ],
       };
-      
-      const dummymessage = await signer._signTypedData(domain, types2, dummyargs);
+
+      const dummymessage = await signer._signTypedData(
+        domain,
+        types2,
+        dummyargs
+      );
       const message2 = await signer2._signTypedData(domain, types2, args);
       const message3 = await signer3._signTypedData(domain, types2, args);
       expect(
-        await cPJManager.verifySignature(args ,[dummymessage,message2,message3])
-      ).to.be.equal(true)
+        await cPJManager.verifySignature(args, [
+          dummymessage,
+          message2,
+          message3,
+        ])
+      ).to.be.equal(true);
 
       expect(
-        await cPJManager.verifySignature(args ,[message2,dummymessage,message3])
-      ).to.be.equal(true)
+        await cPJManager.verifySignature(args, [
+          message2,
+          dummymessage,
+          message3,
+        ])
+      ).to.be.equal(true);
 
       expect(
-        await cPJManager.verifySignature(args ,[message2,message3,dummymessage])
-      ).to.be.equal(true)
+        await cPJManager.verifySignature(args, [
+          message2,
+          message3,
+          dummymessage,
+        ])
+      ).to.be.equal(true);
 
-      //reverted for threshold is not short sig verify 
+      //reverted for threshold is not short sig verify
       await expect(
-        cPJManager.verifySignature(args ,[dummymessage,dummymessage,message3])
+        cPJManager.verifySignature(args, [dummymessage, dummymessage, message3])
       ).revertedWith("PJManager: fall short of threshold for verify");
-
     });
 
     it("[R] signature verifyer reverted not has roll", async function () {
-      
-      expect(await cPJManager.hasRole(SignerRoleHash,signer.address)).to.be.equal(false);
+      expect(
+        await cPJManager.hasRole(SignerRoleHash, signer.address)
+      ).to.be.equal(false);
       const SharesWithLinearArgs = {
-        pools: [cContributionPool.address,cContributionPool2.address],
-        coefs: [2, 3]
-      }
-      
-      const args: any = { 
+        pools: [cContributionPool.address, cContributionPool2.address],
+        coefs: [2, 3],
+      };
+
+      const args: any = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
         board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
-        updateNeededPools: [cContributionPool.address,cContributionPool2.address],
-        contributePoolOwner: [signer.address,signer.address],
-        pjnonce: (Number(await cPJManager.getNonce())).toString()
+        updateNeededPools: [
+          cContributionPool.address,
+          cContributionPool2.address,
+        ],
+        contributePoolOwner: [signer.address, signer.address],
+        pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
       //EIP712 create domain separator
@@ -674,38 +717,41 @@ describe("PJManager", function () {
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "contributePoolOwner", type: "address[]" },
-          { name: "pjnonce", type: "uint256" }
+          { name: "pjnonce", type: "uint256" },
         ],
-        CalculateDispatchArgs:[
+        CalculateDispatchArgs: [
           { name: "algorithm", type: "bytes4" },
-          { name: "args", type: "bytes" }
-        ]
+          { name: "args", type: "bytes" },
+        ],
       };
 
       const message = await signer._signTypedData(domain, types2, args);
-      await expect(
-        cPJManager.verifySignature(args ,[message])
-      ).revertedWith("PJManager: fall short of threshold for verify");
-
+      await expect(cPJManager.verifySignature(args, [message])).revertedWith(
+        "PJManager: fall short of threshold for verify"
+      );
     });
 
     it("[R] signature verifyer reverted not has roll", async function () {
-      
-      expect(await cPJManager.hasRole(SignerRoleHash,signer.address)).to.be.equal(false);
+      expect(
+        await cPJManager.hasRole(SignerRoleHash, signer.address)
+      ).to.be.equal(false);
       const SharesWithLinearArgs = {
-        pools: [cContributionPool.address,cContributionPool2.address],
-        coefs: [2, 3]
-      }
-      
-      const args: any = { 
+        pools: [cContributionPool.address, cContributionPool2.address],
+        coefs: [2, 3],
+      };
+
+      const args: any = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
         board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
-        updateNeededPools: [cContributionPool.address,cContributionPool2.address],
-        contributePoolOwner: [signer.address,signer.address],
-        pjnonce: (Number(await cPJManager.getNonce())).toString()
+        updateNeededPools: [
+          cContributionPool.address,
+          cContributionPool2.address,
+        ],
+        contributePoolOwner: [signer.address, signer.address],
+        pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
       //EIP712 create domain separator
@@ -725,30 +771,26 @@ describe("PJManager", function () {
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "contributePoolOwner", type: "address[]" },
-          { name: "pjnonce", type: "uint256" }
+          { name: "pjnonce", type: "uint256" },
         ],
-        CalculateDispatchArgs:[
+        CalculateDispatchArgs: [
           { name: "algorithm", type: "bytes4" },
-          { name: "args", type: "bytes" }
-        ]
+          { name: "args", type: "bytes" },
+        ],
       };
 
       const message = await signer._signTypedData(domain, types2, args);
-      await expect(
-        cPJManager.verifySignature(args ,[message])
-      ).revertedWith("PJManager: fall short of threshold for verify");
-
+      await expect(cPJManager.verifySignature(args, [message])).revertedWith(
+        "PJManager: fall short of threshold for verify"
+      );
     });
   });
 
-  
-
   describe("getNonce", function () {
     let cPJManager: PJManager;
-    
 
     beforeEach(async function () {
-      ({  cPJManager } = await deployPJManager(
+      ({ cPJManager } = await deployPJManager(
         4000,
         withShares(businessOwners, [1, 2])
       ));
@@ -760,7 +802,7 @@ describe("PJManager", function () {
     });
 
     it("[S] increment check", async function () {
-      // Questry platform test 
+      // Questry platform test
     });
 
     it("[R] Reverted increment check (Not has roll)", async function () {
@@ -772,9 +814,9 @@ describe("PJManager", function () {
 
   describe("setThreshold", function () {
     let cPJManager: PJManager;
-    
+
     beforeEach(async function () {
-      ({  cPJManager } = await deployPJManager(
+      ({ cPJManager } = await deployPJManager(
         4000,
         withShares(businessOwners, [1, 2])
       ));
@@ -801,7 +843,9 @@ describe("PJManager", function () {
     it("[R] reverted for zero set transaction", async function () {
       //Set sig threshold
       expect(await cPJManager.getThreshold()).to.be.equal(1);
-      await expect(cPJManager.connect(admin).setThreshold(0)).revertedWith("PJManager :threshold does not set zero");
+      await expect(cPJManager.connect(admin).setThreshold(0)).revertedWith(
+        "PJManager :threshold does not set zero"
+      );
     });
   });
 
@@ -809,7 +853,6 @@ describe("PJManager", function () {
     let cPJManager: PJManager;
     let cERC20: RandomERC20;
     let cDummyERC20: RandomERC20;
-    
 
     beforeEach(async function () {
       ({ cPJManager, cERC20 } = await deployDummyPJManager());

@@ -6,12 +6,12 @@ import { MockCallerContract } from "../typechain";
 
 export type AllocateArgs = {
   pjManager: string;
-  paymentMode: string; 
-  paymentToken: string; 
-  board: string; 
-  calculateArgs:  CalculateDispatchArgs;
-  updateNeededPools: string[]; 
-  ContributePoolOwner: string[]; 
+  paymentMode: string;
+  paymentToken: string;
+  board: string;
+  calculateArgs: CalculateDispatchArgs;
+  updateNeededPools: string[];
+  ContributePoolOwner: string[];
   pjnonce: string;
 };
 
@@ -28,6 +28,17 @@ export type AllocationShare = {
 export type CalculateDispatchArgs = {
   algorithm: string;
   args: string;
+};
+
+export type ExecutePaymentArgs = {
+  paymentMode: string;
+  paymentToken: string;
+  paymentCategory: string;
+  from: string;
+  to: string;
+  amount: string | number;
+  resolver: string;
+  nonce: string | number;
 };
 
 export class TestUtils {
@@ -63,11 +74,4 @@ export class TestUtils {
     const signature = iface.encodeFunctionData(fname, args);
     return await caller.callFunction(callee.address, signature);
   }
-
 }
-
-
-
-
-
-

@@ -8,19 +8,24 @@ import "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeabl
 import "@openzeppelin/contracts-upgradeable/metatx/ERC2771ContextUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 //interface Inheritance
-import "contracts/interface/tokenControl/ItokenControl.sol";
+import "contracts/interface/token-control-proxy/ITokenControlProxy.sol";
 
 /**
  * @title
  */
-contract TokenControllProxy is
+contract TokenControlProxy is
   Initializable,
-  ITokenControllProxy,
+  ITokenControlProxy,
   ERC2771ContextUpgradeable,
   ERC165Upgradeable,
   AccessControlUpgradeable,
   UUPSUpgradeable
 {
+  event ExecutorRoleGranted(address indexed _questryPlatform);
+
+  /// @dev QuestryPlatform is the sole owner of the EXECUTOR_ROLE.
+  address public questryPlatform;
+
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor(address _trustedForwarder)
     ERC2771ContextUpgradeable(_trustedForwarder)
@@ -36,9 +41,10 @@ contract TokenControllProxy is
     __AccessControl_init();
     __UUPSUpgradeable_init();
     //set Token Controll Proxy Roll Manager(EOA)
-    _setupRole(DEFAULT_ADMIN_ROLE, _RollManager);
+    _setupRole(ADMIN_ROLE, _RollManager);
   }
 
+  bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
   bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
 
   /**
@@ -51,8 +57,26 @@ contract TokenControllProxy is
     internal
     virtual
     override
-    onlyRole(DEFAULT_ADMIN_ROLE)
+    onlyRole(ADMIN_ROLE)
   {}
+
+  /**
+   * @dev Grants the executor role to `_questryPlatform`.
+   *
+   * Emits an {ExecutorRoleGranted} event.
+   */
+  function grantExecutorRoleToQuestryPlatform(address _questryPlatform)
+    external
+    onlyRole(ADMIN_ROLE)
+  {
+    require(
+      questryPlatform == address(0),
+      "TokenControllProxy: already granted"
+    );
+    questryPlatform = _questryPlatform;
+    _setupRole(EXECUTOR_ROLE, _questryPlatform);
+    emit ExecutorRoleGranted(_questryPlatform);
+  }
 
   /**
    * @dev See {IERC165Upgradeable-supportsInterface}.
@@ -67,7 +91,7 @@ contract TokenControllProxy is
     returns (bool)
   {
     return
-      _interfaceId == type(ITokenControllProxy).interfaceId ||
+      _interfaceId == type(ITokenControlProxy).interfaceId ||
       super.supportsInterface(_interfaceId);
   }
 
