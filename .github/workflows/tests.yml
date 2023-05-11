@@ -37,7 +37,7 @@ jobs:
       - name: Run unit tests
         run: yarn run test
 
-      - name: deploy script
+      - name: Run deploy script
         run: yarn hardhat run --network hardhat scripts/deploy.ts
         env:
           # 以下のアドレスは、hardhat nodeで生成されるアドレスで、実際には使用しないでください。
