@@ -171,7 +171,7 @@ async function main() {
 
   const contributionCalculatorAddress = await deployContributionCalculator();
 
-  const daoTreasuryPoolAddress = "";
+  const daoTreasuryPoolAddress = process.env.DAO_TREASURY_POOL_ADDRESS || "";
   const questryPlatformAddress = await deployQuestryPlatform(
     contributionCalculatorAddress,
     daoTreasuryPoolAddress
@@ -180,8 +180,8 @@ async function main() {
     questryPlatformAddress
   );
 
-  const adminAddress = "";
-  const executorAddress = "";
+  const adminAddress = process.env.ADMIN_ADDRESS || "";
+  const executorAddress = process.env.EXECUTOR_ADDRESS || "";
   const questryForwarderAddress = await deployQuestryForwarder(
     adminAddress,
     executorAddress
@@ -191,13 +191,13 @@ async function main() {
     questryForwarderAddress
   );
 
-  const roleManagerAddress = "";
+  const roleManagerAddress = process.env.ROLE_MANAGER_ADDRESS || "";
   const tokenControlProxyAddress = await deployTokenControlProxy(
     roleManagerAddress,
     questryForwarderAddress
   );
 
-  const pjManagerAddress = "";
+  const pjManagerAddress = process.env.PJ_MANAGER_ADDRESS || "";
   const boardFactoryAddress = await deployBoardFactory(
     adminAddress,
     pjManagerAddress
