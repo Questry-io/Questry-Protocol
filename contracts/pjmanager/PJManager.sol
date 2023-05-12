@@ -1,12 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
-import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
-import {LibPJManager} from "../library/LibPJManager.sol";
-import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
-import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 import {PJTreasuryPool} from "./PJTreasuryPool.sol";
 import {SignatureVerifier} from "./SignatureVerifier.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+//interface imported
+import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
+import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+// Library imported
+import {LibPJManager} from "../library/LibPJManager.sol";
+import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 
 // TODO: Remove this import after REGISTER_BOARD_ROLE implementations.
 import {console} from "hardhat/console.sol";
@@ -18,7 +24,8 @@ import {console} from "hardhat/console.sol";
 contract PJManager is 
   IPJManager, 
   PJTreasuryPool, 
-  SignatureVerifier
+  SignatureVerifier,
+  ReentrancyGuard
 {
   /// @dev the basis points proportion of total allocation for boarding members
   uint32 public immutable boardingMembersProportion;
@@ -33,9 +40,7 @@ contract PJManager is
     address _admin,
     uint32 _boardingMembersProportion,
     LibPJManager.AllocationShare[] memory _businessOwners
-  ) 
-    PJTreasuryPool(_questryPlatform)
-  {
+  ){
     bool ownersShareExists = _initBusinessOwners(_businessOwners);
     LibPJManager._validateAllocationSettings(
       _businessOwners,
@@ -50,6 +55,11 @@ contract PJManager is
       LibPJManager.PJ_NONCE_INCREMENT_ROLE, 
       address(_questryPlatform)
     );
+    _setupRole(
+      LibPJManager.PJ_WITHDRAW_ROLE, 
+      address(_questryPlatform)
+    );
+
     //set signature threshold
     _setThreshold(_defaultThreshold);
     
@@ -58,6 +68,7 @@ contract PJManager is
     _setupRole(LibPJManager.PJ_WHITELIST_ROLE, _admin);
     _setupRole(LibPJManager.PJ_DEPOSIT_ROLE, _admin);
     _setupRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE, _admin);
+    
 
     _setRoleAdmin(LibPJManager.PJ_MANAGEMENT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(LibPJManager.PJ_WHITELIST_ROLE, LibPJManager.PJ_ADMIN_ROLE);
@@ -139,6 +150,70 @@ contract PJManager is
       boardingMembersProportion
     );
     emit UpdateBusinessOwner(_businessOwner.recipient, _businessOwner.share);
+  }
+
+  // --------------------------------------------------
+  // PJTreasuryPool Function
+  // --------------------------------------------------
+
+  /// @inheritdoc IPJManager
+  function withdrawForAllocation(
+    bytes4 _paymentMode,
+    IERC20 _paymentToken,
+    address _receiver,
+    uint256 _amount
+  ) external onlyRole(LibPJManager.PJ_WITHDRAW_ROLE) nonReentrant {
+    _withdrawForAllocation(
+      _paymentMode,
+      _paymentToken,
+      _receiver,
+      _amount
+    );
+  }
+
+  /**
+   * @dev Deposits the native token into the pool.
+   *
+   * Emits a {Deposit} event.
+   */
+  function deposit() public payable onlyRole(LibPJManager.PJ_DEPOSIT_ROLE) {
+    emit Deposit(_msgSender(), msg.value);
+  }
+
+  /**
+   * @dev Deposits an `_amount` of the ERC20 `_token` into the pool.
+   *
+   * Emits a {DepositERC20} event.
+   */
+  function depositERC20(IERC20 _token, uint256 _amount)
+    external
+    onlyRole(LibPJManager.PJ_DEPOSIT_ROLE)
+  {
+    _depositERC20(_token, _amount);
+  }
+
+   /**
+   * @dev Adds the ERC20 `_token` to the whitelist.
+   *
+   * Emits an {AllowERC20} event.
+   */
+  function allowERC20(IERC20 _token)
+    external
+    onlyRole(LibPJManager.PJ_WHITELIST_ROLE)
+  {
+    _allowERC20(_token);
+  }
+
+  /**
+   * @dev Removes the ERC20 `_token` from the whitelist.
+   *
+   * Emits a {DisallowERC20} event.
+   */
+  function disallowERC20(IERC20 _token)
+    external
+    onlyRole(LibPJManager.PJ_WHITELIST_ROLE)
+  {
+    _disallowERC20(_token);
   }
 
   // --------------------------------------------------
