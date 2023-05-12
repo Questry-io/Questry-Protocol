@@ -246,7 +246,7 @@ describe("PJManager", function () {
     it("[R] should not addBusinessOwner by others", async function () {
       const arg = { recipient: dummyAddress, share: 3 };
       await expect(cPJManager.connect(user).addBusinessOwner(arg)).revertedWith(
-        missingRoleError(user.address, managementRoleHash)
+        'Invalid executor role'
       );
     });
 
@@ -311,7 +311,7 @@ describe("PJManager", function () {
     it("[R] should not removeBusinessOwner by others", async function () {
       await expect(
         cPJManager.connect(user).removeBusinessOwner(businessOwners[0].address)
-      ).revertedWith(missingRoleError(user.address, managementRoleHash));
+      ).revertedWith('Invalid executor role');
     });
 
     it("[R] should not remove non-existing owner", async function () {
@@ -370,7 +370,7 @@ describe("PJManager", function () {
       const arg = { recipient: businessOwners[0].address, share: 123 };
       await expect(
         cPJManager.connect(user).updateBusinessOwner(arg)
-      ).revertedWith(missingRoleError(user.address, managementRoleHash));
+      ).revertedWith('Invalid executor role');
     });
 
     it("[R] should not update non-existing owner", async function () {
@@ -887,7 +887,7 @@ describe("PJManager", function () {
     it("[R] should not allow by others", async function () {
       await expect(
         cPJManager.connect(user).allowERC20(cERC20.address)
-      ).revertedWith(missingRoleError(user.address, whitelistRoleHash));
+      ).revertedWith('Invalid executor role');
     });
 
     it("[R] should not allow if token is not a contract", async function () {
@@ -961,7 +961,7 @@ describe("PJManager", function () {
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
       await expect(
         cPJManager.connect(user).disallowERC20(cERC20.address)
-      ).revertedWith(missingRoleError(user.address, whitelistRoleHash));
+      ).revertedWith('Invalid executor role');
     });
   });
 
@@ -1005,7 +1005,7 @@ describe("PJManager", function () {
 
     it("[R] should not deposit native tokens by others", async function () {
       await expect(cPJManager.connect(user).deposit({ value: 2 })).revertedWith(
-        missingRoleError(user.address, depositRoleHash)
+        'Invalid executor role'
       );
     });
   });
@@ -1039,7 +1039,7 @@ describe("PJManager", function () {
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
       await expect(
         cPJManager.connect(user).depositERC20(cERC20.address, 2)
-      ).revertedWith(missingRoleError(user.address, depositRoleHash));
+      ).revertedWith('Invalid executor role');
     });
   });
 

@@ -11,7 +11,7 @@
     "lint:sol": "solhint 'contracts/**/*.sol' && prettier -c .",
     "lint:sol:fix": "prettier --write .",
     "coverage": "env COVERAGE=true hardhat coverage",
-    "test": "hardhat test ",
+    "test": "hardhat test",
     "gas-report": "env REPORT_GAS=true yarn run test",
     "compile": "hardhat compile",
     "prepare": "yarn run clean && env COMPILE_MODE=production yarn run compile",
