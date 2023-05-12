@@ -64,11 +64,6 @@ contract PJManager is
     _setThreshold(_defaultThreshold);
     
     _setupRole(LibPJManager.PJ_ADMIN_ROLE, _admin);
-    _setupRole(LibPJManager.PJ_MANAGEMENT_ROLE, _admin);
-    _setupRole(LibPJManager.PJ_WHITELIST_ROLE, _admin);
-    _setupRole(LibPJManager.PJ_DEPOSIT_ROLE, _admin);
-    _setupRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE, _admin);
-    
 
     _setRoleAdmin(LibPJManager.PJ_MANAGEMENT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(LibPJManager.PJ_WHITELIST_ROLE, LibPJManager.PJ_ADMIN_ROLE);
@@ -87,7 +82,12 @@ contract PJManager is
    */
   function addBusinessOwner(
     LibPJManager.AllocationShare calldata _businessOwner
-  ) external onlyRole(LibPJManager.PJ_MANAGEMENT_ROLE) {
+  ) external {
+    require(
+      hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
+      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+      "Invalid executor role"
+    );
     for (uint8 i = 0; i < businessOwners.length; i++) {
       require(
         businessOwners[i].recipient != _businessOwner.recipient,
@@ -109,8 +109,12 @@ contract PJManager is
    */
   function removeBusinessOwner(address _businessOwner)
     external
-    onlyRole(LibPJManager.PJ_MANAGEMENT_ROLE)
   {
+    require(
+      hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
+      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+      "Invalid executor role"
+    );
     bool removed = false;
     uint32 newIdx = 0;
     for (uint256 i = 0; i < businessOwners.length; i++) {
@@ -136,7 +140,12 @@ contract PJManager is
    */
   function updateBusinessOwner(
     LibPJManager.AllocationShare calldata _businessOwner
-  ) external onlyRole(LibPJManager.PJ_MANAGEMENT_ROLE) {
+  ) external {
+    require(
+      hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
+      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+      "Invalid executor role"
+    );
     bool updated = false;
     for (uint256 i = 0; i < businessOwners.length; i++) {
       if (businessOwners[i].recipient == _businessOwner.recipient) {
@@ -176,7 +185,12 @@ contract PJManager is
    *
    * Emits a {Deposit} event.
    */
-  function deposit() public payable onlyRole(LibPJManager.PJ_DEPOSIT_ROLE) {
+  function deposit() public payable {
+    require(
+      hasRole(LibPJManager.PJ_DEPOSIT_ROLE, _msgSender()) ||
+      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+      "Invalid executor role"
+    );
     emit Deposit(_msgSender(), msg.value);
   }
 
@@ -187,8 +201,12 @@ contract PJManager is
    */
   function depositERC20(IERC20 _token, uint256 _amount)
     external
-    onlyRole(LibPJManager.PJ_DEPOSIT_ROLE)
   {
+    require(
+      hasRole(LibPJManager.PJ_DEPOSIT_ROLE, _msgSender()) ||
+      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+      "Invalid executor role"
+    );
     _depositERC20(_token, _amount);
   }
 
@@ -199,8 +217,12 @@ contract PJManager is
    */
   function allowERC20(IERC20 _token)
     external
-    onlyRole(LibPJManager.PJ_WHITELIST_ROLE)
   {
+    require(
+      hasRole(LibPJManager.PJ_WHITELIST_ROLE, _msgSender()) ||
+      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+      "Invalid executor role"
+    );
     _allowERC20(_token);
   }
 
@@ -211,8 +233,12 @@ contract PJManager is
    */
   function disallowERC20(IERC20 _token)
     external
-    onlyRole(LibPJManager.PJ_WHITELIST_ROLE)
   {
+    require(
+      hasRole(LibPJManager.PJ_WHITELIST_ROLE, _msgSender()) ||
+      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+      "Invalid executor role"
+    );
     _disallowERC20(_token);
   }
 
