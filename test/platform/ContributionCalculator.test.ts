@@ -9,6 +9,7 @@ import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 describe("ContributionCalculator", function () {
   let superAdmin: SignerWithAddress;
   let notAdmin: SignerWithAddress;
+  let upgrader: SignerWithAddress;
   let member1: SignerWithAddress;
   let member2: SignerWithAddress;
   let cPool1: Contract;
@@ -16,7 +17,8 @@ describe("ContributionCalculator", function () {
   let cCalculator: Contract;
 
   beforeEach(async function () {
-    [superAdmin, notAdmin, member1, member2] = await ethers.getSigners();
+    [superAdmin, notAdmin, upgrader, member1, member2] =
+      await ethers.getSigners();
     const cfPool = await ethers.getContractFactory("ContributionPool");
 
     cPool1 = await cfPool.deploy(
@@ -38,9 +40,13 @@ describe("ContributionCalculator", function () {
       "ContributionCalculator",
       superAdmin
     );
-    cCalculator = await upgrades.deployProxy(cfCalculator, [], {
-      kind: "uups",
-    });
+    cCalculator = await upgrades.deployProxy(
+      cfCalculator,
+      [superAdmin.address],
+      {
+        kind: "uups",
+      }
+    );
   });
 
   describe("Upgrade contract", function () {
@@ -59,7 +65,22 @@ describe("ContributionCalculator", function () {
       );
       await expect(
         upgrades.upgradeProxy(cCalculator, implV2)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+      ).to.be.revertedWith(
+        `AccessControl: account ${notAdmin.address.toLowerCase()} is missing role ${await cCalculator.UPGRADER_ROLE()}`
+      );
+    });
+
+    it("[S] can upgrade by upgrader", async function () {
+      await cCalculator
+        .connect(superAdmin)
+        .grantRole(await cCalculator.UPGRADER_ROLE(), upgrader.address);
+
+      const implV2 = await ethers.getContractFactory(
+        "MockContributionCalculatorV2",
+        upgrader
+      );
+      const upgraded = await upgrades.upgradeProxy(cCalculator, implV2);
+      await expect(upgraded.deployed()).not.reverted;
     });
   });
 
