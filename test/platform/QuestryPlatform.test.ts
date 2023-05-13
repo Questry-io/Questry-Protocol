@@ -33,6 +33,7 @@ describe("QuestryPlatform", function () {
   let depositer: SignerWithAddress;
   let boardMinter: SignerWithAddress;
   let contributionUpdater: SignerWithAddress;
+  let platformUpgrader: SignerWithAddress;
   let businessOwners: SignerWithAddress[];
   let boardingMembers: SignerWithAddress[];
   let signers: SignerWithAddress[];
@@ -135,6 +136,7 @@ describe("QuestryPlatform", function () {
       boardMinter,
       contributionUpdater,
       daoTreasuryPool,
+      platformUpgrader,
       ...rest
     ] = await ethers.getSigners();
     businessOwners = rest.slice(0, 2);
@@ -224,6 +226,45 @@ describe("QuestryPlatform", function () {
     });
   });
 
+  describe("Upgrade contract", function () {
+    it("[S] should be upgraded by deployer", async function () {
+      const implV2 = await ethers.getContractFactory("MockQuestryPlatformV2");
+      const upgraded = await upgrades.upgradeProxy(cQuestryPlatform, implV2, {
+        constructorArgs: [cQuestryForwarder.address],
+      });
+      await expect(upgraded.deployed()).not.reverted;
+    });
+    it("[S] should be upgraded by user with PLATFORM_EXECUTOR_ROLE", async function () {
+      await cQuestryPlatform
+        .connect(deployer)
+        .grantRole(platformExecutorRoleHash, platformUpgrader.address);
+      const implV2 = await ethers.getContractFactory(
+        "MockQuestryPlatformV2",
+        platformUpgrader
+      );
+      const upgraded = await upgrades.upgradeProxy(cQuestryPlatform, implV2, {
+        constructorArgs: [cQuestryForwarder.address],
+      });
+      await expect(upgraded.deployed()).not.reverted;
+    });
+    it("[R] should not be upgraded by user without PLATFORM_EXECUTOR_ROLE", async function () {
+      const implV2 = await ethers.getContractFactory(
+        "MockQuestryPlatformV2",
+        platformUpgrader
+      );
+      await expect(
+        upgrades.upgradeProxy(cQuestryPlatform, implV2, {
+          constructorArgs: [cQuestryForwarder.address],
+        })
+      ).to.be.revertedWith(
+        "AccessControl: account " +
+          platformUpgrader.address.toLowerCase() +
+          " is missing role " +
+          platformExecutorRoleHash.toLowerCase()
+      );
+    });
+  });
+
   describe("allocate", function () {
     async function addContribution(
       cBoard: Board,
@@ -252,7 +293,7 @@ describe("QuestryPlatform", function () {
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
-      //EIP712 create domain separator
+      // EIP712 create domain separator
       const domain = {
         name: "QUESTRY_PLATFORM",
         version: "1.0",
@@ -300,7 +341,7 @@ describe("QuestryPlatform", function () {
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
-      //EIP712 create domain separator
+      // EIP712 create domain separator
       const domain = {
         name: "QUESTRY_PLATFORM",
         version: "1.0",
