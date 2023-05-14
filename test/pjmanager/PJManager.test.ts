@@ -19,7 +19,7 @@ import {
   PJManager,
   Board,
 } from "../../typechain";
-import { AllocationShare, TestUtils } from "../testUtils";
+import { AllocateArgs, AllocationShare, TestUtils } from "../testUtils";
 import { solidity } from "ethereum-waffle";
 import { exec } from "child_process";
 import { Console } from "console";
@@ -246,7 +246,7 @@ describe("PJManager", function () {
     it("[R] should not addBusinessOwner by others", async function () {
       const arg = { recipient: dummyAddress, share: 3 };
       await expect(cPJManager.connect(user).addBusinessOwner(arg)).revertedWith(
-        'Invalid executor role'
+        "Invalid executor role"
       );
     });
 
@@ -311,7 +311,7 @@ describe("PJManager", function () {
     it("[R] should not removeBusinessOwner by others", async function () {
       await expect(
         cPJManager.connect(user).removeBusinessOwner(businessOwners[0].address)
-      ).revertedWith('Invalid executor role');
+      ).revertedWith("Invalid executor role");
     });
 
     it("[R] should not remove non-existing owner", async function () {
@@ -370,7 +370,7 @@ describe("PJManager", function () {
       const arg = { recipient: businessOwners[0].address, share: 123 };
       await expect(
         cPJManager.connect(user).updateBusinessOwner(arg)
-      ).revertedWith('Invalid executor role');
+      ).revertedWith("Invalid executor role");
     });
 
     it("[R] should not update non-existing owner", async function () {
@@ -436,7 +436,7 @@ describe("PJManager", function () {
         coefs: [2, 3],
       };
 
-      const args: any = {
+      const args: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -446,11 +446,10 @@ describe("PJManager", function () {
           cContributionPool.address,
           cContributionPool2.address,
         ],
-        contributePoolOwner: [signer.address, signer.address],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
-      //EIP712 create domain separator
+      // EIP712 create domain separator
       const domain = {
         name: "QUESTRY_PLATFORM",
         version: "1.0",
@@ -466,7 +465,6 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
         ],
         CalculateDispatchArgs: [
@@ -476,15 +474,15 @@ describe("PJManager", function () {
       };
 
       const message = await signer._signTypedData(domain, types2, args);
-      const recoveraddress = ethers.utils.verifyTypedData(
+      const recoverAddress = ethers.utils.verifyTypedData(
         domain,
         types2,
         args,
         message
       );
-      expect(await cPJManager.verifySignature(args, [message])).to.be.equal(
-        true
-      );
+      expect(await cPJManager.verifySignature(args, [message])).deep.equal([
+        signer.address,
+      ]);
     });
 
     it("[S] signature verifyer success on Multi signature", async function () {
@@ -499,18 +497,18 @@ describe("PJManager", function () {
         await cPJManager.hasRole(SignerRoleHash, signer2.address)
       ).to.be.equal(true);
 
-      //Set sig threshold
+      // Set sig threshold
       expect(await cPJManager.getThreshold()).to.be.equal(1);
       await cPJManager.connect(admin).setThreshold(2);
       expect(await cPJManager.getThreshold()).to.be.equal(2);
 
-      //signeture message parameta
+      // signeture message parameta
       const SharesWithLinearArgs = {
         pools: [cContributionPool.address, cContributionPool2.address],
         coefs: [2, 3],
       };
 
-      const args: any = {
+      const args: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -520,11 +518,10 @@ describe("PJManager", function () {
           cContributionPool.address,
           cContributionPool2.address,
         ],
-        contributePoolOwner: [signer.address, signer.address],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
-      //EIP712 create domain separator
+      // EIP712 create domain separator
       const domain = {
         name: "QUESTRY_PLATFORM",
         version: "1.0",
@@ -540,7 +537,6 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
         ],
         CalculateDispatchArgs: [
@@ -554,7 +550,7 @@ describe("PJManager", function () {
 
       expect(
         await cPJManager.verifySignature(args, [message, message2])
-      ).to.be.equal(true);
+      ).deep.equal([signer.address, signer2.address]);
     });
 
     it("[S] signature verifyer success on Multi signature (2 of 3)", async function () {
@@ -575,19 +571,19 @@ describe("PJManager", function () {
         await cPJManager.hasRole(SignerRoleHash, signer3.address)
       ).to.be.equal(true);
 
-      //Set sig threshold
+      // Set sig threshold
       expect(await cPJManager.getThreshold()).to.be.equal(1);
       await cPJManager.connect(admin).setThreshold(2);
       expect(await cPJManager.getThreshold()).to.be.equal(2);
 
-      //signeture message parameta
+      // signeture message parameta
       const SharesWithLinearArgs = {
         pools: [cContributionPool.address, cContributionPool2.address],
         coefs: [2, 3],
       };
 
-      //diff equal paymnetmode is native
-      const dummyargs: any = {
+      // diff equal paymnetmode is native
+      const dummyargs: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: nativeMode,
         paymentToken: cERC20.address,
@@ -597,11 +593,10 @@ describe("PJManager", function () {
           cContributionPool.address,
           cContributionPool2.address,
         ],
-        contributePoolOwner: [signer.address, signer.address],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
-      const args: any = {
+      const args: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -611,11 +606,10 @@ describe("PJManager", function () {
           cContributionPool.address,
           cContributionPool2.address,
         ],
-        contributePoolOwner: [signer.address, signer.address],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
-      //EIP712 create domain separator
+      // EIP712 create domain separator
       const domain = {
         name: "QUESTRY_PLATFORM",
         version: "1.0",
@@ -631,7 +625,6 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
         ],
         CalculateDispatchArgs: [
@@ -653,7 +646,7 @@ describe("PJManager", function () {
           message2,
           message3,
         ])
-      ).to.be.equal(true);
+      ).deep.equal([signer2.address, signer3.address]);
 
       expect(
         await cPJManager.verifySignature(args, [
@@ -661,7 +654,7 @@ describe("PJManager", function () {
           dummymessage,
           message3,
         ])
-      ).to.be.equal(true);
+      ).deep.equal([signer2.address, signer3.address]);
 
       expect(
         await cPJManager.verifySignature(args, [
@@ -669,9 +662,9 @@ describe("PJManager", function () {
           message3,
           dummymessage,
         ])
-      ).to.be.equal(true);
+      ).deep.equal([signer2.address, signer3.address]);
 
-      //reverted for threshold is not short sig verify
+      // reverted for threshold is not short sig verify
       await expect(
         cPJManager.verifySignature(args, [dummymessage, dummymessage, message3])
       ).revertedWith("PJManager: fall short of threshold for verify");
@@ -686,7 +679,7 @@ describe("PJManager", function () {
         coefs: [2, 3],
       };
 
-      const args: any = {
+      const args: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -696,11 +689,10 @@ describe("PJManager", function () {
           cContributionPool.address,
           cContributionPool2.address,
         ],
-        contributePoolOwner: [signer.address, signer.address],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
-      //EIP712 create domain separator
+      // EIP712 create domain separator
       const domain = {
         name: "QUESTRY_PLATFORM",
         version: "1.0",
@@ -716,7 +708,6 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
         ],
         CalculateDispatchArgs: [
@@ -740,7 +731,7 @@ describe("PJManager", function () {
         coefs: [2, 3],
       };
 
-      const args: any = {
+      const args: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -750,11 +741,10 @@ describe("PJManager", function () {
           cContributionPool.address,
           cContributionPool2.address,
         ],
-        contributePoolOwner: [signer.address, signer.address],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
-      //EIP712 create domain separator
+      // EIP712 create domain separator
       const domain = {
         name: "QUESTRY_PLATFORM",
         version: "1.0",
@@ -770,7 +760,6 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
         ],
         CalculateDispatchArgs: [
@@ -797,7 +786,7 @@ describe("PJManager", function () {
     });
 
     it("[S] get nonce state", async function () {
-      //Get Nonce
+      // Get Nonce
       expect(await cPJManager.getNonce()).to.be.equal(0);
     });
 
@@ -806,7 +795,7 @@ describe("PJManager", function () {
     });
 
     it("[R] Reverted increment check (Not has roll)", async function () {
-      //Get Nonce
+      // Get Nonce
       expect(await cPJManager.getNonce()).to.be.equal(0);
       await expect(cPJManager.connect(signer).incrementNonce()).to.be.reverted;
     });
@@ -823,14 +812,14 @@ describe("PJManager", function () {
     });
 
     it("[S] set sig threshold check", async function () {
-      //Set sig threshold
+      // Set sig threshold
       expect(await cPJManager.getThreshold()).to.be.equal(1);
       await cPJManager.connect(admin).setThreshold(2);
       expect(await cPJManager.getThreshold()).to.be.equal(2);
     });
 
     it("[R] Not has roll signer", async function () {
-      //Set sig threshold
+      // Set sig threshold
       expect(await cPJManager.getThreshold()).to.be.equal(1);
       await expect(cPJManager.connect(signer).setThreshold(2)).to.be.reverted;
       expect(await cPJManager.getThreshold()).to.be.equal(1);
@@ -841,7 +830,7 @@ describe("PJManager", function () {
     });
 
     it("[R] reverted for zero set transaction", async function () {
-      //Set sig threshold
+      // Set sig threshold
       expect(await cPJManager.getThreshold()).to.be.equal(1);
       await expect(cPJManager.connect(admin).setThreshold(0)).revertedWith(
         "PJManager :threshold does not set zero"
@@ -887,7 +876,7 @@ describe("PJManager", function () {
     it("[R] should not allow by others", async function () {
       await expect(
         cPJManager.connect(user).allowERC20(cERC20.address)
-      ).revertedWith('Invalid executor role');
+      ).revertedWith("Invalid executor role");
     });
 
     it("[R] should not allow if token is not a contract", async function () {
@@ -961,7 +950,7 @@ describe("PJManager", function () {
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
       await expect(
         cPJManager.connect(user).disallowERC20(cERC20.address)
-      ).revertedWith('Invalid executor role');
+      ).revertedWith("Invalid executor role");
     });
   });
 
@@ -1005,7 +994,7 @@ describe("PJManager", function () {
 
     it("[R] should not deposit native tokens by others", async function () {
       await expect(cPJManager.connect(user).deposit({ value: 2 })).revertedWith(
-        'Invalid executor role'
+        "Invalid executor role"
       );
     });
   });
@@ -1039,7 +1028,7 @@ describe("PJManager", function () {
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
       await expect(
         cPJManager.connect(user).depositERC20(cERC20.address, 2)
-      ).revertedWith('Invalid executor role');
+      ).revertedWith("Invalid executor role");
     });
   });
 

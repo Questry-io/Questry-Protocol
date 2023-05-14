@@ -10,12 +10,13 @@ import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 contract ContributionPool is IContributionPool, AccessControl {
   using Counters for Counters.Counter;
 
+  uint256 public constant DEFAULT_THRESHOLD = 1;
   IContributionPool.MutationMode public immutable mode;
   mapping(address => bool) public incrementTermSigners;
-
   address public admin;
   address public contributionUpdater;
   address public incrementTermWhitelistAdmin;
+  uint256 public threshold;
   mapping(uint256 => mapping(address => uint120)) public contributions; // term => member => value
   Counters.Counter public term;
 
@@ -27,6 +28,7 @@ contract ContributionPool is IContributionPool, AccessControl {
     address _admin
   ) {
     mode = _mode;
+    _setThreshold(DEFAULT_THRESHOLD);
 
     _setupRole(
       LibPJManager.POOL_INCREMENT_TERM_ROLE,
@@ -136,21 +138,27 @@ contract ContributionPool is IContributionPool, AccessControl {
   }
 
   /// @inheritdoc IContributionPool
-  function incrementTerm(address _permittedSigner)
+  function incrementTerm(address[] memory _verifiedSigners)
     external
     onlyRole(LibPJManager.POOL_INCREMENT_TERM_ROLE)
   {
+    uint256 verifiedCount = 0;
+    for (uint256 i = 0; i < _verifiedSigners.length; i++) {
+      if (incrementTermSigners[_verifiedSigners[i]]) {
+        verifiedCount++;
+      }
+    }
     require(
-      incrementTermSigners[_permittedSigner],
-      "ContributionPool: operation not allowed"
+      verifiedCount >= _getThreshold(),
+      "ContributionPool: insufficient whitelisted signers"
     );
     term.increment();
   }
 
   /**
-   * @dev Grants increment term role to signer.
+   * @dev Adds a new increment term signer to the whitelist.
    */
-  function grantIncrementTermRole(address _signer)
+  function addIncrementTermSigner(address _signer)
     external
     onlyRole(LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE)
   {
@@ -162,9 +170,9 @@ contract ContributionPool is IContributionPool, AccessControl {
   }
 
   /**
-   * @dev Revokes increment term role to signer.
+   * @dev Removes the increment term signer from the whitelist.
    */
-  function revokeIncrementTermRole(address _signer)
+  function removeIncrementTermSigner(address _signer)
     external
     onlyRole(LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE)
   {
@@ -173,6 +181,16 @@ contract ContributionPool is IContributionPool, AccessControl {
       "ContributionPool: signer doesn't exist"
     );
     incrementTermSigners[_signer] = false;
+  }
+
+  /**
+   * @dev Sets the threshold for increment term.
+   */
+  function setThreshold(uint256 _threshold)
+    external
+    onlyRole(LibPJManager.POOL_ADMIN_ROLE)
+  {
+    _setThreshold(_threshold);
   }
 
   /// @inheritdoc IContributionPool
@@ -185,6 +203,24 @@ contract ContributionPool is IContributionPool, AccessControl {
     return term.current();
   }
 
+  /**
+   * @dev Returns whether the `_account` is in the increment term whitelist.
+   */
+  function isIncrementTermSigner(address _account)
+    external
+    view
+    returns (bool)
+  {
+    return incrementTermSigners[_account];
+  }
+
+  /**
+   * @dev Returns the threshold for increment term.
+   */
+  function getThreshold() external view returns (uint256) {
+    return _getThreshold();
+  }
+
   function _addContribution(address _member, uint120 _value) private {
     contributions[term.current()][_member] += _value;
   }
@@ -195,5 +231,13 @@ contract ContributionPool is IContributionPool, AccessControl {
 
   function _setContribution(address _member, uint120 _value) private {
     contributions[term.current()][_member] = _value;
+  }
+
+  function _setThreshold(uint256 _threshold) private {
+    threshold = _threshold;
+  }
+
+  function _getThreshold() private view returns (uint256) {
+    return threshold;
   }
 }

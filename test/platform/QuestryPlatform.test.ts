@@ -22,7 +22,12 @@ import {
   MockPaymentResolver__factory,
   QuestryForwarder,
 } from "../../typechain";
-import { TestUtils, AllocationShare, ExecutePaymentArgs } from "../testUtils";
+import {
+  TestUtils,
+  AllocationShare,
+  ExecutePaymentArgs,
+  AllocateArgs,
+} from "../testUtils";
 import { getMetaTx, getMetaTxAndSignForGas } from "../utils";
 
 describe("QuestryPlatform", function () {
@@ -206,7 +211,7 @@ describe("QuestryPlatform", function () {
 
     await cContributionPool
       .connect(poolAdmin)
-      .grantIncrementTermRole(TestUtils.dummySigner);
+      .addIncrementTermSigner(TestUtils.dummySigner);
   });
 
   describe("role check", function () {
@@ -266,6 +271,12 @@ describe("QuestryPlatform", function () {
   });
 
   describe("allocate", function () {
+    async function setupIncrementTermSigner() {
+      await cContributionPool
+        .connect(poolAdmin)
+        .addIncrementTermSigner(admin.address);
+    }
+
     async function addContribution(
       cBoard: Board,
       cContributionPool: ContributionPool,
@@ -279,7 +290,7 @@ describe("QuestryPlatform", function () {
     }
 
     async function allocateNative(cPJManager: PJManager, cBoard: Board) {
-      const args: any = {
+      const args: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: nativeMode,
         paymentToken: ethers.constants.AddressZero,
@@ -289,7 +300,6 @@ describe("QuestryPlatform", function () {
           coefs: [1],
         }),
         updateNeededPools: [cContributionPool.address],
-        contributePoolOwner: [TestUtils.dummySigner],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
@@ -309,7 +319,6 @@ describe("QuestryPlatform", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
         ],
         CalculateDispatchArgs: [
@@ -327,7 +336,7 @@ describe("QuestryPlatform", function () {
       cERC20: ERC20,
       cBoard: Board
     ) {
-      const args: any = {
+      const args: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -337,7 +346,6 @@ describe("QuestryPlatform", function () {
           coefs: [1],
         }),
         updateNeededPools: [cContributionPool.address],
-        contributePoolOwner: [TestUtils.dummySigner],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
@@ -357,7 +365,6 @@ describe("QuestryPlatform", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
         ],
         CalculateDispatchArgs: [
@@ -375,11 +382,15 @@ describe("QuestryPlatform", function () {
         4000,
         withShares(businessOwners, [1, 2])
       );
+      await setupIncrementTermSigner();
       await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
       await cPJManager.connect(depositer).deposit({ value: 100 });
+
       expect(await cContributionPool.getTerm()).equals(0);
       expect(await cPJManager.getNonce()).equals(0);
+
       await allocateNative(cPJManager, cBoard);
+
       expect(await cContributionPool.getTerm()).equals(1);
       expect(await cPJManager.getNonce()).equals(1);
     });
@@ -389,6 +400,7 @@ describe("QuestryPlatform", function () {
         4000,
         withShares(businessOwners, [1, 2])
       );
+      await setupIncrementTermSigner();
       await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
       await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(depositer).deposit({ value: 100 });
@@ -418,6 +430,7 @@ describe("QuestryPlatform", function () {
         0,
         withShares(businessOwners, [1, 2])
       );
+      await setupIncrementTermSigner();
       await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
       await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(depositer).deposit({ value: 100 });
@@ -447,6 +460,7 @@ describe("QuestryPlatform", function () {
         10000,
         withShares(businessOwners, [0, 0])
       );
+      await setupIncrementTermSigner();
       await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
       await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(depositer).deposit({ value: 100 });
@@ -477,6 +491,7 @@ describe("QuestryPlatform", function () {
         withShares(businessOwners, [1, 2])
       );
       await cPJManager.connect(depositer).deposit({ value: 100 });
+      await setupIncrementTermSigner();
 
       const tx = await allocateNative(cPJManager, cBoard);
 
@@ -503,6 +518,7 @@ describe("QuestryPlatform", function () {
         4000,
         withShares(businessOwners, [1, 2])
       );
+      await setupIncrementTermSigner();
       await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
       await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
@@ -522,6 +538,7 @@ describe("QuestryPlatform", function () {
         0,
         withShares(businessOwners, [1, 2])
       );
+      await setupIncrementTermSigner();
       await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
       await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
@@ -541,6 +558,7 @@ describe("QuestryPlatform", function () {
         10000,
         withShares(businessOwners, [0, 0])
       );
+      await setupIncrementTermSigner();
       await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
       await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
@@ -562,6 +580,7 @@ describe("QuestryPlatform", function () {
       );
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
       await cPJManager.connect(depositer).depositERC20(cERC20.address, 100);
+      await setupIncrementTermSigner();
 
       await allocateERC20(cPJManager, cERC20, cBoard);
 

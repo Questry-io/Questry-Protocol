@@ -413,32 +413,34 @@ describe("ContributionPool", function () {
     });
   });
 
-  describe("grantIncrementTermRole", function () {
-    it("[S] can grantIncrementTermRole by admin", async function () {
-      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user2.address);
+  describe("addIncrementTermSigner", function () {
+    it("[S] can addIncrementTermSigner by admin", async function () {
+      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user2.address);
       expect(await cPoolAdd.incrementTermSigners(user2.address)).to.be.true;
     });
 
-    it("[R] cannot grantIncrementTermRole by others", async function () {
+    it("[R] cannot addIncrementTermSigner by others", async function () {
       await expect(
-        cPoolAdd.connect(user1).grantIncrementTermRole(user2.address)
+        cPoolAdd.connect(user1).addIncrementTermSigner(user2.address)
       ).to.be.revertedWith(
         missingRoleError(user1.address, incrementTermWhitelistAdminRole)
       );
     });
   });
 
-  describe("revokeIncrementTermRole", function () {
-    it("[S] can revokeIncrementTermRole by admin", async function () {
-      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user2.address);
-      await cPoolAdd.connect(superAdmin).revokeIncrementTermRole(user2.address);
+  describe("removeIncrementTermSigner", function () {
+    it("[S] can removeIncrementTermSigner by admin", async function () {
+      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user2.address);
+      await cPoolAdd
+        .connect(superAdmin)
+        .removeIncrementTermSigner(user2.address);
       expect(await cPoolAdd.incrementTermSigners(user2.address)).to.be.false;
     });
 
-    it("[R] cannot revokeIncrementTermRole by others", async function () {
-      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user2.address);
+    it("[R] cannot removeIncrementTermSigner by others", async function () {
+      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user2.address);
       await expect(
-        cPoolAdd.connect(user1).revokeIncrementTermRole(user2.address)
+        cPoolAdd.connect(user1).removeIncrementTermSigner(user2.address)
       ).to.be.revertedWith(
         missingRoleError(user1.address, incrementTermWhitelistAdminRole)
       );
@@ -447,27 +449,27 @@ describe("ContributionPool", function () {
 
   describe("incrementTerm", function () {
     it("[S] can incrementTerm by QuestryPlatform", async function () {
-      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user1.address);
+      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user1.address);
       await TestUtils.call(
         cQuestryPlatform,
         cPoolAdd,
-        "incrementTerm(address permittedSigner)",
-        [user1.address]
+        "incrementTerm(address[] memory verifiedSigners)",
+        [[user1.address]]
       );
       expect(await cPoolAdd.getTerm()).equals(1);
       await TestUtils.call(
         cQuestryPlatform,
         cPoolAdd,
-        "incrementTerm(address permittedSigner)",
-        [user1.address]
+        "incrementTerm(address[] memory verifiedSigners)",
+        [[user1.address]]
       );
       expect(await cPoolAdd.getTerm()).equals(2);
     });
 
     it("[R] cannot incrementTerm by others", async function () {
-      await cPoolAdd.connect(superAdmin).grantIncrementTermRole(user1.address);
+      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user1.address);
       await expect(
-        cPoolAdd.connect(user1).incrementTerm(user1.address)
+        cPoolAdd.connect(user1).incrementTerm([user1.address])
       ).to.be.revertedWith(
         missingRoleError(user1.address, incrementTermRoleHash)
       );
@@ -478,10 +480,12 @@ describe("ContributionPool", function () {
         TestUtils.call(
           cQuestryPlatform,
           cPoolAdd,
-          "incrementTerm(address permittedSigner)",
-          [user1.address]
+          "incrementTerm(address[] memory verifiedSigners)",
+          [[user1.address]]
         )
-      ).to.be.revertedWith("ContributionPool: operation not allowed");
+      ).to.be.revertedWith(
+        "ContributionPool: insufficient whitelisted signers"
+      );
     });
   });
 

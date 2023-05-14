@@ -104,49 +104,33 @@ contract PJManagerMock is IPJManager {
   }
 
   function verifySignature(
-    LibQuestryPlatform.AllocateArgs calldata _args, 
+    LibQuestryPlatform.AllocateArgs calldata _args,
     bytes[] calldata _signatures
-  )
-    external
-    view
-    returns (bool)
-  {
+  ) external view returns (address[] memory) {
     revert("Not implemented.");
   }
 
   //PJManager Signature verifier Nonce Increment function
-  function incrementNonce()
-    external
-  {
+  function incrementNonce() external {
     revert("Not implemented.");
   }
 
   //Signature verify threshold setting for multisig
-  function setThreshold(uint256 _threshold)
-    external
-  {
+  function setThreshold(uint256 _threshold) external {
     revert("Not implemented.");
   }
 
   /**
    * @dev Get PJManager signature nonce
    */
-  function getNonce() 
-    external
-    view 
-    returns(uint256)
-  {
+  function getNonce() external view returns (uint256) {
     revert("Not implemented.");
   }
 
   /**
    * @dev Get PJManager signature verify threshold
    */
-  function getThreshold() 
-    external 
-    view 
-    returns(uint256)
-  {
+  function getThreshold() external view returns (uint256) {
     revert("Not implemented.");
   }
 }

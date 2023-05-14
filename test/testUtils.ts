@@ -11,7 +11,6 @@ export type AllocateArgs = {
   board: string;
   calculateArgs: CalculateDispatchArgs;
   updateNeededPools: string[];
-  ContributePoolOwner: string[];
   pjnonce: string;
 };
 
