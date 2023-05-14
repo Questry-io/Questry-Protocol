@@ -263,7 +263,10 @@ contract PJManager is
         _args,
         _signatures[idx]
       );
-      if(hasRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE,recoverAddress)){
+      if(
+        hasRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE,recoverAddress) || 
+        hasRole(LibPJManager.PJ_ADMIN_ROLE,recoverAddress)
+      ){
         _verifyCount += 1;
       }
     }
