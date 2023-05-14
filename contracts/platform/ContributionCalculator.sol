@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {AccessControlUpgradeable} from "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
@@ -15,26 +15,29 @@ import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 contract ContributionCalculator is
   IContributionCalculator,
   Initializable,
-  OwnableUpgradeable,
+  AccessControlUpgradeable,
   UUPSUpgradeable
 {
   bytes4 public constant LINEAR_ALGORITHM = bytes4(keccak256("LINEAR"));
+  bytes32 public constant UPGRADER_ROLE = keccak256("UPGRADER_ROLE");
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
     _disableInitializers();
   }
 
-  function initialize() public initializer {
-    __Ownable_init();
+  function initialize(address _admin) public initializer {
+    __AccessControl_init();
     __UUPSUpgradeable_init();
+    _setupRole(DEFAULT_ADMIN_ROLE, _admin);
+    _setupRole(UPGRADER_ROLE, _admin);
   }
 
   /// @inheritdoc UUPSUpgradeable
   function _authorizeUpgrade(address _newImplementation)
     internal
     override
-    onlyOwner
+    onlyRole(UPGRADER_ROLE)
   {}
 
   /// @inheritdoc IContributionCalculator
