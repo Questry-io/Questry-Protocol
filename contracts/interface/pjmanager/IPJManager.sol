@@ -42,29 +42,20 @@ interface IPJManager {
    * @dev verify signature.
    */
   function verifySignature(
-    LibQuestryPlatform.AllocateArgs calldata _args, 
+    LibQuestryPlatform.AllocateArgs calldata _args,
     bytes[] calldata _signatures
-  )
-    external
-    view
-    returns (bool);
+  ) external view returns (bool);
 
   /**
    * @dev Get PJManager signature nonce
    */
-  function getNonce() 
-    external
-    view 
-    returns(uint256);
+  function getNonce() external view returns (uint256);
 
   /**
    * @dev Get PJManager signature verify threshold
    */
-  function getThreshold() 
-    external 
-    view 
-    returns(uint256);
-  
+  function getThreshold() external view returns (uint256);
+
   /**
    * @dev Increment nonce for signature.
    */
