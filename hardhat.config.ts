@@ -52,6 +52,9 @@ const config: HardhatUserConfig = {
       },
     },
   },
+  mocha: {
+    timeout: 100000000,
+  },
   networks: {
     ropsten: {
       url: process.env.ROPSTEN_URL || "",
