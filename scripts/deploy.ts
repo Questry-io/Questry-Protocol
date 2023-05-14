@@ -8,7 +8,9 @@ import * as hre from "hardhat";
 const ethers = hre.ethers;
 const upgrades = hre.upgrades;
 
-async function deployContributionCalculator(): Promise<string> {
+async function deployContributionCalculator(
+  adminAddress: string
+): Promise<string> {
   const ContributionCalculator = await ethers.getContractFactory(
     "ContributionCalculator"
   );
@@ -16,7 +18,10 @@ async function deployContributionCalculator(): Promise<string> {
   console.log("Deploying ContributionCalculator...");
   const contributionCalculator = await upgrades.deployProxy(
     ContributionCalculator,
-    { initializer: "initialize" }
+    [adminAddress],
+    {
+      initializer: "initialize",
+    }
   );
   console.log(
     "ContributionCalculator deployed to:",
@@ -193,7 +198,9 @@ async function main() {
     questryForwarderAddress
   );
 
-  const contributionCalculatorAddress = await deployContributionCalculator();
+  const contributionCalculatorAddress = await deployContributionCalculator(
+    adminAddress
+  );
 
   const daoTreasuryPoolAddress = process.env.DAO_TREASURY_POOL_ADDRESS || "";
   const questryPlatformAddress = await deployQuestryPlatform(
