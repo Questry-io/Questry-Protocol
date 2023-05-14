@@ -47,6 +47,9 @@ describe("Board", function () {
       SuperAdmin.address,
       dummyContract
     );
+    await cPJManagerMock
+      .connect(SuperAdmin)
+      .registerBoard({ recipient: cBoardMock.address, share: 1 });
   });
 
   describe("Post deployment checks", function () {
