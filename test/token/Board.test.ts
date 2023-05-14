@@ -1,8 +1,9 @@
 /* eslint-disable node/no-missing-import */
 import { ethers, network } from "hardhat";
-import { Contract, utils } from "ethers";
+import { utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { Board, PJManager } from "../../typechain";
 
 describe("Board", function () {
   let Deployer: SignerWithAddress;
@@ -10,8 +11,8 @@ describe("Board", function () {
   let NotMinter: SignerWithAddress;
   let NotBurner: SignerWithAddress;
   let address3: SignerWithAddress;
-  let cPJManagerMock: Contract;
-  let cBoardMock: Contract;
+  let cPJManagerMock: PJManager;
+  let cBoardMock: Board;
 
   const TokenExistsError = "ERC721Metadata: URI query for nonexistent token";
   const URIUpdaterError = "Board: must have URI updater role to update URI";
@@ -30,12 +31,15 @@ describe("Board", function () {
   beforeEach(async function () {
     [Deployer, SuperAdmin, NotMinter, NotBurner, address3] =
       await ethers.getSigners();
-    const cfPJManagerContract = await ethers.getContractFactory(
-      "PJManagerMock"
+    const cfPJManager = await ethers.getContractFactory("PJManager");
+    cPJManagerMock = await cfPJManager.deploy(
+      ethers.constants.AddressZero,
+      SuperAdmin.address,
+      10000,
+      []
     );
-    cPJManagerMock = await cfPJManagerContract.deploy();
-    const cfBoardContract = await ethers.getContractFactory("Board");
-    cBoardMock = await cfBoardContract.deploy(
+    const cfBoard = await ethers.getContractFactory("Board");
+    cBoardMock = await cfBoard.deploy(
       name,
       symbol,
       baseURI,
