@@ -453,17 +453,91 @@ describe("ContributionPool", function () {
       await TestUtils.call(
         cQuestryPlatform,
         cPoolAdd,
-        "incrementTerm(address[] memory verifiedSigners)",
+        "incrementTerm(address[] verifiedSigners)",
         [[user1.address]]
       );
       expect(await cPoolAdd.getTerm()).equals(1);
       await TestUtils.call(
         cQuestryPlatform,
         cPoolAdd,
-        "incrementTerm(address[] memory verifiedSigners)",
+        "incrementTerm(address[] verifiedSigners)",
         [[user1.address]]
       );
       expect(await cPoolAdd.getTerm()).equals(2);
+    });
+
+    it("[S] can incrementTerm for multiple signers", async function () {
+      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user1.address);
+      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user2.address);
+      await TestUtils.call(
+        cQuestryPlatform,
+        cPoolAdd,
+        "incrementTerm(address[] verifiedSigners)",
+        [[user1.address]]
+      );
+      expect(await cPoolAdd.getTerm()).equals(1);
+      await TestUtils.call(
+        cQuestryPlatform,
+        cPoolAdd,
+        "incrementTerm(address[] verifiedSigners)",
+        [[user2.address]]
+      );
+      expect(await cPoolAdd.getTerm()).equals(2);
+      await TestUtils.call(
+        cQuestryPlatform,
+        cPoolAdd,
+        "incrementTerm(address[] verifiedSigners)",
+        [[user1.address, user2.address]]
+      );
+      expect(await cPoolAdd.getTerm()).equals(3);
+    });
+
+    it("[S] can incrementTerm if signers length is greater than threshold", async function () {
+      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user1.address);
+      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user2.address);
+      await cPoolAdd.connect(superAdmin).setThreshold(2);
+      await TestUtils.call(
+        cQuestryPlatform,
+        cPoolAdd,
+        "incrementTerm(address[] verifiedSigners)",
+        [[user1.address, user2.address]]
+      );
+      expect(await cPoolAdd.getTerm()).equals(1);
+      await TestUtils.call(
+        cQuestryPlatform,
+        cPoolAdd,
+        "incrementTerm(address[] verifiedSigners)",
+        [[ethers.constants.AddressZero, user1.address, user2.address]]
+      );
+      expect(await cPoolAdd.getTerm()).equals(2);
+    });
+
+    it("[R] cannot incrementTerm if signers length is greater than threshold", async function () {
+      const extraUser = "0x90fA7809574b4f8206ec1a47aDc37eCEE57443cb";
+      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user1.address);
+      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user2.address);
+      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(extraUser);
+      await cPoolAdd.connect(superAdmin).setThreshold(3);
+      await expect(
+        TestUtils.call(
+          cQuestryPlatform,
+          cPoolAdd,
+          "incrementTerm(address[] verifiedSigners)",
+          [[user1.address, user2.address]]
+        )
+      ).revertedWith(
+        "VM Exception while processing transaction: reverted with reason string 'ContributionPool: insufficient whitelisted signers'"
+      );
+      await expect(
+        TestUtils.call(
+          cQuestryPlatform,
+          cPoolAdd,
+          "incrementTerm(address[] verifiedSigners)",
+          [[extraUser, user2.address]]
+        )
+      ).revertedWith(
+        "VM Exception while processing transaction: reverted with reason string 'ContributionPool: insufficient whitelisted signers'"
+      );
     });
 
     it("[R] cannot incrementTerm by others", async function () {
@@ -485,6 +559,23 @@ describe("ContributionPool", function () {
         )
       ).to.be.revertedWith(
         "ContributionPool: insufficient whitelisted signers"
+      );
+    });
+  });
+
+  describe("threshold", function () {
+    it("[S] should be that default threshold = 1", async function () {
+      expect(await cPoolAdd.getThreshold()).equals(1);
+    });
+
+    it("[S] can setThreshold by admin", async function () {
+      await cPoolAdd.connect(superAdmin).setThreshold(2);
+      expect(await cPoolAdd.getThreshold()).equals(2);
+    });
+
+    it("[S] cannot setThreshold by others", async function () {
+      await expect(cPoolAdd.connect(user1).setThreshold(2)).revertedWith(
+        missingRoleError(user1.address, poolAdminRoleHash)
       );
     });
   });

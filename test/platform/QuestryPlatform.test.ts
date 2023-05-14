@@ -590,6 +590,30 @@ describe("QuestryPlatform", function () {
       expect(await cERC20.balanceOf(businessOwners[1].address)).equals(64);
       expect(await cERC20.balanceOf(daoTreasuryPool.address)).equals(4);
     });
+
+    it("[R] ERC20: should not allocate if lack of incrementTerm signers", async function () {
+      const { cPJManager, cERC20, cBoard } = await deployPJManager(
+        4000,
+        withShares(businessOwners, [1, 2])
+      );
+      await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
+      await cPJManager.connect(depositer).depositERC20(cERC20.address, 100);
+
+      await cContributionPool
+        .connect(poolAdmin)
+        .addIncrementTermSigner(signers[0].address);
+      await expect(allocateERC20(cPJManager, cERC20, cBoard)).revertedWith(
+        "ContributionPool: insufficient whitelisted signers"
+      );
+
+      await cContributionPool.connect(poolAdmin).setThreshold(2);
+      await cContributionPool
+        .connect(poolAdmin)
+        .addIncrementTermSigner(admin.address);
+      await expect(allocateERC20(cPJManager, cERC20, cBoard)).revertedWith(
+        "ContributionPool: insufficient whitelisted signers"
+      );
+    });
   });
 
   describe("FeeRates", function () {
