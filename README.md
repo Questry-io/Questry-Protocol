@@ -11,64 +11,97 @@
 ## derectry Structure
 derectry構成のtreeをこちらに記述する
 <pre>
-.
 ├── README.md
 ├── contracts
-│   ├── Factory
-│   │   ├── PJ-Manager-Factory.sol
-│   │   ├── Qestry-ERC721-factry.sol
-│   │   └── Soulbound-Factory.sol
+│   ├── factory
+│   │   ├── BoardFactory.sol
+│   │   ├── ContributionPoolFactory.sol
+│   │   └── PJManagerFactory.sol
 │   ├── interface
+│   │   ├── factory
+│   │   │   └── IPJManagerFactory.sol
 │   │   ├── pjmanager
-│   │   │   ├── IContributionLogic.sol
-│   │   │   ├── IPJ-Manager.sol
-│   │   │   ├── IPJ-tresully-pool.sol
-│   │   │   └── ISignVerifi.sol
+│   │   │   ├── IContributionPool.sol
+│   │   │   └── IPJManager.sol
 │   │   ├── platform
-│   │   │   ├── IContributionLogicSammalizer.sol
-│   │   │   └── Ikaname-platform.sol
+│   │   │   ├── IContributionCalculator.sol
+│   │   │   ├── IPaymentResolver.sol
+│   │   │   └── IQuestryPlatform.sol
 │   │   ├── token
-│   │   │   ├── INFT.sol
-│   │   │   └── ISoulbound.sol
-│   │   └── tokenControl
-│   │       └── ItokenControl.sol
+│   │   │   └── IBoard.sol
+│   │   └── token-control-proxy
+│   │       └── ITokenControlProxy.sol
 │   ├── library
-│   │   └── platformDomain.sol
+│   │   ├── LibPJManager.sol
+│   │   └── LibQuestryPlatform.sol
 │   ├── mock
+│   │   ├── MockCallerContract.sol
+│   │   ├── MockContributionCalculatorV2.sol
+│   │   ├── MockPaymentResolver.sol
+│   │   ├── MockQuestryPlatformV2.sol
 │   │   ├── NFTPartnerA.sol
 │   │   ├── NFTPartnerB.sol
 │   │   ├── NFTRandom.sol
+│   │   ├── PJManagerMock.sol
 │   │   ├── RandomERC1155.sol
 │   │   └── RandomERC20.sol
 │   ├── pjmanager
-│   │   ├── ContributionLogic.sol
-│   │   ├── PJ-Manager.sol
-│   │   ├── PJ-tresully-pool.sol
-│   │   └── SignVerifi.sol
+│   │   ├── ContributionPool.sol
+│   │   ├── PJManager.sol
+│   │   ├── PJTreasuryPool.sol
+│   │   └── SignatureVerifier.sol
 │   ├── platform
-│   │   ├── ContributionLogicSammalizer.sol
-│   │   └── kaname-platform.sol
+│   │   ├── ContributionCalculator.sol
+│   │   ├── PlatformPayments.sol
+│   │   ├── QuestryForwarder.sol
+│   │   └── QuestryPlatform.sol
 │   ├── token
-│   │   ├── questry-ERC721
-│   │   │   └──  NFT.sol
-│   │   └── soulboaund
-│   │       └── Soulbound.sol
+│   │   ├── questry-ERC20
+│   │   │   └── ERC20.sol
+│   │   └── soulbound
+│   │       └── Board.sol
 │   └── token-control-proxy
-│       └── tokenControl.sol
+│       └── TokenControlProxy.sol
 ├── hardhat.config.ts
+├── image
+│   └── Contract-development-covernance.png
 ├── package.json
 ├── scripts
+│   ├── deploy
+│   │   ├── factory
+│   │   │   ├── boardFactory.ts
+│   │   │   ├── contributionPoolFactory.ts
+│   │   │   └── pjmanagerFactory.ts
+│   │   ├── platform
+│   │   │   ├── contributionCalculator.ts
+│   │   │   ├── forwarder.ts
+│   │   │   └── questry-platform.ts
+│   │   └── token
+│   │       ├── board.ts
+│   │       ├── erc20.ts
+│   │       └── tokenControlProxy.ts
+│   ├── deploy.ts
 │   └── verify
-│       ├── deploy.ts
 │       └── verify.ts
 ├── test
-│   ├── Factory
-│   │   ├── NFT-factory.test.ts
-│   │   ├── PJ-Manager-Factory.test.ts
-│   │   └── board-factory.test.ts
-│   └── token
-│       ├── NFT.test.ts
-│       └── soulbound.test.ts
+│   ├── factory
+│   │   ├── BoardFactory.test.ts
+│   │   ├── ContributionPoolFactory.test.ts
+│   │   └── PJManagerFactory.test.ts
+│   ├── pjmanager
+│   │   ├── ContributionPool.test.ts
+│   │   └── PJManager.test.ts
+│   ├── platform
+│   │   ├── ContributionCalculator.test.ts
+│   │   ├── Forwarder.test.ts
+│   │   └── QuestryPlatform.test.ts
+│   ├── testUtils.ts
+│   ├── token
+│   │   ├── Board.test.ts
+│   │   └── ERC20.test.ts
+│   ├── tokenControlProxy
+│   │   └── tokenControl.test.ts
+│   └── utils.ts
 ├── tsconfig.json
 └── yarn.lock
 </pre>
