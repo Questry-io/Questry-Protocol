@@ -262,7 +262,7 @@ contract PJManager is
     bytes[] calldata _signatures
   ) external view returns (address[] memory) {
     address[] memory tempVerifiedSigners = new address[](_signatures.length);
-    uint256 verifiedCount = 0;
+    uint8 verifiedCount = 0;
     for (uint256 idx = 0; idx < _signatures.length; idx++) {
       // Verify signatures
       address recoveredAddress = _verifySignaturesForAllocation(

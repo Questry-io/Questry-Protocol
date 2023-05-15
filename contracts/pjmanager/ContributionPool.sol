@@ -142,7 +142,7 @@ contract ContributionPool is IContributionPool, AccessControl {
     external
     onlyRole(LibPJManager.POOL_INCREMENT_TERM_ROLE)
   {
-    uint256 verifiedCount = 0;
+    uint8 verifiedCount = 0;
     for (uint256 i = 0; i < _verifiedSigners.length; i++) {
       if (incrementTermSigners[_verifiedSigners[i]]) {
         verifiedCount++;
