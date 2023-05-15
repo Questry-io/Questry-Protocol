@@ -1153,7 +1153,38 @@ describe("QuestryPlatform", function () {
           signers[0]
         );
       });
+
+      it(`[S] ERC20: should executePayment with ${testcase.categoryName} (fee changed fee pattarn is zero)`, async function () {
+        const amount = 100;
+        const feeRate = 0;
+  
+        await cERC20
+          .connect(signers[0])
+          .approve(cTokenControlProxy.address, amount);
+        const args: ExecutePaymentArgs = {
+          paymentMode: erc20Mode,
+          paymentToken: cERC20.address,
+          paymentCategory: testcase.paymentCategory,
+          from: signers[0].address,
+          to: signers[1].address,
+          amount,
+          resolver: cPaymentResolver.address,
+          nonce: 0,
+        };
+        const typedData = await createTypedData(args);
+  
+        await cQuestryPlatform[testcase.feeRateSetter!](feeRate);
+  
+        await executeERC20PaymentAndVerify(
+          args,
+          typedData,
+          feeRate,
+          signers[0]
+        );
+      });
     });
+
+    
 
     describe("resolver", function () {
       [
