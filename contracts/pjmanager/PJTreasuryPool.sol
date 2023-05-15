@@ -121,17 +121,13 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl {
     if (_paymentMode == LibQuestryPlatform.NATIVE_PAYMENT_MODE) {
       return address(this).balance;
     } else if (_paymentMode == LibQuestryPlatform.ERC20_PAYMENT_MODE) {
-      return _paymentToken.balanceOf(address(this));
+      require(
+        isTokenWhitelisted[_paymentToken],
+        "PJTreasuryPool: not whitelisted"
+      );
+      return tokenBalance[_paymentToken];
     } else {
       revert("PJTreasuryPool: unknown paymentMode");
     }
-  }
-
-  /**
-   * @dev Returns the ERC20 `token` balance.
-   */
-  function getTokenBalance(IERC20 _token) external view returns (uint256) {
-    require(isTokenWhitelisted[_token], "PJTreasuryPool: not whitelisted");
-    return tokenBalance[_token];
   }
 }
