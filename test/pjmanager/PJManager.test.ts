@@ -1054,12 +1054,24 @@ describe("PJManager", function () {
 
     it("[S] should deposit native tokens by depositer", async function () {
       const tx = await cPJManager.connect(depositer).deposit({ value: 2 });
+      expect(
+        await cPJManager.getTotalBalance(
+          nativeMode,
+          ethers.constants.AddressZero
+        )
+      ).equals(2);
       expect(await ethers.provider.getBalance(cPJManager.address)).equals(2);
       expect(tx).to.emit(cPJManager, "Deposit").withArgs(depositer.address, 2);
     });
 
     it("[S] should deposit native tokens by admin", async function () {
       await cPJManager.connect(admin).deposit({ value: 2 });
+      expect(
+        await cPJManager.getTotalBalance(
+          nativeMode,
+          ethers.constants.AddressZero
+        )
+      ).equals(2);
       expect(await ethers.provider.getBalance(cPJManager.address)).equals(2);
     });
 
@@ -1083,6 +1095,9 @@ describe("PJManager", function () {
       const tx = await cPJManager
         .connect(depositer)
         .depositERC20(cERC20.address, 2);
+      expect(
+        await cPJManager.getTotalBalance(erc20Mode, cERC20.address)
+      ).equals(2);
       expect(await cERC20.balanceOf(cPJManager.address)).equals(2);
       expect(tx)
         .to.emit(cPJManager, "DepositERC20")
@@ -1092,6 +1107,9 @@ describe("PJManager", function () {
     it("[S] should depositERC20 by admin", async function () {
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
       await cPJManager.connect(admin).depositERC20(cERC20.address, 2);
+      expect(
+        await cPJManager.getTotalBalance(erc20Mode, cERC20.address)
+      ).equals(2);
       expect(await cERC20.balanceOf(cPJManager.address)).equals(2);
     });
 
@@ -1121,6 +1139,9 @@ describe("PJManager", function () {
         "withdrawForAllocation(bytes4 paymentMode,address paymentToken,address receiver,uint256 amount)",
         [nativeMode, ethers.constants.AddressZero, user.address, 1]
       );
+      expect(
+        await cPJManager.getTotalBalance(nativeMode, cERC20.address)
+      ).equals(1);
       await expect(tx).to.changeEtherBalances([cPJManager, user], [-1, 1]);
     });
 
@@ -1132,6 +1153,9 @@ describe("PJManager", function () {
         [erc20Mode, cERC20.address, user.address, 1]
       );
       expect(await cERC20.balanceOf(cPJManager.address)).equals(1);
+      expect(
+        await cPJManager.getTotalBalance(erc20Mode, cERC20.address)
+      ).equals(1);
       expect(await cERC20.balanceOf(user.address)).equals(1);
     });
 
@@ -1158,6 +1182,9 @@ describe("PJManager", function () {
 
     it("[R] should not withdraw ERC20 tokens if they are transferred directly", async function () {
       await cERC20.connect(depositer).transfer(cPJManager.address, 1);
+      expect(
+        await cPJManager.getTotalBalance(erc20Mode, cERC20.address)
+      ).equals(2);
       expect(await cERC20.balanceOf(cPJManager.address)).equals(3);
       await expect(
         TestUtils.call(
