@@ -260,28 +260,35 @@ contract PJManager is
   function verifySignature(
     LibQuestryPlatform.AllocateArgs calldata _args,
     bytes[] calldata _signatures
-  ) external view returns (bool) {
-    uint256 _verifyCount = 0;
+  ) external view returns (address[] memory) {
+    address[] memory tempVerifiedSigners = new address[](_signatures.length);
+    uint8 verifiedCount = 0;
     for (uint256 idx = 0; idx < _signatures.length; idx++) {
       // Verify signatures
-      address recoverAddress = _verifySignaturesForAllocation(
+      address recoveredAddress = _verifySignaturesForAllocation(
         _args,
         _signatures[idx]
       );
       if (
-        hasRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE, recoverAddress) ||
-        hasRole(LibPJManager.PJ_ADMIN_ROLE, recoverAddress)
+        hasRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE, recoveredAddress) ||
+        hasRole(LibPJManager.PJ_ADMIN_ROLE, recoveredAddress)
       ) {
-        _verifyCount += 1;
+        tempVerifiedSigners[verifiedCount] = recoveredAddress;
+        verifiedCount += 1;
       }
     }
 
     require(
-      _verifyCount >= _getThreshold(),
+      verifiedCount >= _getThreshold(),
       "PJManager: fall short of threshold for verify"
     );
 
-    return true;
+    address[] memory verifiedSigners = new address[](verifiedCount);
+    for (uint256 idx = 0; idx < verifiedCount; idx++) {
+      verifiedSigners[idx] = tempVerifiedSigners[idx];
+    }
+
+    return verifiedSigners;
   }
 
   //PJManager Signature verifier Nonce Increment function

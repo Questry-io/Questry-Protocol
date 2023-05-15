@@ -19,7 +19,7 @@ import {
   PJManager,
   Board,
 } from "../../typechain";
-import { AllocationShare, TestUtils } from "../testUtils";
+import { AllocateArgs, AllocationShare, TestUtils } from "../testUtils";
 import { solidity } from "ethereum-waffle";
 
 chai.use(solidity);
@@ -507,7 +507,7 @@ describe("PJManager", function () {
         coefs: [2, 3],
       };
 
-      const args: any = {
+      const args: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -517,7 +517,6 @@ describe("PJManager", function () {
           cContributionPool.address,
           cContributionPool2.address,
         ],
-        contributePoolOwner: [signer.address, signer.address],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
@@ -537,7 +536,6 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
         ],
         CalculateDispatchArgs: [
@@ -547,15 +545,15 @@ describe("PJManager", function () {
       };
 
       const message = await signer._signTypedData(domain, types2, args);
-      const recoveraddress = ethers.utils.verifyTypedData(
+      const recoverAddress = ethers.utils.verifyTypedData(
         domain,
         types2,
         args,
         message
       );
-      expect(await cPJManager.verifySignature(args, [message])).to.be.equal(
-        true
-      );
+      expect(await cPJManager.verifySignature(args, [message])).deep.equal([
+        signer.address,
+      ]);
     });
 
     it("[S] signature verifyer success on Multi signature", async function () {
@@ -581,7 +579,7 @@ describe("PJManager", function () {
         coefs: [2, 3],
       };
 
-      const args: any = {
+      const args: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -591,7 +589,6 @@ describe("PJManager", function () {
           cContributionPool.address,
           cContributionPool2.address,
         ],
-        contributePoolOwner: [signer.address, signer.address],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
@@ -611,7 +608,6 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
         ],
         CalculateDispatchArgs: [
@@ -625,7 +621,7 @@ describe("PJManager", function () {
 
       expect(
         await cPJManager.verifySignature(args, [message, message2])
-      ).to.be.equal(true);
+      ).deep.equal([signer.address, signer2.address]);
     });
 
     it("[S] signature verifyer success on Multi signature (2 of 3)", async function () {
@@ -658,7 +654,7 @@ describe("PJManager", function () {
       };
 
       // diff equal paymnetmode is native
-      const dummyargs: any = {
+      const dummyargs: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: nativeMode,
         paymentToken: cERC20.address,
@@ -668,11 +664,10 @@ describe("PJManager", function () {
           cContributionPool.address,
           cContributionPool2.address,
         ],
-        contributePoolOwner: [signer.address, signer.address],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
-      const args: any = {
+      const args: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -682,7 +677,6 @@ describe("PJManager", function () {
           cContributionPool.address,
           cContributionPool2.address,
         ],
-        contributePoolOwner: [signer.address, signer.address],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
@@ -702,7 +696,6 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
         ],
         CalculateDispatchArgs: [
@@ -724,7 +717,7 @@ describe("PJManager", function () {
           message2,
           message3,
         ])
-      ).to.be.equal(true);
+      ).deep.equal([signer2.address, signer3.address]);
 
       expect(
         await cPJManager.verifySignature(args, [
@@ -732,7 +725,7 @@ describe("PJManager", function () {
           dummymessage,
           message3,
         ])
-      ).to.be.equal(true);
+      ).deep.equal([signer2.address, signer3.address]);
 
       expect(
         await cPJManager.verifySignature(args, [
@@ -740,7 +733,7 @@ describe("PJManager", function () {
           message3,
           dummymessage,
         ])
-      ).to.be.equal(true);
+      ).deep.equal([signer2.address, signer3.address]);
 
       // reverted for threshold is not short sig verify
       await expect(
@@ -757,7 +750,7 @@ describe("PJManager", function () {
         coefs: [2, 3],
       };
 
-      const args: any = {
+      const args: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -767,7 +760,6 @@ describe("PJManager", function () {
           cContributionPool.address,
           cContributionPool2.address,
         ],
-        contributePoolOwner: [signer.address, signer.address],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
@@ -787,7 +779,6 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
         ],
         CalculateDispatchArgs: [
@@ -811,7 +802,7 @@ describe("PJManager", function () {
         coefs: [2, 3],
       };
 
-      const args: any = {
+      const args: AllocateArgs = {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
@@ -821,7 +812,6 @@ describe("PJManager", function () {
           cContributionPool.address,
           cContributionPool2.address,
         ],
-        contributePoolOwner: [signer.address, signer.address],
         pjnonce: Number(await cPJManager.getNonce()).toString(),
       };
 
@@ -841,7 +831,6 @@ describe("PJManager", function () {
           { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
-          { name: "contributePoolOwner", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
         ],
         CalculateDispatchArgs: [

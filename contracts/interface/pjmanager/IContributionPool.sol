@@ -70,10 +70,10 @@ interface IContributionPool {
   ) external;
 
   /**
-   * @dev Increments the accumulation period for contributions by checking if the `_permittedSigner`
-   * has the execution permission.
+   * @dev Increments the accumulation period for contributions by checking if the `_verifiedSigners`
+   * have the execution permission.
    */
-  function incrementTerm(address _permittedSigner) external;
+  function incrementTerm(address[] memory _verifiedSigners) external;
 
   /**
    * @dev Gets contribution of `_member`.

@@ -42,7 +42,6 @@ library LibQuestryPlatform {
     IBoard board; // allocation target board which has contributions
     CalculateDispatchArgs calculateArgs; // allocation calculation args
     IContributionPool[] updateNeededPools; // term update needed pools
-    address[] contributePoolOwner; //contribute pool owners
     uint256 pjnonce;
   }
 
@@ -84,7 +83,7 @@ library LibQuestryPlatform {
   // ---- EIP712 ----
   bytes32 private constant AllOCATE_TYPEHASH =
     keccak256(
-      "AllocateArgs(address pjManager,bytes4 paymentMode,address paymentToken,address board,CalculateDispatchArgs calculateArgs,address[] updateNeededPools,address[] contributePoolOwner,uint256 pjnonce)CalculateDispatchArgs(bytes4 algorithm,bytes args)"
+      "AllocateArgs(address pjManager,bytes4 paymentMode,address paymentToken,address board,CalculateDispatchArgs calculateArgs,address[] updateNeededPools,uint256 pjnonce)CalculateDispatchArgs(bytes4 algorithm,bytes args)"
     );
 
   bytes32 private constant CALCURATEDISPATCHARGS_TYPEHASH =
@@ -115,7 +114,6 @@ library LibQuestryPlatform {
           _allocateargs.board,
           _hashCalculateDispatchArgs(_allocateargs.calculateArgs),
           keccak256(abi.encodePacked(_allocateargs.updateNeededPools)),
-          keccak256(abi.encodePacked(_allocateargs.contributePoolOwner)),
           _allocateargs.pjnonce
         )
       );
@@ -208,20 +206,11 @@ library LibQuestryPlatform {
       _allocateargs.updateNeededPools.length > 0,
       "LibQuestryPlatform: contribution pool is zero"
     );
-    require(
-      _allocateargs.updateNeededPools.length ==
-        _allocateargs.contributePoolOwner.length,
-      "LibQuestryPlatform: array element is differnt"
-    );
     //Contributioonpool check
     for (uint256 idx = 0; idx < _allocateargs.updateNeededPools.length; idx++) {
       require(
         address(_allocateargs.updateNeededPools[idx]) != address(0),
         "LibQuestryPlatform: contribution pool address is invalid"
-      );
-      require(
-        address(_allocateargs.contributePoolOwner[idx]) != address(0),
-        "LibQuestryPlatform: contribution pool owner address is invalid"
       );
     }
     require(

@@ -42,7 +42,6 @@ derectry構成のtreeをこちらに記述する
 │   │   ├── NFTPartnerA.sol
 │   │   ├── NFTPartnerB.sol
 │   │   ├── NFTRandom.sol
-│   │   ├── PJManagerMock.sol
 │   │   ├── RandomERC1155.sol
 │   │   └── RandomERC20.sol
 │   ├── pjmanager

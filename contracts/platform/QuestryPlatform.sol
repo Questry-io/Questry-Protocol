@@ -66,7 +66,10 @@ contract QuestryPlatform is Initializable, UUPSUpgradeable, PlatformPayments {
     //signatures validation
     _setAndcheckVerifysignature(_AllcatorSigns);
     //EIP712 verify signature
-    pjManager.verifySignature(_args, _AllcatorSigns);
+    address[] memory verifiedSigners = pjManager.verifySignature(
+      _args,
+      _AllcatorSigns
+    );
 
     LibPJManager.AllocationShare[] memory businessOwners = pjManager
       .getBusinessOwners();
@@ -109,10 +112,7 @@ contract QuestryPlatform is Initializable, UUPSUpgradeable, PlatformPayments {
     _resetPayoutTemp();
 
     // Step6. Update the terms of the contribution pools
-    _updatesTermsOfContributionPools(
-      _args.updateNeededPools,
-      _args.contributePoolOwner
-    );
+    _updatesTermsOfContributionPools(_args.updateNeededPools, verifiedSigners);
     //Step7. Update the nonce of the pjmanager
     _updatesNonceOfPJManager(_args.pjManager);
   }
@@ -237,10 +237,10 @@ contract QuestryPlatform is Initializable, UUPSUpgradeable, PlatformPayments {
    */
   function _updatesTermsOfContributionPools(
     IContributionPool[] calldata _pools,
-    address[] calldata _poolowners
+    address[] memory _verifiedSigners
   ) private {
     for (uint256 i = 0; i < _pools.length; i++) {
-      _pools[i].incrementTerm(_poolowners[i]);
+      _pools[i].incrementTerm(_verifiedSigners);
     }
   }
 

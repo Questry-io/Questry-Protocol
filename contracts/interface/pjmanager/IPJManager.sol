@@ -41,11 +41,12 @@ interface IPJManager {
 
   /**
    * @dev verify signature.
+   * Returns the signers recovered from signatures and verified their roles.
    */
   function verifySignature(
     LibQuestryPlatform.AllocateArgs calldata _args,
     bytes[] calldata _signatures
-  ) external view returns (bool);
+  ) external view returns (address[] memory);
 
   /**
    * @dev Get PJManager signature nonce
