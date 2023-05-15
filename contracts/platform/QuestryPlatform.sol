@@ -53,8 +53,8 @@ contract QuestryPlatform is Initializable, UUPSUpgradeable, PlatformPayments {
 
   /**
    * @dev Allocates tokens to business owners, boarding members and DAO treasury pool.
+   * TODO: Use PJManager.boards[].share to calculate the allocation for each board.
    */
-
   function allocate(
     LibQuestryPlatform.AllocateArgs calldata _args,
     bytes[] calldata _AllcatorSigns

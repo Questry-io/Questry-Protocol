@@ -21,9 +21,6 @@ import {
 } from "../../typechain";
 import { AllocateArgs, AllocationShare, TestUtils } from "../testUtils";
 import { solidity } from "ethereum-waffle";
-import { exec } from "child_process";
-import { Console } from "console";
-import { sign } from "crypto";
 
 chai.use(solidity);
 
@@ -62,6 +59,10 @@ describe("PJManager", function () {
 
   const whitelistRoleHash = utils.keccak256(
     utils.toUtf8Bytes("PJ_WHITELIST_ROLE")
+  );
+
+  const boardIdRoleHash = utils.keccak256(
+    utils.toUtf8Bytes("PJ_BOARD_ID_ROLE")
   );
 
   const SignerRoleHash = utils.keccak256(utils.toUtf8Bytes("PJ_VERIFY_SIGNER"));
@@ -390,6 +391,76 @@ describe("PJManager", function () {
       ).revertedWith(
         "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
       );
+    });
+  });
+
+  describe("registerBoard", function () {
+    let cPJManager: PJManager;
+    let cBoard: Board;
+
+    beforeEach(async function () {
+      ({ cPJManager, cBoard } = await deployPJManager(
+        4000,
+        withShares(businessOwners, [1, 2])
+      ));
+    });
+
+    it("[S] should registerBoard by stateManager", async function () {
+      const arg = { recipient: cBoard.address, share: 1 };
+      const tx = await cPJManager.connect(stateManager).registerBoard(arg);
+      const got = await cPJManager.getBoards();
+      expect(got.length).equals(1);
+      expect(got[0].recipient).equals(arg.recipient);
+      expect(got[0].share).equals(arg.share);
+      expect(tx)
+        .to.emit(cPJManager, "RegisterBoard")
+        .withArgs(arg.recipient, arg.share);
+    });
+
+    it("[S] should register multiple boards by stateManager", async function () {
+      const cBoard2 = await new Board__factory(deployer).deploy(
+        "board2",
+        "BRD2",
+        "https://example.com",
+        cPJManager.address,
+        boardMinter.address,
+        ethers.constants.AddressZero
+      );
+      const arg1 = { recipient: cBoard.address, share: 1 };
+      const arg2 = { recipient: cBoard2.address, share: 2 };
+      await cPJManager.connect(stateManager).registerBoard(arg1);
+      await cPJManager.connect(stateManager).registerBoard(arg2);
+      const got = await cPJManager.getBoards();
+      expect(got.length).equals(2);
+      expect(got[0].recipient).equals(arg1.recipient);
+      expect(got[0].share).equals(arg1.share);
+      expect(got[1].recipient).equals(arg2.recipient);
+      expect(got[1].share).equals(arg2.share);
+    });
+
+    it("[S] should registerBoard by admin", async function () {
+      const arg = { recipient: cBoard.address, share: 1 };
+      await cPJManager.connect(admin).registerBoard(arg);
+      const got = await cPJManager.getBoards();
+      expect(got.length).equals(1);
+      expect(got[0].recipient).equals(arg.recipient);
+      expect(got[0].share).equals(arg.share);
+    });
+
+    it("[R] should not registerBoard by others", async function () {
+      const arg = { recipient: cBoard.address, share: 1 };
+      await expect(cPJManager.connect(user).registerBoard(arg)).revertedWith(
+        "Invalid executor role"
+      );
+    });
+
+    it("[R] should not register the same board two times", async function () {
+      const arg1 = { recipient: cBoard.address, share: 1 };
+      const arg2 = { recipient: cBoard.address, share: 2 };
+      await cPJManager.connect(stateManager).registerBoard(arg1);
+      await expect(
+        cPJManager.connect(stateManager).registerBoard(arg2)
+      ).revertedWith("PJManager: board already exists");
     });
   });
 
@@ -1096,6 +1167,66 @@ describe("PJManager", function () {
           [erc20Mode, cERC20.address, user.address, 3]
         )
       ).revertedWith("PJTreasuryPool: insufficient balance");
+    });
+  });
+
+  describe("assign[resolve]BoardId", function () {
+    let cPJManager: PJManager;
+    let cMockBoard: MockCallerContract;
+
+    beforeEach(async function () {
+      ({ cPJManager } = await deployDummyPJManager());
+      cMockBoard = await new MockCallerContract__factory(deployer).deploy();
+      await cPJManager.connect(admin).registerBoard({
+        recipient: cMockBoard.address,
+        share: 1,
+      });
+    });
+
+    it("[S] should assignBoardId by registered board", async function () {
+      await TestUtils.call(
+        cMockBoard,
+        cPJManager,
+        "assignBoardId(address _board,uint256 _tokenId)",
+        [cMockBoard.address, 1]
+      );
+      let boardId = await cPJManager.resolveBoardId(cMockBoard.address, 1);
+      expect(boardId).equals(1);
+
+      await TestUtils.call(
+        cMockBoard,
+        cPJManager,
+        "assignBoardId(address _board,uint256 _tokenId)",
+        [cMockBoard.address, 2]
+      );
+      boardId = await cPJManager.resolveBoardId(cMockBoard.address, 2);
+      expect(boardId).equals(2);
+    });
+
+    it("[R] should not assignBoardId to the same token", async function () {
+      await TestUtils.call(
+        cMockBoard,
+        cPJManager,
+        "assignBoardId(address _board,uint256 _tokenId)",
+        [cMockBoard.address, 1]
+      );
+      const boardId = await cPJManager.resolveBoardId(cMockBoard.address, 1);
+      expect(boardId).equals(1);
+
+      await expect(
+        TestUtils.call(
+          cMockBoard,
+          cPJManager,
+          "assignBoardId(address _board,uint256 _tokenId)",
+          [cMockBoard.address, 1]
+        )
+      ).revertedWith("PJManager: assign for existent boardId");
+    });
+
+    it("[R] should not registerBoardId by others", async function () {
+      await expect(
+        cPJManager.connect(admin).assignBoardId(cMockBoard.address, 1)
+      ).revertedWith(missingRoleError(admin.address, boardIdRoleHash));
     });
   });
 });

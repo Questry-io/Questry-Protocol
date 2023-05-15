@@ -10,6 +10,7 @@ interface IPJManager {
   event AddBusinessOwner(address owner, uint120 share);
   event RemoveBusinessOwner(address owner);
   event UpdateBusinessOwner(address owner, uint120 share);
+  event RegisterBoard(address board, uint120 share);
   event Deposit(address depositer, uint256 amount);
   event DepositERC20(address token, address depositer, uint256 amount);
   event AllowERC20(address token);
@@ -26,9 +27,9 @@ interface IPJManager {
   ) external;
 
   /**
-   * @dev Register a new board which is identified by `_board` and `_tokenId` pair.
+   * @dev Assign a new board id corresponding to the `_board` and `_tokenId` pair.
    */
-  function registerBoard(address _board, uint256 _tokenId) external;
+  function assignBoardId(address _board, uint256 _tokenId) external;
 
   /**
    * @dev Resolve unique boardId in the project from `_board` and `_tokenId` pair.

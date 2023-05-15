@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 import {PJTreasuryPool} from "./PJTreasuryPool.sol";
 import {SignatureVerifier} from "./SignatureVerifier.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 
 //interface imported
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
@@ -13,9 +14,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 // Library imported
 import {LibPJManager} from "../library/LibPJManager.sol";
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
-
-// TODO: Remove this import after REGISTER_BOARD_ROLE implementations.
-import {console} from "hardhat/console.sol";
 
 /**
  * @title PJManager
@@ -27,11 +25,16 @@ contract PJManager is
   SignatureVerifier,
   ReentrancyGuard
 {
+  using Counters for Counters.Counter;
+
   /// @dev the basis points proportion of total allocation for boarding members
   uint32 public immutable boardingMembersProportion;
   uint32 private _defaultThreshold = 1;
   address public immutable admin;
   LibPJManager.AllocationShare[] public businessOwners;
+  LibPJManager.AllocationShare[] public boards;
+  Counters.Counter public boardIdTracker;
+  mapping(address => mapping(uint256 => uint256)) public boardIds;
   //signature verify reply management
   mapping(bytes => bool) private _isCompVerifySignature;
 
@@ -49,6 +52,7 @@ contract PJManager is
 
     admin = _admin;
     boardingMembersProportion = _boardingMembersProportion;
+    boardIdTracker.increment();
 
     //set nonce increment roll
     _setupRole(LibPJManager.PJ_NONCE_INCREMENT_ROLE, address(_questryPlatform));
@@ -154,6 +158,28 @@ contract PJManager is
       boardingMembersProportion
     );
     emit UpdateBusinessOwner(_businessOwner.recipient, _businessOwner.share);
+  }
+
+  /**
+   * @dev Registers a new `_board`.
+   *
+   * Emits a {RegisterBoard} event.
+   */
+  function registerBoard(LibPJManager.AllocationShare memory _board) external {
+    require(
+      hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
+        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+      "Invalid executor role"
+    );
+    for (uint8 i = 0; i < boards.length; i++) {
+      require(
+        boards[i].recipient != _board.recipient,
+        "PJManager: board already exists"
+      );
+    }
+    _setupRole(LibPJManager.PJ_BOARD_ID_ROLE, _board.recipient);
+    boards.push(_board);
+    emit RegisterBoard(_board.recipient, _board.share);
   }
 
   // --------------------------------------------------
@@ -300,11 +326,19 @@ contract PJManager is
   }
 
   // --------------------------------------------------
-  // TODO: REGISTER_BOARD_ROLE
+  // DID BoardId functions
   // --------------------------------------------------
 
-  function registerBoard(address _board, uint256 _tokenId) external {
-    console.log("TODO: registerBoard() not implemented yet.");
+  function assignBoardId(address _board, uint256 _tokenId)
+    external
+    onlyRole(LibPJManager.PJ_BOARD_ID_ROLE)
+  {
+    require(
+      boardIds[_board][_tokenId] == 0,
+      "PJManager: assign for existent boardId"
+    );
+    boardIds[_board][_tokenId] = boardIdTracker.current();
+    boardIdTracker.increment();
   }
 
   function resolveBoardId(address _board, uint256 _tokenId)
@@ -312,7 +346,11 @@ contract PJManager is
     view
     returns (uint256)
   {
-    console.log("TODO: resolveBoardId() not implemented yet.");
+    require(
+      boardIds[_board][_tokenId] > 0,
+      "PJManager: resolve for nonexistent boardId"
+    );
+    return boardIds[_board][_tokenId];
   }
 
   // --------------------------------------------------
@@ -331,6 +369,17 @@ contract PJManager is
   /// @inheritdoc IPJManager
   function getBoardingMembersProportion() external view returns (uint32) {
     return boardingMembersProportion;
+  }
+
+  /**
+   * @dev Returns the list of boards.
+   */
+  function getBoards()
+    external
+    view
+    returns (LibPJManager.AllocationShare[] memory)
+  {
+    return boards;
   }
 
   // --------------------------------------------------

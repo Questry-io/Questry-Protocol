@@ -87,13 +87,15 @@ abstract contract PlatformPayments is
     uint256 deduction = (_args.amount * feeRate) / _feeDenominator();
 
     // Pay fees to the DAO Treasury pool
-    _transfer(
-      _args.paymentMode,
-      _args.paymentToken,
-      _args.from,
-      getDAOTreasuryPool(),
-      deduction
-    );
+    if(deduction > 0){
+      _transfer(
+        _args.paymentMode,
+        _args.paymentToken,
+        _args.from,
+        getDAOTreasuryPool(),
+        deduction
+      );
+    }
 
     // Transfer the remaining amount to the recipient
     _transfer(
