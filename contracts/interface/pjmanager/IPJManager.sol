@@ -10,6 +10,7 @@ interface IPJManager {
   event AddBusinessOwner(address owner, uint120 share);
   event RemoveBusinessOwner(address owner);
   event UpdateBusinessOwner(address owner, uint120 share);
+  event RegisterBoard(address board, uint120 share);
   event Deposit(address depositer, uint256 amount);
   event DepositERC20(address token, address depositer, uint256 amount);
   event AllowERC20(address token);
@@ -26,9 +27,9 @@ interface IPJManager {
   ) external;
 
   /**
-   * @dev Register a new board which is identified by `_board` and `_tokenId` pair.
+   * @dev Assign a new board id corresponding to the `_board` and `_tokenId` pair.
    */
-  function registerBoard(address _board, uint256 _tokenId) external;
+  function assignBoardId(address _board, uint256 _tokenId) external;
 
   /**
    * @dev Resolve unique boardId in the project from `_board` and `_tokenId` pair.
@@ -42,29 +43,20 @@ interface IPJManager {
    * @dev verify signature.
    */
   function verifySignature(
-    LibQuestryPlatform.AllocateArgs calldata _args, 
+    LibQuestryPlatform.AllocateArgs calldata _args,
     bytes[] calldata _signatures
-  )
-    external
-    view
-    returns (bool);
+  ) external view returns (bool);
 
   /**
    * @dev Get PJManager signature nonce
    */
-  function getNonce() 
-    external
-    view 
-    returns(uint256);
+  function getNonce() external view returns (uint256);
 
   /**
    * @dev Get PJManager signature verify threshold
    */
-  function getThreshold() 
-    external 
-    view 
-    returns(uint256);
-  
+  function getThreshold() external view returns (uint256);
+
   /**
    * @dev Increment nonce for signature.
    */

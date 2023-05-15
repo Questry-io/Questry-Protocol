@@ -111,6 +111,9 @@ describe("QuestryPlatform", function () {
       ethers.constants.AddressZero
     );
     await cBoard.deployed();
+    cPJManager
+      .connect(admin)
+      .registerBoard({ recipient: cBoard.address, share: 1 });
 
     // deploy mock ERC20
     const cERC20 = await new RandomERC20__factory(deployer).deploy();

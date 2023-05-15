@@ -4,6 +4,7 @@ pragma solidity ^0.8.17;
 import {PJTreasuryPool} from "./PJTreasuryPool.sol";
 import {SignatureVerifier} from "./SignatureVerifier.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 
 //interface imported
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
@@ -14,24 +15,26 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {LibPJManager} from "../library/LibPJManager.sol";
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 
-// TODO: Remove this import after REGISTER_BOARD_ROLE implementations.
-import {console} from "hardhat/console.sol";
-
 /**
  * @title PJManager
  * @dev This is abstract contract that stores treasury and controls token whitelists.
  */
-contract PJManager is 
-  IPJManager, 
-  PJTreasuryPool, 
+contract PJManager is
+  IPJManager,
+  PJTreasuryPool,
   SignatureVerifier,
   ReentrancyGuard
 {
+  using Counters for Counters.Counter;
+
   /// @dev the basis points proportion of total allocation for boarding members
   uint32 public immutable boardingMembersProportion;
-  uint32 private _defaultThreshold = 1; 
+  uint32 private _defaultThreshold = 1;
   address public immutable admin;
   LibPJManager.AllocationShare[] public businessOwners;
+  LibPJManager.AllocationShare[] public boards;
+  Counters.Counter public boardIdTracker;
+  mapping(address => mapping(uint256 => uint256)) public boardIds;
   //signature verify reply management
   mapping(bytes => bool) private _isCompVerifySignature;
 
@@ -40,7 +43,7 @@ contract PJManager is
     address _admin,
     uint32 _boardingMembersProportion,
     LibPJManager.AllocationShare[] memory _businessOwners
-  ){
+  ) {
     bool ownersShareExists = _initBusinessOwners(_businessOwners);
     LibPJManager._validateAllocationSettings(
       _businessOwners,
@@ -49,26 +52,24 @@ contract PJManager is
 
     admin = _admin;
     boardingMembersProportion = _boardingMembersProportion;
+    boardIdTracker.increment();
 
     //set nonce increment roll
-    _setupRole(
-      LibPJManager.PJ_NONCE_INCREMENT_ROLE, 
-      address(_questryPlatform)
-    );
-    _setupRole(
-      LibPJManager.PJ_WITHDRAW_ROLE, 
-      address(_questryPlatform)
-    );
+    _setupRole(LibPJManager.PJ_NONCE_INCREMENT_ROLE, address(_questryPlatform));
+    _setupRole(LibPJManager.PJ_WITHDRAW_ROLE, address(_questryPlatform));
 
     //set signature threshold
     _setThreshold(_defaultThreshold);
-    
+
     _setupRole(LibPJManager.PJ_ADMIN_ROLE, _admin);
 
     _setRoleAdmin(LibPJManager.PJ_MANAGEMENT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(LibPJManager.PJ_WHITELIST_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(LibPJManager.PJ_DEPOSIT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
-    _setRoleAdmin(LibPJManager.PJ_VERIFY_SIGNER_ROLE, LibPJManager.PJ_ADMIN_ROLE);
+    _setRoleAdmin(
+      LibPJManager.PJ_VERIFY_SIGNER_ROLE,
+      LibPJManager.PJ_ADMIN_ROLE
+    );
   }
 
   // --------------------------------------------------
@@ -85,7 +86,7 @@ contract PJManager is
   ) external {
     require(
       hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
-      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
       "Invalid executor role"
     );
     for (uint8 i = 0; i < businessOwners.length; i++) {
@@ -107,12 +108,10 @@ contract PJManager is
    *
    * Emits an {RemoveBusinessOwner} event.
    */
-  function removeBusinessOwner(address _businessOwner)
-    external
-  {
+  function removeBusinessOwner(address _businessOwner) external {
     require(
       hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
-      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
       "Invalid executor role"
     );
     bool removed = false;
@@ -143,7 +142,7 @@ contract PJManager is
   ) external {
     require(
       hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
-      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
       "Invalid executor role"
     );
     bool updated = false;
@@ -161,6 +160,28 @@ contract PJManager is
     emit UpdateBusinessOwner(_businessOwner.recipient, _businessOwner.share);
   }
 
+  /**
+   * @dev Registers a new `_board`.
+   *
+   * Emits a {RegisterBoard} event.
+   */
+  function registerBoard(LibPJManager.AllocationShare memory _board) external {
+    require(
+      hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
+        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+      "Invalid executor role"
+    );
+    for (uint8 i = 0; i < boards.length; i++) {
+      require(
+        boards[i].recipient != _board.recipient,
+        "PJManager: board already exists"
+      );
+    }
+    _setupRole(LibPJManager.PJ_BOARD_ID_ROLE, _board.recipient);
+    boards.push(_board);
+    emit RegisterBoard(_board.recipient, _board.share);
+  }
+
   // --------------------------------------------------
   // PJTreasuryPool Function
   // --------------------------------------------------
@@ -172,12 +193,7 @@ contract PJManager is
     address _receiver,
     uint256 _amount
   ) external onlyRole(LibPJManager.PJ_WITHDRAW_ROLE) nonReentrant {
-    _withdrawForAllocation(
-      _paymentMode,
-      _paymentToken,
-      _receiver,
-      _amount
-    );
+    _withdrawForAllocation(_paymentMode, _paymentToken, _receiver, _amount);
   }
 
   /**
@@ -188,7 +204,7 @@ contract PJManager is
   function deposit() public payable {
     require(
       hasRole(LibPJManager.PJ_DEPOSIT_ROLE, _msgSender()) ||
-      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
       "Invalid executor role"
     );
     emit Deposit(_msgSender(), msg.value);
@@ -199,28 +215,24 @@ contract PJManager is
    *
    * Emits a {DepositERC20} event.
    */
-  function depositERC20(IERC20 _token, uint256 _amount)
-    external
-  {
+  function depositERC20(IERC20 _token, uint256 _amount) external {
     require(
       hasRole(LibPJManager.PJ_DEPOSIT_ROLE, _msgSender()) ||
-      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
       "Invalid executor role"
     );
     _depositERC20(_token, _amount);
   }
 
-   /**
+  /**
    * @dev Adds the ERC20 `_token` to the whitelist.
    *
    * Emits an {AllowERC20} event.
    */
-  function allowERC20(IERC20 _token)
-    external
-  {
+  function allowERC20(IERC20 _token) external {
     require(
       hasRole(LibPJManager.PJ_WHITELIST_ROLE, _msgSender()) ||
-      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
       "Invalid executor role"
     );
     _allowERC20(_token);
@@ -231,12 +243,10 @@ contract PJManager is
    *
    * Emits a {DisallowERC20} event.
    */
-  function disallowERC20(IERC20 _token)
-    external
-  {
+  function disallowERC20(IERC20 _token) external {
     require(
       hasRole(LibPJManager.PJ_WHITELIST_ROLE, _msgSender()) ||
-      hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
+        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
       "Invalid executor role"
     );
     _disallowERC20(_token);
@@ -248,25 +258,20 @@ contract PJManager is
 
   /// @inheritdoc IPJManager
   function verifySignature(
-    LibQuestryPlatform.AllocateArgs calldata _args, 
+    LibQuestryPlatform.AllocateArgs calldata _args,
     bytes[] calldata _signatures
-  )
-    external
-    view
-    returns (bool)
-  {
-    uint256 _verifyCount = 0; 
-    for(uint256 idx = 0;idx < _signatures.length ;idx++){
-      
+  ) external view returns (bool) {
+    uint256 _verifyCount = 0;
+    for (uint256 idx = 0; idx < _signatures.length; idx++) {
       // Verify signatures
       address recoverAddress = _verifySignaturesForAllocation(
         _args,
         _signatures[idx]
       );
-      if(
-        hasRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE,recoverAddress) || 
-        hasRole(LibPJManager.PJ_ADMIN_ROLE,recoverAddress)
-      ){
+      if (
+        hasRole(LibPJManager.PJ_VERIFY_SIGNER_ROLE, recoverAddress) ||
+        hasRole(LibPJManager.PJ_ADMIN_ROLE, recoverAddress)
+      ) {
         _verifyCount += 1;
       }
     }
@@ -274,7 +279,7 @@ contract PJManager is
     require(
       _verifyCount >= _getThreshold(),
       "PJManager: fall short of threshold for verify"
-    );  
+    );
 
     return true;
   }
@@ -282,7 +287,7 @@ contract PJManager is
   //PJManager Signature verifier Nonce Increment function
   function incrementNonce()
     external
-    onlyRole(LibPJManager.PJ_NONCE_INCREMENT_ROLE) 
+    onlyRole(LibPJManager.PJ_NONCE_INCREMENT_ROLE)
   {
     /**
      * todo: increment roll is questry platform fix this roll
@@ -295,41 +300,38 @@ contract PJManager is
     external
     onlyRole(LibPJManager.PJ_ADMIN_ROLE)
   {
-    require(
-      _threshold > 0,
-      "PJManager :threshold does not set zero"
-    );
+    require(_threshold > 0, "PJManager :threshold does not set zero");
     _setThreshold(_threshold);
   }
 
   /**
    * @dev Get PJManager signature nonce
    */
-  function getNonce() 
-    external
-    view 
-    returns(uint256)
-  {
+  function getNonce() external view returns (uint256) {
     return _getNonce();
   }
 
   /**
    * @dev Get PJManager signature verify threshold
    */
-  function getThreshold() 
-    external 
-    view 
-    returns(uint256)
-  {
+  function getThreshold() external view returns (uint256) {
     return _getThreshold();
   }
 
   // --------------------------------------------------
-  // TODO: REGISTER_BOARD_ROLE
+  // DID BoardId functions
   // --------------------------------------------------
 
-  function registerBoard(address _board, uint256 _tokenId) external {
-    console.log("TODO: registerBoard() not implemented yet.");
+  function assignBoardId(address _board, uint256 _tokenId)
+    external
+    onlyRole(LibPJManager.PJ_BOARD_ID_ROLE)
+  {
+    require(
+      boardIds[_board][_tokenId] == 0,
+      "PJManager: assign for existent boardId"
+    );
+    boardIds[_board][_tokenId] = boardIdTracker.current();
+    boardIdTracker.increment();
   }
 
   function resolveBoardId(address _board, uint256 _tokenId)
@@ -337,7 +339,11 @@ contract PJManager is
     view
     returns (uint256)
   {
-    console.log("TODO: resolveBoardId() not implemented yet.");
+    require(
+      boardIds[_board][_tokenId] > 0,
+      "PJManager: resolve for nonexistent boardId"
+    );
+    return boardIds[_board][_tokenId];
   }
 
   // --------------------------------------------------
@@ -356,6 +362,17 @@ contract PJManager is
   /// @inheritdoc IPJManager
   function getBoardingMembersProportion() external view returns (uint32) {
     return boardingMembersProportion;
+  }
+
+  /**
+   * @dev Returns the list of boards.
+   */
+  function getBoards()
+    external
+    view
+    returns (LibPJManager.AllocationShare[] memory)
+  {
+    return boards;
   }
 
   // --------------------------------------------------
