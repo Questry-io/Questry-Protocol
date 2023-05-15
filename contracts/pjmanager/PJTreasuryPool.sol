@@ -17,7 +17,6 @@ import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
  * @dev This is abstract contract that stores treasury and controls token whitelists.
  */
 abstract contract PJTreasuryPool is IPJManager, AccessControl {
-
   IERC20[] public tokenWhitelists;
   mapping(IERC20 => bool) private isTokenWhitelisted;
 
@@ -58,9 +57,7 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl {
    *
    * Emits a {DepositERC20} event.
    */
-  function _depositERC20(IERC20 _token, uint256 _amount)
-    internal
-  {
+  function _depositERC20(IERC20 _token, uint256 _amount) internal {
     require(isTokenWhitelisted[_token], "PJTreasuryPool: not whitelisted");
     tokenBalance[_token] += _amount;
     _token.transferFrom(_msgSender(), address(this), _amount);
@@ -72,9 +69,7 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl {
    *
    * Emits an {AllowERC20} event.
    */
-  function _allowERC20(IERC20 _token)
-    internal
-  {
+  function _allowERC20(IERC20 _token) internal {
     require(
       Address.isContract(address(_token)),
       "PJTreasuryPool: token is not a contract"
@@ -90,9 +85,7 @@ abstract contract PJTreasuryPool is IPJManager, AccessControl {
    *
    * Emits a {DisallowERC20} event.
    */
-  function _disallowERC20(IERC20 _token)
-    internal
-  {
+  function _disallowERC20(IERC20 _token) internal {
     require(isTokenWhitelisted[_token], "PJTreasuryPool: not whitelisted");
     uint32 newIdx = 0;
     for (uint256 i = 0; i < tokenWhitelists.length; i++) {
