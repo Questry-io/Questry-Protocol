@@ -11,6 +11,8 @@ import {IPaymentResolver} from "../interface/platform/IPaymentResolver.sol";
 import {ITokenControlProxy} from "../interface/token-control-proxy/ITokenControlProxy.sol";
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 
+import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
+
 abstract contract PlatformPayments is
   Initializable,
   AccessControlUpgradeable,
@@ -87,10 +89,11 @@ abstract contract PlatformPayments is
     uint256 deduction = (_args.amount * feeRate) / _feeDenominator();
 
     // Pay fees to the DAO Treasury pool
-    if(deduction > 0){
+    if (deduction > 0) {
       _transfer(
         _args.paymentMode,
         _args.paymentToken,
+        _args.pjManager,
         _args.from,
         getDAOTreasuryPool(),
         deduction
@@ -101,6 +104,7 @@ abstract contract PlatformPayments is
     _transfer(
       _args.paymentMode,
       _args.paymentToken,
+      _args.pjManager,
       _args.from,
       _args.to,
       _args.amount - deduction
@@ -244,6 +248,7 @@ abstract contract PlatformPayments is
   function _transfer(
     bytes4 _paymentMode,
     IERC20 _paymentToken,
+    address _pjManager,
     address _from,
     address _to,
     uint256 _amount
@@ -252,6 +257,10 @@ abstract contract PlatformPayments is
       // Sending ETH
       AddressUpgradeable.sendValue(payable(_to), _amount);
     } else if (_paymentMode == LibQuestryPlatform.ERC20_PAYMENT_MODE) {
+      require(
+        IPJManager(_pjManager).isWhitelisted(_paymentToken),
+        "PlatformPayments: token not whitelisted"
+      );
       // Sending ERC20
       tokenControlProxy.erc20safeTransferFrom(
         _paymentToken,
