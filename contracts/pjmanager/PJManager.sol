@@ -56,6 +56,7 @@ contract PJManager is
 
     //set nonce increment roll
     _setupRole(LibPJManager.PJ_NONCE_INCREMENT_ROLE, address(_questryPlatform));
+    _setupRole(LibPJManager.PJ_DEPOSIT_ROLE, address(_questryPlatform));
     _setupRole(LibPJManager.PJ_WITHDRAW_ROLE, address(_questryPlatform));
 
     //set signature threshold
@@ -65,7 +66,6 @@ contract PJManager is
 
     _setRoleAdmin(LibPJManager.PJ_MANAGEMENT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(LibPJManager.PJ_WHITELIST_ROLE, LibPJManager.PJ_ADMIN_ROLE);
-    _setRoleAdmin(LibPJManager.PJ_DEPOSIT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(
       LibPJManager.PJ_VERIFY_SIGNER_ROLE,
       LibPJManager.PJ_ADMIN_ROLE
@@ -197,31 +197,17 @@ contract PJManager is
   }
 
   /**
-   * @dev Deposits the native token into the pool.
+   * @dev Deposits an amount into the pool.
    *
-   * Emits a {Deposit} event.
+   * Emits a {Deposit} or {DepositERC20} event.
    */
-  function deposit() public payable {
-    require(
-      hasRole(LibPJManager.PJ_DEPOSIT_ROLE, _msgSender()) ||
-        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
-      "Invalid executor role"
-    );
-    emit Deposit(_msgSender(), msg.value);
-  }
-
-  /**
-   * @dev Deposits an `_amount` of the ERC20 `_token` into the pool.
-   *
-   * Emits a {DepositERC20} event.
-   */
-  function depositERC20(IERC20 _token, uint256 _amount) external {
-    require(
-      hasRole(LibPJManager.PJ_DEPOSIT_ROLE, _msgSender()) ||
-        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
-      "Invalid executor role"
-    );
-    _depositERC20(_token, _amount);
+  function deposit(
+    bytes4 _paymentMode,
+    IERC20 _paymentToken,
+    address _from,
+    uint256 _amount
+  ) external payable onlyRole(LibPJManager.PJ_DEPOSIT_ROLE) nonReentrant {
+    _deposit(_paymentMode, _paymentToken, _from, _amount);
   }
 
   /**

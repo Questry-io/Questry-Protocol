@@ -11,10 +11,22 @@ interface IPJManager {
   event RemoveBusinessOwner(address owner);
   event UpdateBusinessOwner(address owner, uint120 share);
   event RegisterBoard(address board, uint120 share);
-  event Deposit(address depositer, uint256 amount);
-  event DepositERC20(address token, address depositer, uint256 amount);
+  event Deposit(address depositer, uint256 netAmount);
+  event DepositERC20(address token, address depositer, uint256 netAmount);
   event AllowERC20(address token);
   event DisallowERC20(address token);
+
+  /**
+   * @dev Deposits an amount into the pool.
+   *
+   * Emits a {Deposit} or {DepositERC20} event.
+   */
+  function deposit(
+    bytes4 _paymentMode,
+    IERC20 _paymentToken,
+    address _from,
+    uint256 _amount
+  ) external payable;
 
   /**
    * @dev Withdraws for allocation.
