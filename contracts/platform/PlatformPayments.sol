@@ -7,8 +7,13 @@ import {ContextUpgradeable, ERC2771ContextUpgradeable} from "@openzeppelin/contr
 import {AddressUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import {EIP712Upgradeable, ECDSAUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/cryptography/EIP712Upgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IPaymentResolver} from "../interface/platform/IPaymentResolver.sol";
-import {ITokenControlProxy} from "../interface/token-control-proxy/ITokenControlProxy.sol";
+
+// interface import
+import {IPaymentResolver} from "contracts/interface/platform/IPaymentResolver.sol";
+import {ITokenControlProxy} from "contracts/interface/token-control-proxy/ITokenControlProxy.sol";
+import {IPJManager} from "contracts/interface/pjmanager/IPJManager.sol";
+
+// libary import
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
@@ -86,9 +91,9 @@ abstract contract PlatformPayments is
       revert("PlatformPayments: unknown payment category");
     }
 
+    // Pay fees to the DAO Treasury pool
     uint256 deduction = (_args.amount * feeRate) / _feeDenominator();
 
-    // Pay fees to the DAO Treasury pool
     if (deduction > 0) {
       _transfer(
         _args.paymentMode,
@@ -101,19 +106,37 @@ abstract contract PlatformPayments is
     }
 
     // Transfer the remaining amount to the recipient
-    _transfer(
-      _args.paymentMode,
-      _args.paymentToken,
-      _args.pjManager,
-      _args.from,
-      _args.to,
-      _args.amount - deduction
-    );
 
-    if (_args.resolver != IPaymentResolver(address(0))) {
-      // Call the resolver contract to finalize the investment, purchase NFTs, etc.
-      // It will revert if the resolver determines that `_args` is invalid.
-      _args.resolver.resolveAfterPayment(_args);
+    uint256 remains = _args.amount - deduction;
+
+    if (_args.paymentCategory == LibQuestryPlatform.COMMON_PAYMENT_CATEGORY) {
+      // Transfer the amount to the general account.
+      // Do not send to PJManager using this paymentCategory as it will not be allocated.
+      _transfer(
+        _args.paymentMode,
+        _args.paymentToken,
+        _args.pjManager,
+        _args.from,
+        _args.to,
+        remains
+      );
+    } else if (
+      _args.paymentCategory == LibQuestryPlatform.INVESTMENT_PAYMENT_CATEGORY ||
+      _args.paymentCategory == LibQuestryPlatform.PROTOCOL_PAYMENT_CATEGORY
+    ) {
+      // Deposit the amount to PJManager. It will be allocated.
+      require(
+        AddressUpgradeable.isContract(_args.to),
+        "PlatformPayments: 'to' is not contract"
+      );
+      IPJManager(_args.to).deposit{value: remains}(
+        _args.paymentMode,
+        _args.paymentToken,
+        _args.from,
+        remains
+      );
+    } else {
+      revert("PlatformPayments: unknown paymentCategory");
     }
   }
 

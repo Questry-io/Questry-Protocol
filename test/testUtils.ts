@@ -74,4 +74,21 @@ export class TestUtils {
     const signature = iface.encodeFunctionData(fname, args);
     return await caller.callFunction(callee.address, signature);
   }
+
+  static async callAndSend(
+    caller: MockCallerContract,
+    callee: Contract,
+    func: string,
+    args: any[],
+    overrides: any
+  ) {
+    const iface = new ethers.utils.Interface([`function ${func}`]);
+    const fname = func.split("(")[0];
+    const signature = iface.encodeFunctionData(fname, args);
+    return await caller.callAndSendFunction(
+      callee.address,
+      signature,
+      overrides
+    );
+  }
 }
