@@ -92,6 +92,13 @@ task("build-abi", "Build abi for frontend", async (_, hre) => {
     fs.writeFileSync(filePath, data);
   };
 
+  const deleteGarbagesFromArtifact = (artifact: any) => {
+    delete artifact.bytecode;
+    delete artifact.deployedBytecode;
+    delete artifact.linkReferences;
+    delete artifact.deployedLinkReferences;
+  };
+
   const artifactsBaseDir = "./artifacts/contracts/";
   const abiBaseDir = "./build/generated-abi/";
 
@@ -105,9 +112,10 @@ task("build-abi", "Build abi for frontend", async (_, hre) => {
         jsonFile
       );
       const data = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
-      const abiJSON = JSON.stringify(data.abi, null, 2);
+      deleteGarbagesFromArtifact(data);
+      const fixedJSON = JSON.stringify(data, null, 2);
       const abiFilename = path.join(abiBaseDir, currentDir, jsonFile);
-      writeFileWithDirectorySync(abiFilename, abiJSON);
+      writeFileWithDirectorySync(abiFilename, fixedJSON);
     });
   } catch (err) {
     console.error(err);
