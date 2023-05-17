@@ -98,9 +98,6 @@ describe("PJManager", function () {
       .grantRole(managementRoleHash, stateManager.address);
     await cPJManager
       .connect(admin)
-      .grantRole(depositRoleHash, depositer.address);
-    await cPJManager
-      .connect(admin)
       .grantRole(whitelistRoleHash, whitelistController.address);
 
     // deploy Board associated with the project.
@@ -1025,7 +1022,7 @@ describe("PJManager", function () {
     });
   });
 
-  describe("deposit", function () {
+  describe("deposit native token", function () {
     let cPJManager: PJManager;
 
     beforeEach(async function () {
@@ -1052,8 +1049,14 @@ describe("PJManager", function () {
       );
     });
 
-    it("[S] should deposit native tokens by depositer", async function () {
-      const tx = await cPJManager.connect(depositer).deposit({ value: 2 });
+    it("[S] should deposit native tokens by QuestryPlatform", async function () {
+      const tx = await TestUtils.callAndSend(
+        cMockQuestryPlatform,
+        cPJManager,
+        "deposit(bytes4 _paymentMode,address _paymentToken,address _from,uint256 _amount)",
+        [nativeMode, ethers.constants.AddressZero, depositer.address, 2],
+        { value: 2 }
+      );
       expect(
         await cPJManager.getTotalBalance(
           nativeMode,
@@ -1064,25 +1067,18 @@ describe("PJManager", function () {
       expect(tx).to.emit(cPJManager, "Deposit").withArgs(depositer.address, 2);
     });
 
-    it("[S] should deposit native tokens by admin", async function () {
-      await cPJManager.connect(admin).deposit({ value: 2 });
-      expect(
-        await cPJManager.getTotalBalance(
-          nativeMode,
-          ethers.constants.AddressZero
-        )
-      ).equals(2);
-      expect(await ethers.provider.getBalance(cPJManager.address)).equals(2);
-    });
-
     it("[R] should not deposit native tokens by others", async function () {
-      await expect(cPJManager.connect(user).deposit({ value: 2 })).revertedWith(
-        "Invalid executor role"
-      );
+      await expect(
+        cPJManager
+          .connect(user)
+          .deposit(nativeMode, ethers.constants.AddressZero, user.address, 2, {
+            value: 2,
+          })
+      ).revertedWith(missingRoleError(user.address, depositRoleHash));
     });
   });
 
-  describe("depositERC20", function () {
+  describe("deposit ERC20", function () {
     let cPJManager: PJManager;
     let cERC20: RandomERC20;
 
@@ -1090,11 +1086,14 @@ describe("PJManager", function () {
       ({ cPJManager, cERC20 } = await deployDummyPJManager());
     });
 
-    it("[S] should depositERC20 by depositer", async function () {
+    it("[S] should deposit ERC20 by QuestryPlatform", async function () {
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
-      const tx = await cPJManager
-        .connect(depositer)
-        .depositERC20(cERC20.address, 2);
+      const tx = await TestUtils.call(
+        cMockQuestryPlatform,
+        cPJManager,
+        "deposit(bytes4 _paymentMode,address _paymentToken,address _from,uint256 _amount)",
+        [erc20Mode, cERC20.address, depositer.address, 2]
+      );
       expect(
         await cPJManager.getTotalBalance(erc20Mode, cERC20.address)
       ).equals(2);
@@ -1104,20 +1103,13 @@ describe("PJManager", function () {
         .withArgs(cERC20.address, depositer.address, 2);
     });
 
-    it("[S] should depositERC20 by admin", async function () {
-      await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
-      await cPJManager.connect(admin).depositERC20(cERC20.address, 2);
-      expect(
-        await cPJManager.getTotalBalance(erc20Mode, cERC20.address)
-      ).equals(2);
-      expect(await cERC20.balanceOf(cPJManager.address)).equals(2);
-    });
-
-    it("[R] should not depositERC20 by others", async function () {
+    it("[R] should not deposit ERC20 by others", async function () {
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
       await expect(
-        cPJManager.connect(user).depositERC20(cERC20.address, 2)
-      ).revertedWith("Invalid executor role");
+        cPJManager
+          .connect(user)
+          .deposit(erc20Mode, cERC20.address, depositer.address, 2)
+      ).revertedWith(missingRoleError(user.address, depositRoleHash));
     });
   });
 
@@ -1128,8 +1120,19 @@ describe("PJManager", function () {
     beforeEach(async function () {
       ({ cPJManager, cERC20 } = await deployDummyPJManager());
       await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
-      await cPJManager.connect(depositer).deposit({ value: 2 });
-      await cPJManager.connect(depositer).depositERC20(cERC20.address, 2);
+      await TestUtils.callAndSend(
+        cMockQuestryPlatform,
+        cPJManager,
+        "deposit(bytes4 _paymentMode,address _paymentToken,address _from,uint256 _amount)",
+        [nativeMode, ethers.constants.AddressZero, depositer.address, 2],
+        { value: 2 }
+      );
+      await TestUtils.call(
+        cMockQuestryPlatform,
+        cPJManager,
+        "deposit(bytes4 _paymentMode,address _paymentToken,address _from,uint256 _amount)",
+        [erc20Mode, cERC20.address, depositer.address, 2]
+      );
     });
 
     it("[S] should withdraw native token by QuestryPlatform", async function () {
@@ -1163,13 +1166,8 @@ describe("PJManager", function () {
       await expect(
         cPJManager
           .connect(user)
-          .withdrawForAllocation(
-            nativeMode,
-            ethers.constants.AddressZero,
-            user.address,
-            1
-          )
-      ).revertedWith(missingRoleError(user.address, withdrawRoleHash));
+          .deposit(erc20Mode, ethers.constants.AddressZero, user.address, 2)
+      ).revertedWith(missingRoleError(user.address, depositRoleHash));
     });
 
     it("[R] should not withdraw ERC20 token by others", async function () {

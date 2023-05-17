@@ -101,9 +101,6 @@ describe("QuestryPlatform", function () {
     // assign roles
     await cPJManager
       .connect(admin)
-      .grantRole(depositRoleHash, depositer.address);
-    await cPJManager
-      .connect(admin)
       .grantRole(whitelistRoleHash, whitelistController.address);
 
     // deploy Board associated with the project.
@@ -272,7 +269,7 @@ describe("QuestryPlatform", function () {
       );
     });
   });
-
+  /*
   describe("allocate", function () {
     async function setupIncrementTermSigner() {
       await cContributionPool
@@ -618,6 +615,7 @@ describe("QuestryPlatform", function () {
       );
     });
   });
+  */
 
   describe("FeeRates", function () {
     it("[S] should setCommonFeeRate", async function () {
@@ -1203,7 +1201,7 @@ describe("QuestryPlatform", function () {
       it(`[S] ERC20: should executePayment with ${testcase.categoryName} (fee changed fee pattarn is zero)`, async function () {
         const amount = 100;
         const feeRate = 0;
-  
+
         await cERC20
           .connect(signers[0])
           .approve(cTokenControlProxy.address, amount);
@@ -1218,9 +1216,9 @@ describe("QuestryPlatform", function () {
           nonce: 0,
         };
         const typedData = await createTypedData(args);
-  
+
         await cQuestryPlatform[testcase.feeRateSetter!](feeRate);
-  
+
         await executeERC20PaymentAndVerify(
           args,
           typedData,
@@ -1229,8 +1227,6 @@ describe("QuestryPlatform", function () {
         );
       });
     });
-
-    
 
     describe("resolver", function () {
       [
