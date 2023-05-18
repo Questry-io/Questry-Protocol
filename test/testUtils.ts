@@ -33,6 +33,7 @@ export type ExecutePaymentArgs = {
   paymentMode: string;
   paymentToken: string;
   paymentCategory: string;
+  pjManager: string;
   from: string;
   to: string;
   amount: string | number;

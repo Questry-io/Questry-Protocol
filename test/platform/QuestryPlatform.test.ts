@@ -668,6 +668,7 @@ describe("QuestryPlatform", function () {
     let cPaymentResolver: MockPaymentResolver;
     let cERC20: RandomERC20;
     let initialBalance: number;
+    let cPJManager: PJManager;
 
     beforeEach(async function () {
       cPaymentResolver = await new MockPaymentResolver__factory(
@@ -679,6 +680,10 @@ describe("QuestryPlatform", function () {
         .connect(admin)
         .grantExecutorRoleToQuestryPlatform(cQuestryPlatform.address);
       initialBalance = (await cERC20.balanceOf(signers[0].address)).toNumber();
+      ({ cPJManager } = await deployPJManager(
+        4000,
+        withShares(businessOwners, [1, 2])
+      ));
     });
 
     describe("_checkParameters", function () {
@@ -688,6 +693,7 @@ describe("QuestryPlatform", function () {
             paymentMode: nativeMode,
             paymentToken: ethers.constants.AddressZero,
             paymentCategory: commonPaymentCategory,
+            pjManager: cPJManager.address,
             from: signers[0].address,
             to: signers[1].address,
             amount: 100,
@@ -712,6 +718,7 @@ describe("QuestryPlatform", function () {
             paymentMode: nativeMode,
             paymentToken: ethers.constants.AddressZero,
             paymentCategory: commonPaymentCategory,
+            pjManager: cPJManager.address,
             from: signers[0].address,
             to: signers[1].address,
             amount: 100,
@@ -736,6 +743,7 @@ describe("QuestryPlatform", function () {
             paymentMode: nativeMode,
             paymentToken: cERC20.address,
             paymentCategory: commonPaymentCategory,
+            pjManager: cPJManager.address,
             from: signers[0].address,
             to: signers[1].address,
             amount: 100,
@@ -762,6 +770,7 @@ describe("QuestryPlatform", function () {
             paymentMode: erc20Mode,
             paymentToken: cERC20.address,
             paymentCategory: commonPaymentCategory,
+            pjManager: cPJManager.address,
             from: signers[0].address,
             to: signers[1].address,
             amount: 100,
@@ -784,6 +793,7 @@ describe("QuestryPlatform", function () {
             paymentMode: erc20Mode,
             paymentToken: ethers.constants.AddressZero,
             paymentCategory: commonPaymentCategory,
+            pjManager: cPJManager.address,
             from: signers[0].address,
             to: signers[1].address,
             amount: 100,
@@ -800,11 +810,17 @@ describe("QuestryPlatform", function () {
         });
 
         it("[R] should revert if paymentToken doesn't approve tokenControlProxy", async function () {
+          await cPJManager
+            .connect(whitelistController)
+            .allowERC20(cERC20.address);
+
           cERC20.connect(signers[0]).approve(cTokenControlProxy.address, 1);
+
           const args: ExecutePaymentArgs = {
             paymentMode: erc20Mode,
             paymentToken: cERC20.address,
             paymentCategory: commonPaymentCategory,
+            pjManager: cPJManager.address,
             from: signers[0].address,
             to: signers[1].address,
             amount: 2,
@@ -824,6 +840,32 @@ describe("QuestryPlatform", function () {
             .connect(signers[0])
             .executePayment(args, typedData);
         });
+
+        it("[R] should revert if paymentToken is not whitelisted", async function () {
+          // await cPJManager.connect(whitelistController).allowERC20(cERC20.address);
+
+          const amount = 100;
+
+          await cERC20
+            .connect(signers[0])
+            .approve(cTokenControlProxy.address, amount);
+          const args: ExecutePaymentArgs = {
+            paymentMode: erc20Mode,
+            paymentToken: cERC20.address,
+            paymentCategory: commonPaymentCategory,
+            pjManager: cPJManager.address,
+            from: signers[0].address,
+            to: signers[1].address,
+            amount: 100,
+            resolver: cPaymentResolver.address,
+            nonce: 0,
+          };
+          const typedData = await createTypedData(args);
+
+          await expect(
+            cQuestryPlatform.connect(signers[0]).executePayment(args, typedData)
+          ).to.be.revertedWith("PlatformPayments: token not whitelisted");
+        });
       });
 
       describe("when paymentMode is unknown", function () {
@@ -832,6 +874,7 @@ describe("QuestryPlatform", function () {
             paymentMode: utils
               .keccak256(utils.toUtf8Bytes("UNKNOWN"))
               .slice(0, 10),
+            pjManager: cPJManager.address,
             paymentToken: ethers.constants.AddressZero,
             paymentCategory: commonPaymentCategory,
             from: signers[0].address,
@@ -854,10 +897,15 @@ describe("QuestryPlatform", function () {
         await cERC20
           .connect(signers[0])
           .approve(cTokenControlProxy.address, amount);
+
+        await cPJManager
+          .connect(whitelistController)
+          .allowERC20(cERC20.address);
         const args: ExecutePaymentArgs = {
           paymentMode: erc20Mode,
           paymentToken: cERC20.address,
           paymentCategory: investmentPaymentCategory,
+          pjManager: cPJManager.address,
           from: signers[0].address,
           to: signers[1].address,
           amount,
@@ -877,10 +925,15 @@ describe("QuestryPlatform", function () {
         await cERC20
           .connect(signers[0])
           .approve(cTokenControlProxy.address, amount);
+
+        await cPJManager
+          .connect(whitelistController)
+          .allowERC20(cERC20.address);
         const args: ExecutePaymentArgs = {
           paymentMode: erc20Mode,
           paymentToken: cERC20.address,
           paymentCategory: protocolPaymentCategory,
+          pjManager: cPJManager.address,
           from: signers[0].address,
           to: signers[1].address,
           amount,
@@ -900,10 +953,16 @@ describe("QuestryPlatform", function () {
         await cERC20
           .connect(signers[0])
           .approve(cTokenControlProxy.address, amount);
+
+        await cPJManager
+          .connect(whitelistController)
+          .allowERC20(cERC20.address);
+
         const args: ExecutePaymentArgs = {
           paymentMode: erc20Mode,
           paymentToken: cERC20.address,
           paymentCategory: commonPaymentCategory,
+          pjManager: cPJManager.address,
           from: signers[0].address,
           to: ethers.constants.AddressZero,
           amount,
@@ -918,10 +977,14 @@ describe("QuestryPlatform", function () {
       });
 
       it("[R] should revert if amount is zero", async function () {
+        await cPJManager
+          .connect(whitelistController)
+          .allowERC20(cERC20.address);
         const args: ExecutePaymentArgs = {
           paymentMode: erc20Mode,
           paymentToken: cERC20.address,
           paymentCategory: commonPaymentCategory,
+          pjManager: cPJManager.address,
           from: signers[0].address,
           to: signers[1].address,
           amount: 0,
@@ -936,6 +999,9 @@ describe("QuestryPlatform", function () {
       });
 
       it("[R] should revert if nonce is invalid", async function () {
+        await cPJManager
+          .connect(whitelistController)
+          .allowERC20(cERC20.address);
         await cERC20
           .connect(signers[0])
           .approve(cTokenControlProxy.address, 1000000);
@@ -944,6 +1010,7 @@ describe("QuestryPlatform", function () {
             paymentMode: erc20Mode,
             paymentToken: cERC20.address,
             paymentCategory: commonPaymentCategory,
+            pjManager: cPJManager.address,
             from: signers[0].address,
             to: signers[1].address,
             amount: 1,
@@ -980,6 +1047,9 @@ describe("QuestryPlatform", function () {
       });
 
       it("[R] should revert if nonce is invalid (replay attack)", async function () {
+        await cPJManager
+          .connect(whitelistController)
+          .allowERC20(cERC20.address);
         await cERC20
           .connect(signers[0])
           .approve(cTokenControlProxy.address, 1000000);
@@ -987,6 +1057,7 @@ describe("QuestryPlatform", function () {
           paymentMode: erc20Mode,
           paymentToken: cERC20.address,
           paymentCategory: commonPaymentCategory,
+          pjManager: cPJManager.address,
           from: signers[0].address,
           to: signers[1].address,
           amount: 1,
@@ -1016,6 +1087,7 @@ describe("QuestryPlatform", function () {
           { name: "paymentMode", type: "bytes4" },
           { name: "paymentToken", type: "address" },
           { name: "paymentCategory", type: "bytes4" },
+          { name: "pjManager", type: "address" },
           { name: "from", type: "address" },
           { name: "to", type: "address" },
           { name: "amount", type: "uint256" },
@@ -1099,6 +1171,7 @@ describe("QuestryPlatform", function () {
           paymentMode: nativeMode,
           paymentToken: ethers.constants.AddressZero,
           paymentCategory: testcase.paymentCategory,
+          pjManager: cPJManager.address,
           from: signers[0].address,
           to: signers[1].address,
           amount,
@@ -1124,6 +1197,7 @@ describe("QuestryPlatform", function () {
           paymentMode: nativeMode,
           paymentToken: ethers.constants.AddressZero,
           paymentCategory: testcase.paymentCategory,
+          pjManager: cPJManager.address,
           from: signers[0].address,
           to: signers[1].address,
           amount,
@@ -1144,6 +1218,10 @@ describe("QuestryPlatform", function () {
       });
 
       it(`[S] ERC20: should executePayment with ${testcase.categoryName} (default fee)`, async function () {
+        await cPJManager
+          .connect(whitelistController)
+          .allowERC20(cERC20.address);
+
         const amount = 100;
 
         await cERC20
@@ -1153,12 +1231,14 @@ describe("QuestryPlatform", function () {
           paymentMode: erc20Mode,
           paymentToken: cERC20.address,
           paymentCategory: testcase.paymentCategory,
+          pjManager: cPJManager.address,
           from: signers[0].address,
           to: signers[1].address,
           amount,
           resolver: cPaymentResolver.address,
           nonce: 0,
         };
+
         const typedData = await createTypedData(args);
 
         await executeERC20PaymentAndVerify(
@@ -1170,6 +1250,10 @@ describe("QuestryPlatform", function () {
       });
 
       it(`[S] ERC20: should executePayment with ${testcase.categoryName} (fee changed)`, async function () {
+        await cPJManager
+          .connect(whitelistController)
+          .allowERC20(cERC20.address);
+
         const amount = 100;
         const feeRate = 100;
 
@@ -1180,6 +1264,7 @@ describe("QuestryPlatform", function () {
           paymentMode: erc20Mode,
           paymentToken: cERC20.address,
           paymentCategory: testcase.paymentCategory,
+          pjManager: cPJManager.address,
           from: signers[0].address,
           to: signers[1].address,
           amount,
@@ -1199,6 +1284,10 @@ describe("QuestryPlatform", function () {
       });
 
       it(`[S] ERC20: should executePayment with ${testcase.categoryName} (fee changed fee pattarn is zero)`, async function () {
+        await cPJManager
+          .connect(whitelistController)
+          .allowERC20(cERC20.address);
+
         const amount = 100;
         const feeRate = 0;
 
@@ -1209,6 +1298,7 @@ describe("QuestryPlatform", function () {
           paymentMode: erc20Mode,
           paymentToken: cERC20.address,
           paymentCategory: testcase.paymentCategory,
+          pjManager: cPJManager.address,
           from: signers[0].address,
           to: signers[1].address,
           amount,
@@ -1244,6 +1334,10 @@ describe("QuestryPlatform", function () {
         },
       ].forEach((testcase: PaymentCategoryTestcase) => {
         it(`[S] should resolveAfterPayment with ${testcase.categoryName}`, async function () {
+          await cPJManager
+            .connect(whitelistController)
+            .allowERC20(cERC20.address);
+
           const amount = 100;
 
           await cERC20
@@ -1253,6 +1347,7 @@ describe("QuestryPlatform", function () {
             paymentMode: erc20Mode,
             paymentToken: cERC20.address,
             paymentCategory: testcase.paymentCategory,
+            pjManager: cPJManager.address,
             from: signers[0].address,
             to: signers[1].address,
             amount,
@@ -1270,7 +1365,7 @@ describe("QuestryPlatform", function () {
               utils.keccak256(
                 utils.defaultAbiCoder.encode(
                   [
-                    "(bytes4 paymentMode,address paymentToken,bytes4 paymentCategory,address from,address to,uint256 amount,address resolver,uint256 nonce)",
+                    "(bytes4 paymentMode,address paymentToken,bytes4 paymentCategory,address pjManager,address from,address to,uint256 amount,address resolver,uint256 nonce)",
                   ],
                   [args]
                 )
@@ -1281,6 +1376,10 @@ describe("QuestryPlatform", function () {
       });
 
       it("[S] should be ok if no resolver with common payment", async function () {
+        await cPJManager
+          .connect(whitelistController)
+          .allowERC20(cERC20.address);
+
         const amount = 100;
 
         await cERC20
@@ -1290,6 +1389,7 @@ describe("QuestryPlatform", function () {
           paymentMode: erc20Mode,
           paymentToken: cERC20.address,
           paymentCategory: commonPaymentCategory,
+          pjManager: cPJManager.address,
           from: signers[0].address,
           to: signers[1].address,
           amount,
@@ -1313,6 +1413,10 @@ describe("QuestryPlatform", function () {
       });
 
       it("[S] should process the meta-transaction correctly", async function () {
+        await cPJManager
+          .connect(whitelistController)
+          .allowERC20(cERC20.address);
+
         const amount = 100;
         await cERC20
           .connect(signers[0])
@@ -1321,6 +1425,7 @@ describe("QuestryPlatform", function () {
           paymentMode: erc20Mode,
           paymentToken: cERC20.address,
           paymentCategory: commonPaymentCategory,
+          pjManager: cPJManager.address,
           from: signers[0].address,
           to: signers[1].address,
           amount,

@@ -16,6 +16,8 @@ import {IPJManager} from "contracts/interface/pjmanager/IPJManager.sol";
 // libary import
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 
+import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
+
 abstract contract PlatformPayments is
   Initializable,
   AccessControlUpgradeable,
@@ -96,6 +98,7 @@ abstract contract PlatformPayments is
       _transfer(
         _args.paymentMode,
         _args.paymentToken,
+        _args.pjManager,
         _args.from,
         getDAOTreasuryPool(),
         deduction
@@ -103,6 +106,7 @@ abstract contract PlatformPayments is
     }
 
     // Transfer the remaining amount to the recipient
+
     uint256 remains = _args.amount - deduction;
 
     if (_args.paymentCategory == LibQuestryPlatform.COMMON_PAYMENT_CATEGORY) {
@@ -111,6 +115,7 @@ abstract contract PlatformPayments is
       _transfer(
         _args.paymentMode,
         _args.paymentToken,
+        _args.pjManager,
         _args.from,
         _args.to,
         remains
@@ -266,6 +271,7 @@ abstract contract PlatformPayments is
   function _transfer(
     bytes4 _paymentMode,
     IERC20 _paymentToken,
+    address _pjManager,
     address _from,
     address _to,
     uint256 _amount
@@ -274,6 +280,10 @@ abstract contract PlatformPayments is
       // Sending ETH
       AddressUpgradeable.sendValue(payable(_to), _amount);
     } else if (_paymentMode == LibQuestryPlatform.ERC20_PAYMENT_MODE) {
+      require(
+        IPJManager(_pjManager).isWhitelisted(_paymentToken),
+        "PlatformPayments: token not whitelisted"
+      );
       // Sending ERC20
       tokenControlProxy.erc20safeTransferFrom(
         _paymentToken,
