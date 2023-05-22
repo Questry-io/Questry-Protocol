@@ -14,6 +14,7 @@
     "test": "hardhat test ",
     "gas-report": "env REPORT_GAS=true yarn run test",
     "compile": "hardhat compile",
+    "build-abi": "yarn clean && yarn && hardhat build-abi",
     "prepare": "yarn run clean && env COMPILE_MODE=production yarn run compile",
     "sign-deploy": "hardhat run --network rinkeby scripts/sign/deploy.ts",
     "sign-verify": "hardhat verify-sign-on-explorer --network rinkeby",

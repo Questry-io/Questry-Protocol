@@ -11,6 +11,8 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "@nomiclabs/hardhat-ethers";
 import "@openzeppelin/hardhat-upgrades";
+import * as fs from "fs";
+import * as path from "path";
 
 import "./scripts/verify/verify.ts";
 
@@ -24,6 +26,99 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
   for (const account of accounts) {
     console.log(account.address);
+  }
+});
+
+task("build-abi", "Build abi for frontend", async (_, hre) => {
+  function getArtifactJSONPaths(
+    artifactsBaseDir: string,
+    currentDir: string
+  ): [string, string, string][] {
+    const fullBaseDir = path.join(artifactsBaseDir, currentDir);
+    const files = fs.readdirSync(fullBaseDir, { withFileTypes: true });
+
+    // Search *.sol/ subdirectories
+    const solDirectories = files.filter(
+      (file) => file.isDirectory() && file.name.endsWith(".sol")
+    );
+
+    const result: [string, string, string][] = [];
+
+    solDirectories.forEach((solDirectory) => {
+      const solDirname = solDirectory.name;
+      const dirPath = path.join(fullBaseDir, solDirname);
+      const files = fs.readdirSync(dirPath, { withFileTypes: true });
+      const abiFiles = files
+        .filter(
+          (file) =>
+            file.isFile() &&
+            file.name.endsWith(".json") &&
+            !file.name.endsWith(".dbg.json")
+        )
+        .map((file) => file.name);
+
+      if (abiFiles.length > 1) {
+        throw new Error(
+          `Multiple ABI JSON files in ${dirPath}: ${abiFiles.join(", ")}`
+        );
+      }
+      if (abiFiles.length > 0) {
+        result.push([currentDir, solDirname, abiFiles[0]]);
+      }
+    });
+
+    // Search non *.sol/ subdirectories
+    const nonSolDirectories = files.filter(
+      (file) =>
+        file.isDirectory() &&
+        !file.name.endsWith(".sol") &&
+        file.name !== "mock"
+    );
+
+    nonSolDirectories.forEach((nonSolDirectory) => {
+      const nextDir = path.join(currentDir, nonSolDirectory.name);
+      const subResults = getArtifactJSONPaths(artifactsBaseDir, nextDir);
+      result.push(...subResults);
+    });
+
+    return result;
+  }
+
+  const writeFileWithDirectorySync = (filePath: string, data: string) => {
+    const dirname = path.dirname(filePath);
+    if (!fs.existsSync(dirname)) {
+      fs.mkdirSync(dirname, { recursive: true });
+    }
+    fs.writeFileSync(filePath, data);
+  };
+
+  const deleteGarbagesFromArtifact = (artifact: any) => {
+    delete artifact.bytecode;
+    delete artifact.deployedBytecode;
+    delete artifact.linkReferences;
+    delete artifact.deployedLinkReferences;
+  };
+
+  const artifactsBaseDir = "./artifacts/contracts/";
+  const abiBaseDir = "./build/generated-abi/";
+
+  try {
+    const jsonPaths = getArtifactJSONPaths(artifactsBaseDir, "");
+    jsonPaths.forEach(([currentDir, solDirname, jsonFile]) => {
+      const jsonPath = path.join(
+        artifactsBaseDir,
+        currentDir,
+        solDirname,
+        jsonFile
+      );
+      const data = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+      deleteGarbagesFromArtifact(data);
+      const fixedJSON = JSON.stringify(data, null, 2);
+      const abiFilename = path.join(abiBaseDir, currentDir, jsonFile);
+      writeFileWithDirectorySync(abiFilename, fixedJSON);
+    });
+  } catch (err) {
+    console.error(err);
   }
 });
 
