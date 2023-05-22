@@ -48,7 +48,7 @@ library LibQuestryPlatform {
     bytes4 paymentMode; // determines to pay with whether native or ERC20 token
     IERC20 paymentToken; // ERC20 token to allocate. It must be zero-address if paymentMode == NATIVE_PAYMENT_MODE
     bytes4 paymentCategory; // common, investment, or protocol payment
-    address pjManager; // PJManager address
+    IPJManager pjManager;
     address from;
     address to;
     uint256 amount;
