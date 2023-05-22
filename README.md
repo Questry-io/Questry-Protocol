@@ -25,7 +25,6 @@ derectry構成のtreeをこちらに記述する
 │   │   │   └── IPJManager.sol
 │   │   ├── platform
 │   │   │   ├── IContributionCalculator.sol
-│   │   │   ├── IPaymentResolver.sol
 │   │   │   └── IQuestryPlatform.sol
 │   │   ├── token
 │   │   │   └── IBoard.sol
@@ -37,7 +36,6 @@ derectry構成のtreeをこちらに記述する
 │   ├── mock
 │   │   ├── MockCallerContract.sol
 │   │   ├── MockContributionCalculatorV2.sol
-│   │   ├── MockPaymentResolver.sol
 │   │   ├── MockQuestryPlatformV2.sol
 │   │   ├── NFTPartnerA.sol
 │   │   ├── NFTPartnerB.sol

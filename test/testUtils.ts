@@ -37,7 +37,6 @@ export type ExecutePaymentArgs = {
   from: string;
   to: string;
   amount: string | number;
-  resolver: string;
   nonce: string | number;
 };
 
