@@ -71,8 +71,10 @@ contract QuestryPlatform is Initializable, UUPSUpgradeable, PlatformPayments {
       _AllcatorSigns
     );
 
+    /*
     LibPJManager.AllocationShare[] memory businessOwners = pjManager
       .getBusinessOwners();
+     */
     uint32 boardingMembersProportion = pjManager.getBoardingMembersProportion();
 
     // Step1. Simulate deduction of the protocol fee.
@@ -99,7 +101,8 @@ contract QuestryPlatform is Initializable, UUPSUpgradeable, PlatformPayments {
     }
 
     // Step3. Simulate allocation to the business owners.
-    uint256 actual = _simulateBusinessOwnersTransfer(businessOwners, remains);
+    uint256 actual;
+    // uint256 actual = _simulateBusinessOwnersTransfer(businessOwners, remains);
     remains -= actual;
 
     // Step4. Simulate residual allocation
@@ -260,8 +263,11 @@ contract QuestryPlatform is Initializable, UUPSUpgradeable, PlatformPayments {
     uint256 _revenue,
     uint32 _boardingMembersProportion
   ) private pure returns (uint256) {
+    return 0;
+    /*
     return
       (_revenue * _boardingMembersProportion) / LibPJManager._feeDenominator();
+      */
   }
 
   /**
