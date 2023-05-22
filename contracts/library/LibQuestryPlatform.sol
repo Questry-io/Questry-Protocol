@@ -5,7 +5,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {IBoard} from "../interface/token/IBoard.sol";
-import {IPaymentResolver} from "../interface/platform/IPaymentResolver.sol";
 
 /**
  * @dev Library for QuestryPlatform.
@@ -49,11 +48,10 @@ library LibQuestryPlatform {
     bytes4 paymentMode; // determines to pay with whether native or ERC20 token
     IERC20 paymentToken; // ERC20 token to allocate. It must be zero-address if paymentMode == NATIVE_PAYMENT_MODE
     bytes4 paymentCategory; // common, investment, or protocol payment
-    address pjManager; // PJManager address
+    IPJManager pjManager;
     address from;
     address to;
     uint256 amount;
-    IPaymentResolver resolver; // resolver.resolveAfterPayment(_args) called after payment
     uint256 nonce; // nonce for replay attack protection
   }
 

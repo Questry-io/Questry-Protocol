@@ -14,7 +14,6 @@ import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 import {IBoard} from "../interface/token/IBoard.sol";
 import {ITokenControlProxy} from "../interface/token-control-proxy/ITokenControlProxy.sol";
-import {PlatformPayments} from "../platform/PlatformPayments.sol";
 import {QuestryPlatform} from "../platform/QuestryPlatform.sol";
 
 /**

@@ -36,7 +36,7 @@ describe("Board", function () {
       ethers.constants.AddressZero,
       SuperAdmin.address,
       10000,
-      []
+      ethers.constants.AddressZero
     );
     const cfBoard = await ethers.getContractFactory("Board");
     cBoardMock = await cfBoard.deploy(

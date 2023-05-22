@@ -76,12 +76,9 @@ interface IPJManager {
   function incrementNonce() external;
 
   /**
-   * @dev Returns businessOwners.
+   * @dev Returns the businessOwner.
    */
-  function getBusinessOwners()
-    external
-    view
-    returns (LibPJManager.AllocationShare[] memory);
+  function getBusinessOwner() external view returns (address);
 
   /**
    * @dev Returns `boardingMembersProportion`.
@@ -105,4 +102,12 @@ interface IPJManager {
     external
     view
     returns (uint256);
+
+  /**
+   * @dev The denominator for boarding member proportion.
+   */
+  function getBoardingMemberProportionDenominator()
+    external
+    pure
+    returns (uint32);
 }

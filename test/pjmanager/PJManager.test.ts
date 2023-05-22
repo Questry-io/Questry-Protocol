@@ -2,7 +2,7 @@
 /* eslint-disable node/no-missing-import */
 import { ethers } from "hardhat";
 import * as chai from "chai";
-import { BigNumber, utils } from "ethers";
+import { utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
@@ -19,7 +19,7 @@ import {
   PJManager,
   Board,
 } from "../../typechain";
-import { AllocateArgs, AllocationShare, TestUtils } from "../testUtils";
+import { AllocateArgs, TestUtils } from "../testUtils";
 import { solidity } from "ethereum-waffle";
 
 chai.use(solidity);
@@ -34,7 +34,7 @@ describe("PJManager", function () {
   let whitelistController: SignerWithAddress;
   let depositer: SignerWithAddress;
   let boardMinter: SignerWithAddress;
-  let businessOwners: SignerWithAddress[];
+  let businessOwner: SignerWithAddress;
   let user: SignerWithAddress;
   let cMockQuestryPlatform: MockCallerContract;
   let cCalculator: ContributionCalculator;
@@ -71,24 +71,12 @@ describe("PJManager", function () {
     return `AccessControl: account ${address.toLowerCase()} is missing role ${roleHash}`;
   }
 
-  function withShares(
-    recipients: SignerWithAddress[],
-    shares: number[]
-  ): AllocationShare[] {
-    return recipients.map((r, i) => {
-      return { recipient: r.address, share: shares[i] };
-    });
-  }
-
-  async function deployPJManager(
-    _boardingMembersProportion: number,
-    _businessOwners: AllocationShare[]
-  ) {
+  async function deployPJManager(_boardingMembersProportion: number) {
     const cPJManager = await new PJManager__factory(deployer).deploy(
       cMockQuestryPlatform.address,
       admin.address,
       _boardingMembersProportion,
-      _businessOwners
+      businessOwner.address
     );
     await cPJManager.deployed();
 
@@ -125,11 +113,10 @@ describe("PJManager", function () {
   }
 
   async function deployDummyPJManager() {
-    return await deployPJManager(0, withShares(businessOwners, [1, 1]));
+    return await deployPJManager(0);
   }
 
   beforeEach(async function () {
-    let rest: SignerWithAddress[];
     [
       deployer,
       admin,
@@ -141,9 +128,8 @@ describe("PJManager", function () {
       depositer,
       boardMinter,
       user,
-      ...rest
+      businessOwner,
     ] = await ethers.getSigners();
-    businessOwners = rest.slice(0, 2);
 
     cMockQuestryPlatform = await new MockCallerContract__factory(
       deployer
@@ -164,229 +150,20 @@ describe("PJManager", function () {
 
   describe("constructor", function () {
     it("[S] should deploy if boardingMembersProportion is 0", async function () {
-      await deployPJManager(0, withShares(businessOwners, [1, 1]));
+      await deployPJManager(0);
     });
 
     it("[S] should deploy if boardingMembersProportion is 4000", async function () {
-      await deployPJManager(4000, withShares(businessOwners, [1, 1]));
+      await deployPJManager(4000);
     });
 
-    it("[S] should deploy if boardingMembersProportion is _feeDenominator()", async function () {
-      await deployPJManager(maxBasisPoint, withShares(businessOwners, [0, 0]));
+    it("[S] should deploy if boardingMembersProportion is _boardingMemberProportionDenominator()", async function () {
+      await deployPJManager(maxBasisPoint);
     });
 
-    it("[R] should not deploy if boardingMembersProportion is over _feeDenominator()", async function () {
-      await expect(
-        deployPJManager(maxBasisPoint + 1, withShares(businessOwners, [1, 1]))
-      ).revertedWith("LibPJManager: proportion is out of range");
-    });
-
-    it("[R] should not deploy if boardingMembersProportion is _feeDenominator() but businessOwnersShare exists", async function () {
-      await expect(
-        deployPJManager(maxBasisPoint, withShares(businessOwners, [1, 1]))
-      ).revertedWith(
-        "PJManager: proportion should be less than _feeDenominator() or businessOwners share should not exist"
-      );
-    });
-
-    it("[R] should not deploy if boardingMembersProportion is less than _feeDenominator() (is 4000) but businessOwnersShare doesn't exist", async function () {
-      await expect(
-        deployPJManager(4000, withShares(businessOwners, [0, 0]))
-      ).revertedWith(
-        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
-      );
-    });
-
-    it("[R] should not deploy if boardingMembersProportion is less than _feeDenominator() (is 0) but businessOwnersShare doesn't exist", async function () {
-      await expect(
-        deployPJManager(0, withShares(businessOwners, [0, 0]))
-      ).revertedWith(
-        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
-      );
-    });
-  });
-
-  describe("addBusinessOwner", function () {
-    let cPJManager: PJManager;
-
-    beforeEach(async function () {
-      ({ cPJManager } = await deployPJManager(
-        4000,
-        withShares(businessOwners, [1, 2])
-      ));
-    });
-
-    it("[S] should addBusinessOwner by stateManager", async function () {
-      const arg = { recipient: dummyAddress, share: 3 };
-      const tx = await cPJManager.connect(stateManager).addBusinessOwner(arg);
-      expect(tx)
-        .to.emit(cPJManager, "AddBusinessOwner")
-        .withArgs(arg.recipient, arg.share);
-      const got = await cPJManager.getBusinessOwners();
-      expect(got.length).equals(3);
-      expect(got[0].recipient).equals(businessOwners[0].address);
-      expect(got[0].share).equals(1);
-      expect(got[1].recipient).equals(businessOwners[1].address);
-      expect(got[1].share).equals(2);
-      expect(got[2].recipient).equals(arg.recipient);
-      expect(got[2].share).equals(arg.share);
-    });
-
-    it("[S] should addBusinessOwner by admin", async function () {
-      const arg = { recipient: dummyAddress, share: 3 };
-      await cPJManager.connect(admin).addBusinessOwner(arg);
-      const got = await cPJManager.getBusinessOwners();
-      expect(got.length).equals(3);
-      expect(got[2].recipient).equals(arg.recipient);
-      expect(got[2].share).equals(arg.share);
-    });
-
-    it("[R] should not addBusinessOwner by others", async function () {
-      const arg = { recipient: dummyAddress, share: 3 };
-      await expect(cPJManager.connect(user).addBusinessOwner(arg)).revertedWith(
-        "Invalid executor role"
-      );
-    });
-
-    it("[R] should not add existing owner", async function () {
-      const arg = { recipient: businessOwners[0].address, share: 3 };
-      await expect(
-        cPJManager.connect(stateManager).addBusinessOwner(arg)
-      ).revertedWith("PJManager: businessOwner already exists");
-    });
-
-    it("[R] should not addBusinessOwner if allocation validation fails", async function () {
-      ({ cPJManager } = await deployPJManager(
-        maxBasisPoint,
-        withShares(businessOwners, [0, 0])
-      ));
-      const arg = { recipient: dummyAddress, share: 3 };
-      await expect(
-        cPJManager.connect(stateManager).addBusinessOwner(arg)
-      ).revertedWith(
-        "PJManager: proportion should be less than _feeDenominator() or businessOwners share should not exist"
-      );
-    });
-  });
-
-  describe("removeBusinessOwner", function () {
-    let cPJManager: PJManager;
-
-    beforeEach(async function () {
-      ({ cPJManager } = await deployPJManager(
-        4000,
-        withShares(businessOwners, [1, 2])
-      ));
-    });
-
-    it("[S] should removeBusinessOwner by stateManager", async function () {
-      const tx = await cPJManager
-        .connect(stateManager)
-        .removeBusinessOwner(businessOwners[0].address);
-      expect(tx)
-        .to.emit(cPJManager, "RemoveBusinessOwner")
-        .withArgs(businessOwners[0].address);
-      const got = await cPJManager.getBusinessOwners();
-      expect(got.length).equals(1);
-      expect(got[0].recipient).equals(businessOwners[1].address);
-      expect(got[0].share).equals(BigNumber.from(2));
-    });
-
-    it("[S] should removeBusinessOwner by admin", async function () {
-      ({ cPJManager } = await deployPJManager(
-        4000,
-        withShares(businessOwners, [1, 2])
-      ));
-      await cPJManager
-        .connect(admin)
-        .removeBusinessOwner(businessOwners[0].address);
-      const got = await cPJManager.getBusinessOwners();
-      expect(got.length).equals(1);
-      expect(got[0].recipient).equals(businessOwners[1].address);
-      expect(got[0].share).equals(BigNumber.from(2));
-    });
-
-    it("[R] should not removeBusinessOwner by others", async function () {
-      await expect(
-        cPJManager.connect(user).removeBusinessOwner(businessOwners[0].address)
-      ).revertedWith("Invalid executor role");
-    });
-
-    it("[R] should not remove non-existing owner", async function () {
-      await expect(
-        cPJManager.connect(stateManager).removeBusinessOwner(dummyAddress)
-      ).revertedWith("PJManager: businessOwner doesn't exist");
-    });
-
-    it("[R] should not removeBusinessOwner if allocation validation fails", async function () {
-      await cPJManager
-        .connect(stateManager)
-        .removeBusinessOwner(businessOwners[0].address);
-      await expect(
-        cPJManager
-          .connect(stateManager)
-          .removeBusinessOwner(businessOwners[1].address)
-      ).revertedWith(
-        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
-      );
-    });
-  });
-
-  describe("updateBusinessOwner", function () {
-    let cPJManager: PJManager;
-
-    beforeEach(async function () {
-      ({ cPJManager } = await deployPJManager(
-        4000,
-        withShares(businessOwners, [1, 2])
-      ));
-    });
-
-    it("[S] should updateBusinessOwner by stateManager", async function () {
-      const arg = { recipient: businessOwners[0].address, share: 123 };
-      await cPJManager.connect(stateManager).updateBusinessOwner(arg);
-      const got = await cPJManager.getBusinessOwners();
-      expect(got.length).equals(2);
-      expect(got[0].recipient).equals(businessOwners[0].address);
-      expect(got[0].share).equals(arg.share);
-      expect(got[1].recipient).equals(businessOwners[1].address);
-      expect(got[1].share).equals(2);
-    });
-
-    it("[S] should updateBusinessOwner by admin", async function () {
-      const arg = { recipient: businessOwners[0].address, share: 123 };
-      await cPJManager.connect(admin).updateBusinessOwner(arg);
-      const got = await cPJManager.getBusinessOwners();
-      expect(got.length).equals(2);
-      expect(got[0].recipient).equals(businessOwners[0].address);
-      expect(got[0].share).equals(arg.share);
-      expect(got[1].recipient).equals(businessOwners[1].address);
-      expect(got[1].share).equals(2);
-    });
-
-    it("[R] should not updateBusinessOwner by others", async function () {
-      const arg = { recipient: businessOwners[0].address, share: 123 };
-      await expect(
-        cPJManager.connect(user).updateBusinessOwner(arg)
-      ).revertedWith("Invalid executor role");
-    });
-
-    it("[R] should not update non-existing owner", async function () {
-      const arg = { recipient: dummyAddress, share: 123 };
-      await expect(
-        cPJManager.connect(stateManager).updateBusinessOwner(arg)
-      ).revertedWith("PJManager: businessOwner doesn't exist");
-    });
-
-    it("[R] should not updateBusinessOwner if allocation validation fails", async function () {
-      let arg = { recipient: businessOwners[0].address, share: 0 };
-      await cPJManager.connect(stateManager).updateBusinessOwner(arg);
-
-      arg = { recipient: businessOwners[1].address, share: 0 };
-      await expect(
-        cPJManager.connect(stateManager).updateBusinessOwner(arg)
-      ).revertedWith(
-        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
+    it("[R] should not deploy if boardingMembersProportion is over _boardingMemberProportionDenominator()", async function () {
+      await expect(deployPJManager(maxBasisPoint + 1)).revertedWith(
+        "LibPJManager: proportion is out of range"
       );
     });
   });
@@ -396,10 +173,7 @@ describe("PJManager", function () {
     let cBoard: Board;
 
     beforeEach(async function () {
-      ({ cPJManager, cBoard } = await deployPJManager(
-        4000,
-        withShares(businessOwners, [1, 2])
-      ));
+      ({ cPJManager, cBoard } = await deployPJManager(4000));
     });
 
     it("[S] should registerBoard by stateManager", async function () {
@@ -470,10 +244,7 @@ describe("PJManager", function () {
     let cContributionPool2: ContributionPool;
 
     beforeEach(async function () {
-      ({ cPJManager, cERC20, cBoard } = await deployPJManager(
-        4000,
-        withShares(businessOwners, [1, 2])
-      ));
+      ({ cPJManager, cERC20, cBoard } = await deployPJManager(4000));
 
       cContributionPool = await new ContributionPool__factory(deployer).deploy(
         cMockQuestryPlatform.address,
@@ -847,10 +618,7 @@ describe("PJManager", function () {
     let cPJManager: PJManager;
 
     beforeEach(async function () {
-      ({ cPJManager } = await deployPJManager(
-        4000,
-        withShares(businessOwners, [1, 2])
-      ));
+      ({ cPJManager } = await deployPJManager(4000));
     });
 
     it("[S] get nonce state", async function () {
@@ -873,10 +641,7 @@ describe("PJManager", function () {
     let cPJManager: PJManager;
 
     beforeEach(async function () {
-      ({ cPJManager } = await deployPJManager(
-        4000,
-        withShares(businessOwners, [1, 2])
-      ));
+      ({ cPJManager } = await deployPJManager(4000));
     });
 
     it("[S] set sig threshold check", async function () {

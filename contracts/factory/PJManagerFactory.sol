@@ -27,13 +27,13 @@ contract PJManagerFactory is IPJManagerFactory, ERC2771Context {
    */
   function createPJManager(
     uint32 _boardingMembersProportion,
-    LibPJManager.AllocationShare[] memory _businessOwners
+    address _businessOwner
   ) external returns (PJManager pjManager) {
     pjManager = new PJManager(
       questryPlatform,
       _msgSender(),
       _boardingMembersProportion,
-      _businessOwners
+      _businessOwner
     );
     pjManagersByAdmin[_msgSender()].push(pjManager);
     adminByPJManager[pjManager] = _msgSender();
