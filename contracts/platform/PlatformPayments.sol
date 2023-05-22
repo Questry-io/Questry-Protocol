@@ -9,7 +9,7 @@ import {EIP712Upgradeable, ECDSAUpgradeable} from "@openzeppelin/contracts-upgra
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // interface import
-import {IPaymentResolver} from "contracts/interface/platform/IPaymentResolver.sol";
+//import {IPaymentResolver} from "contracts/interface/platform/IPaymentResolver.sol";
 import {ITokenControlProxy} from "contracts/interface/token-control-proxy/ITokenControlProxy.sol";
 import {IPJManager} from "contracts/interface/pjmanager/IPJManager.sol";
 
@@ -355,10 +355,12 @@ abstract contract PlatformPayments is
       _args.paymentCategory == LibQuestryPlatform.INVESTMENT_PAYMENT_CATEGORY ||
       _args.paymentCategory == LibQuestryPlatform.PROTOCOL_PAYMENT_CATEGORY
     ) {
+      /*
       require(
         _args.resolver != IPaymentResolver(address(0)),
         "PlatformPayments: no resolver"
       );
+      */
     } else {
       revert("PlatformPayments: unknown paymentCategory");
     }
