@@ -31,7 +31,7 @@ contract PJManager is
   uint32 public immutable boardingMembersProportion;
   uint32 private _defaultThreshold = 1;
   address public immutable admin;
-  LibPJManager.AllocationShare[] public businessOwners;
+  address public businessOwner;
   LibPJManager.AllocationShare[] public boards;
   Counters.Counter public boardIdTracker;
   mapping(address => mapping(uint256 => uint256)) public boardIds;
@@ -42,16 +42,16 @@ contract PJManager is
     IQuestryPlatform _questryPlatform,
     address _admin,
     uint32 _boardingMembersProportion,
-    LibPJManager.AllocationShare[] memory _businessOwners
+    address _businessOwner
   ) {
-    bool ownersShareExists = _initBusinessOwners(_businessOwners);
-    LibPJManager._validateAllocationSettings(
-      _businessOwners,
-      _boardingMembersProportion
+    require(
+      _boardingMembersProportion <= _boardingMemberProportionDenominator(),
+      "LibPJManager: proportion is out of range"
     );
 
     admin = _admin;
     boardingMembersProportion = _boardingMembersProportion;
+    businessOwner = _businessOwner;
     boardIdTracker.increment();
 
     //set nonce increment roll
@@ -73,91 +73,19 @@ contract PJManager is
   }
 
   // --------------------------------------------------
-  // LibPJManager.PJ_MANAGEMENT_ROLE
+  // PJManager Function
   // --------------------------------------------------
 
   /**
-   * @dev Adds `_businessOwner` to businessOwners.
-   *
-   * Emits an {AddBusinessOwner} event.
+   * @dev Updates a businessOwner
    */
-  function addBusinessOwner(
-    LibPJManager.AllocationShare calldata _businessOwner
-  ) external {
+  function updateBusinessOwner(address _businessOwner) external {
     require(
       hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
         hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
       "Invalid executor role"
     );
-    for (uint8 i = 0; i < businessOwners.length; i++) {
-      require(
-        businessOwners[i].recipient != _businessOwner.recipient,
-        "PJManager: businessOwner already exists"
-      );
-    }
-    businessOwners.push(_businessOwner);
-    LibPJManager._validateAllocationSettings(
-      businessOwners,
-      boardingMembersProportion
-    );
-    emit AddBusinessOwner(_businessOwner.recipient, _businessOwner.share);
-  }
-
-  /**
-   * @dev Removes `_businessOwner` from businessOwners.
-   *
-   * Emits an {RemoveBusinessOwner} event.
-   */
-  function removeBusinessOwner(address _businessOwner) external {
-    require(
-      hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
-        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
-      "Invalid executor role"
-    );
-    bool removed = false;
-    uint32 newIdx = 0;
-    for (uint256 i = 0; i < businessOwners.length; i++) {
-      if (businessOwners[i].recipient == _businessOwner) {
-        removed = true;
-      } else {
-        businessOwners[newIdx++] = businessOwners[i];
-      }
-    }
-    require(removed, "PJManager: businessOwner doesn't exist");
-    businessOwners.pop();
-    LibPJManager._validateAllocationSettings(
-      businessOwners,
-      boardingMembersProportion
-    );
-    emit RemoveBusinessOwner(_businessOwner);
-  }
-
-  /**
-   * @dev Updates `_businessOwner` for existing business owner.
-   *
-   * Emits an {UpdateBusinessOwner} event.
-   */
-  function updateBusinessOwner(
-    LibPJManager.AllocationShare calldata _businessOwner
-  ) external {
-    require(
-      hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
-        hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
-      "Invalid executor role"
-    );
-    bool updated = false;
-    for (uint256 i = 0; i < businessOwners.length; i++) {
-      if (businessOwners[i].recipient == _businessOwner.recipient) {
-        businessOwners[i].share = _businessOwner.share;
-        updated = true;
-      }
-    }
-    require(updated, "PJManager: businessOwner doesn't exist");
-    LibPJManager._validateAllocationSettings(
-      businessOwners,
-      boardingMembersProportion
-    );
-    emit UpdateBusinessOwner(_businessOwner.recipient, _businessOwner.share);
+    businessOwner = _businessOwner;
   }
 
   /**
@@ -344,12 +272,8 @@ contract PJManager is
   // --------------------------------------------------
 
   /// @inheritdoc IPJManager
-  function getBusinessOwners()
-    external
-    view
-    returns (LibPJManager.AllocationShare[] memory)
-  {
-    return businessOwners;
+  function getBusinessOwner() external view returns (address) {
+    return businessOwner;
   }
 
   /// @inheritdoc IPJManager
@@ -368,18 +292,27 @@ contract PJManager is
     return boards;
   }
 
+  /// @inheritdoc IPJManager
+  function getBoardingMemberProportionDenominator()
+    external
+    pure
+    returns (uint32)
+  {
+    return _boardingMemberProportionDenominator();
+  }
+
   // --------------------------------------------------
-  // Private functions
+  // Internal functions
   // --------------------------------------------------
 
-  function _initBusinessOwners(
-    LibPJManager.AllocationShare[] memory _businessOwners
-  ) private returns (bool shareExists) {
-    uint256 totalShare = 0;
-    for (uint256 i = 0; i < _businessOwners.length; i++) {
-      totalShare += _businessOwners[i].share;
-      businessOwners.push(_businessOwners[i]);
-    }
-    shareExists = totalShare > 0;
+  /**
+   * @dev The denominator for boarding member proportion.
+   */
+  function _boardingMemberProportionDenominator()
+    internal
+    pure
+    returns (uint32)
+  {
+    return 10000;
   }
 }

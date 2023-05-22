@@ -31,40 +31,4 @@ library LibPJManager {
     address recipient;
     uint120 share;
   }
-
-  /**
-   * @dev The denominator for boarding member proportion with which to interpret the fee set.
-   */
-  function _feeDenominator() internal pure returns (uint256) {
-    return 10000;
-  }
-
-  function _validateAllocationSettings(
-    AllocationShare[] memory _businessOwners,
-    uint32 _boardingMembersProportion
-  ) internal pure {
-    bool businessOwnersShareExists = false;
-    for (uint256 i = 0; i < _businessOwners.length; i++) {
-      if (_businessOwners[i].share > 0) {
-        businessOwnersShareExists = true;
-        break;
-      }
-    }
-
-    require(
-      _boardingMembersProportion <= _feeDenominator(),
-      "LibPJManager: proportion is out of range"
-    );
-    if (_boardingMembersProportion < _feeDenominator()) {
-      require(
-        businessOwnersShareExists,
-        "LibPJManager: businessOwners share should exist unless proportion is _feeDenominator()"
-      );
-    } else {
-      require(
-        !businessOwnersShareExists,
-        "LibPJManager: proportion should be less than _feeDenominator() or businessOwners share should not exist"
-      );
-    }
-  }
 }
