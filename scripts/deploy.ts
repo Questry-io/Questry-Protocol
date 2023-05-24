@@ -134,14 +134,14 @@ async function deployPJManagerFactory(
 
 async function deployBoardFactory(
   adminAddress: string,
-  pjManagerAddress: string
+  pjManagerFactoryAddress: string
 ): Promise<string> {
-  if (adminAddress === "" || pjManagerAddress === "") {
-    throw new Error("Please set adminAddress and pjManagerAddress");
+  if (adminAddress === "" || pjManagerFactoryAddress === "") {
+    throw new Error("Please set adminAddress and pjManagerFactoryAddress");
   }
   const BoardFactory = await hre.ethers.getContractFactory("BoardFactory");
   const boardFactory = await BoardFactory.deploy(
-    pjManagerAddress,
+    pjManagerFactoryAddress,
     adminAddress
   );
   await boardFactory.deployed();
@@ -218,10 +218,9 @@ async function main() {
     questryForwarderAddress
   );
 
-  const pjManagerAddress = process.env.PJ_MANAGER_ADDRESS || "";
   const boardFactoryAddress = await deployBoardFactory(
     adminAddress,
-    pjManagerAddress
+    pjManagerFactoryAddress
   );
 
   console.log(
