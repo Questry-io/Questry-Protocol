@@ -3,6 +3,7 @@ pragma solidity ^0.8.17;
 
 import {IPJManagerFactory} from "../interface/factory/IPJManagerFactory.sol";
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
+import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {Board, AccessControl} from "../token/soulbound/Board.sol";
 
 contract BoardFactory is AccessControl {
@@ -37,8 +38,9 @@ contract BoardFactory is AccessControl {
   function createBoard(
     string calldata _name,
     string calldata _symbol,
-    string memory _baseTokenURI,
+    string calldata _baseTokenURI,
     IPJManager _pjManager,
+    IContributionPool[] calldata _contributionPools,
     address _admin
   ) external returns (address board) {
     require(
@@ -57,6 +59,7 @@ contract BoardFactory is AccessControl {
         _symbol,
         _baseTokenURI,
         _pjManager,
+        _contributionPools,
         _admin,
         _trustedForwarder
       )

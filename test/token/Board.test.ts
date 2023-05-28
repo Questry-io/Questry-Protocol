@@ -44,6 +44,7 @@ describe("Board", function () {
       symbol,
       baseURI,
       cPJManagerMock.address,
+      [ethers.constants.AddressZero],
       SuperAdmin.address,
       dummyContract
     );
@@ -313,6 +314,16 @@ describe("Board", function () {
       await expect(cBoardMock.connect(NotBurner).burn(1)).to.be.revertedWith(
         NotBurnerRoleError
       );
+    });
+  });
+
+  describe("addContributionPool", function () {
+    it("[S] should add contribution pool", async function () {
+      await cBoardMock.connect(SuperAdmin).addContributionPool(dummyContract);
+      expect(await cBoardMock.getContributionPools()).deep.equal([
+        ethers.constants.AddressZero,
+        dummyContract,
+      ]);
     });
   });
 

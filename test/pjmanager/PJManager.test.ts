@@ -40,8 +40,6 @@ describe("PJManager", function () {
   let cCalculator: ContributionCalculator;
   let cContributionPool: ContributionPool;
 
-  const dummyAddress = "0x90fA7809574b4f8206ec1a47aDc37eCEE57443cb";
-
   const maxBasisPoint = 10000;
 
   const nativeMode = utils.keccak256(utils.toUtf8Bytes("NATIVE")).slice(0, 10);
@@ -94,6 +92,7 @@ describe("PJManager", function () {
       "BRD",
       "https://example.com",
       cPJManager.address,
+      [cContributionPool.address],
       boardMinter.address,
       ethers.constants.AddressZero
     );
@@ -194,6 +193,7 @@ describe("PJManager", function () {
         "BRD2",
         "https://example.com",
         cPJManager.address,
+        [ethers.constants.AddressZero],
         boardMinter.address,
         ethers.constants.AddressZero
       );

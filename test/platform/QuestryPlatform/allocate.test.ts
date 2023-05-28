@@ -69,6 +69,7 @@ describe("QuestryPlatform - allocate", function () {
       "BRD",
       "https://example.com",
       cPJManager.address,
+      [ethers.constants.AddressZero],
       boardMinter.address,
       ethers.constants.AddressZero
     );
