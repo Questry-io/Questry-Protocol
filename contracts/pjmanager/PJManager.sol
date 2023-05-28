@@ -8,6 +8,7 @@ import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 
 //interface imported
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
+import {IBoard} from "../interface/token/IBoard.sol";
 import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -32,7 +33,7 @@ contract PJManager is
   uint32 private _defaultThreshold = 1;
   address public immutable admin;
   address public businessOwner;
-  LibPJManager.AllocationShare[] public boards;
+  IBoard[] public boards;
   Counters.Counter public boardIdTracker;
   mapping(address => mapping(uint256 => uint256)) public boardIds;
   //signature verify reply management
@@ -93,21 +94,18 @@ contract PJManager is
    *
    * Emits a {RegisterBoard} event.
    */
-  function registerBoard(LibPJManager.AllocationShare memory _board) external {
+  function registerBoard(IBoard _board) external {
     require(
       hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
         hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
       "Invalid executor role"
     );
     for (uint8 i = 0; i < boards.length; i++) {
-      require(
-        boards[i].recipient != _board.recipient,
-        "PJManager: board already exists"
-      );
+      require(boards[i] != _board, "PJManager: board already exists");
     }
-    _setupRole(LibPJManager.PJ_BOARD_ID_ROLE, _board.recipient);
+    _setupRole(LibPJManager.PJ_BOARD_ID_ROLE, address(_board));
     boards.push(_board);
-    emit RegisterBoard(_board.recipient, _board.share);
+    emit RegisterBoard(address(_board));
   }
 
   // --------------------------------------------------
@@ -284,11 +282,7 @@ contract PJManager is
   /**
    * @dev Returns the list of boards.
    */
-  function getBoards()
-    external
-    view
-    returns (LibPJManager.AllocationShare[] memory)
-  {
+  function getBoards() external view returns (IBoard[] memory) {
     return boards;
   }
 

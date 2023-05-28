@@ -176,15 +176,13 @@ describe("PJManager", function () {
     });
 
     it("[S] should registerBoard by stateManager", async function () {
-      const arg = { recipient: cBoard.address, share: 1 };
-      const tx = await cPJManager.connect(stateManager).registerBoard(arg);
+      const tx = await cPJManager
+        .connect(stateManager)
+        .registerBoard(cBoard.address);
       const got = await cPJManager.getBoards();
       expect(got.length).equals(1);
-      expect(got[0].recipient).equals(arg.recipient);
-      expect(got[0].share).equals(arg.share);
-      expect(tx)
-        .to.emit(cPJManager, "RegisterBoard")
-        .withArgs(arg.recipient, arg.share);
+      expect(got[0]).equals(cBoard.address);
+      expect(tx).to.emit(cPJManager, "RegisterBoard").withArgs(cBoard.address);
     });
 
     it("[S] should register multiple boards by stateManager", async function () {
@@ -197,40 +195,31 @@ describe("PJManager", function () {
         boardMinter.address,
         ethers.constants.AddressZero
       );
-      const arg1 = { recipient: cBoard.address, share: 1 };
-      const arg2 = { recipient: cBoard2.address, share: 2 };
-      await cPJManager.connect(stateManager).registerBoard(arg1);
-      await cPJManager.connect(stateManager).registerBoard(arg2);
+      await cPJManager.connect(stateManager).registerBoard(cBoard.address);
+      await cPJManager.connect(stateManager).registerBoard(cBoard2.address);
       const got = await cPJManager.getBoards();
       expect(got.length).equals(2);
-      expect(got[0].recipient).equals(arg1.recipient);
-      expect(got[0].share).equals(arg1.share);
-      expect(got[1].recipient).equals(arg2.recipient);
-      expect(got[1].share).equals(arg2.share);
+      expect(got[0]).equals(cBoard.address);
+      expect(got[1]).equals(cBoard2.address);
     });
 
     it("[S] should registerBoard by admin", async function () {
-      const arg = { recipient: cBoard.address, share: 1 };
-      await cPJManager.connect(admin).registerBoard(arg);
+      await cPJManager.connect(admin).registerBoard(cBoard.address);
       const got = await cPJManager.getBoards();
       expect(got.length).equals(1);
-      expect(got[0].recipient).equals(arg.recipient);
-      expect(got[0].share).equals(arg.share);
+      expect(got[0]).equals(cBoard.address);
     });
 
     it("[R] should not registerBoard by others", async function () {
-      const arg = { recipient: cBoard.address, share: 1 };
-      await expect(cPJManager.connect(user).registerBoard(arg)).revertedWith(
-        "Invalid executor role"
-      );
+      await expect(
+        cPJManager.connect(user).registerBoard(cBoard.address)
+      ).revertedWith("Invalid executor role");
     });
 
     it("[R] should not register the same board two times", async function () {
-      const arg1 = { recipient: cBoard.address, share: 1 };
-      const arg2 = { recipient: cBoard.address, share: 2 };
-      await cPJManager.connect(stateManager).registerBoard(arg1);
+      await cPJManager.connect(stateManager).registerBoard(cBoard.address);
       await expect(
-        cPJManager.connect(stateManager).registerBoard(arg2)
+        cPJManager.connect(stateManager).registerBoard(cBoard.address)
       ).revertedWith("PJManager: board already exists");
     });
   });
@@ -238,7 +227,6 @@ describe("PJManager", function () {
   describe("verifysignature (unit test)", function () {
     let cPJManager: PJManager;
     let cERC20: RandomERC20;
-    let cDummyERC20: RandomERC20;
     let cBoard: Board;
     let cContributionPool: ContributionPool;
     let cContributionPool2: ContributionPool;
@@ -967,10 +955,7 @@ describe("PJManager", function () {
     beforeEach(async function () {
       ({ cPJManager } = await deployDummyPJManager());
       cMockBoard = await new MockCallerContract__factory(deployer).deploy();
-      await cPJManager.connect(admin).registerBoard({
-        recipient: cMockBoard.address,
-        share: 1,
-      });
+      await cPJManager.connect(admin).registerBoard(cMockBoard.address);
     });
 
     it("[S] should assignBoardId by registered board", async function () {

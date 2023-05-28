@@ -10,7 +10,7 @@ interface IPJManager {
   event AddBusinessOwner(address owner, uint120 share);
   event RemoveBusinessOwner(address owner);
   event UpdateBusinessOwner(address owner, uint120 share);
-  event RegisterBoard(address board, uint120 share);
+  event RegisterBoard(address board);
   event Deposit(address depositer, uint256 netAmount);
   event DepositERC20(address token, address depositer, uint256 netAmount);
   event AllowERC20(address token);
