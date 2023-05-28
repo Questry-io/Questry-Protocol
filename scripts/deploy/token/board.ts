@@ -18,6 +18,7 @@ async function main() {
   const symbol = "";
   const baseTokenURI = "";
   const pjmanagerContract = "";
+  const contributionPool = "";
   const admin = "";
   const Trustedforwarder = "";
 
@@ -26,6 +27,7 @@ async function main() {
     symbol == "" ||
     baseTokenURI == "" ||
     pjmanagerContract == "" ||
+    contributionPool == "" ||
     admin == "" ||
     Trustedforwarder == ""
   ) {
@@ -41,6 +43,7 @@ async function main() {
     symbol,
     baseTokenURI,
     pjmanagerContract,
+    contributionPool,
     admin,
     Trustedforwarder
   );
@@ -55,5 +58,3 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
-
-

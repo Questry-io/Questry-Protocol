@@ -44,7 +44,7 @@ describe("Board", function () {
       symbol,
       baseURI,
       cPJManagerMock.address,
-      [ethers.constants.AddressZero],
+      dummyContract,
       SuperAdmin.address,
       dummyContract
     );
@@ -91,6 +91,10 @@ describe("Board", function () {
 
     it("Trusted Forwarder Check", async function () {
       expect(await cBoardMock.isTrustedForwarder(dummyContract)).to.equal(true);
+    });
+
+    it("getContributionPool", async function () {
+      expect(await cBoardMock.getContributionPool()).to.equal(dummyContract);
     });
   });
 
@@ -312,16 +316,6 @@ describe("Board", function () {
       await expect(cBoardMock.connect(NotBurner).burn(1)).to.be.revertedWith(
         NotBurnerRoleError
       );
-    });
-  });
-
-  describe("addContributionPool", function () {
-    it("[S] should add contribution pool", async function () {
-      await cBoardMock.connect(SuperAdmin).addContributionPool(dummyContract);
-      expect(await cBoardMock.getContributionPools()).deep.equal([
-        ethers.constants.AddressZero,
-        dummyContract,
-      ]);
     });
   });
 

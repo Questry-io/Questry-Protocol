@@ -92,7 +92,7 @@ describe("PJManager", function () {
       "BRD",
       "https://example.com",
       cPJManager.address,
-      [cContributionPool.address],
+      cContributionPool.address,
       boardMinter.address,
       ethers.constants.AddressZero
     );
@@ -191,7 +191,7 @@ describe("PJManager", function () {
         "BRD2",
         "https://example.com",
         cPJManager.address,
-        [ethers.constants.AddressZero],
+        ethers.constants.AddressZero,
         boardMinter.address,
         ethers.constants.AddressZero
       );

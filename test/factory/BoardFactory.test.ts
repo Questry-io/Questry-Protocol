@@ -76,7 +76,7 @@ describe("BoardFactory", function () {
           symbol,
           baseURI,
           pjManagerAddress,
-          [ethers.constants.AddressZero],
+          ethers.constants.AddressZero,
           pjManagerAdmin.address
         );
       const board = await cBoardFactory.getContractAddress(name, symbol);
@@ -91,7 +91,7 @@ describe("BoardFactory", function () {
           symbol,
           baseURI,
           pjManagerAddress,
-          [ethers.constants.AddressZero],
+          ethers.constants.AddressZero,
           pjManagerAdmin.address
         );
       const board = await cBoardFactory.getContractAddress(name, symbol);
@@ -115,7 +115,7 @@ describe("BoardFactory", function () {
             symbol,
             baseURI,
             pjManagerAddress,
-            [ethers.constants.AddressZero],
+            ethers.constants.AddressZero,
             pjManagerAdmin.address
           )
       ).revertedWith("BoardFactory: only PJManager admin can create Board");
@@ -129,7 +129,7 @@ describe("BoardFactory", function () {
           symbol,
           baseURI,
           pjManagerAddress,
-          [ethers.constants.AddressZero],
+          ethers.constants.AddressZero,
           pjManagerAdmin.address
         );
       await cBoardFactory.getContractAddress(name, symbol);
@@ -141,7 +141,7 @@ describe("BoardFactory", function () {
             symbol,
             baseURI,
             pjManagerAddress,
-            [ethers.constants.AddressZero],
+            ethers.constants.AddressZero,
             pjManagerAdmin.address
           )
       ).to.be.revertedWith(boardExistsError);

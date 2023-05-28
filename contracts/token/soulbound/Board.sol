@@ -17,12 +17,10 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
   bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
   bytes32 public constant URIUPDATER_ROLE = keccak256("URIUPDATER_ROLE");
   bytes32 public constant BURNER_ROLE = keccak256("BUNER_ROLE");
-  bytes32 public constant CONTRIBUTION_POOL_ROLE =
-    keccak256("CONTRIBUTION_POOL_ROLE");
 
   bool public isTransfable = false;
   IPJManager public immutable pjManager;
-  IContributionPool[] private contributionPools;
+  IContributionPool private immutable contributionPool;
   string private baseTokenURI;
   address[] private boardingMembers;
   mapping(address => bool) private isBoardingMember;
@@ -40,22 +38,19 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
     string memory _symbol,
     string memory _baseTokenURI,
     IPJManager _pjManager,
-    IContributionPool[] memory _contributionPools,
+    IContributionPool _contributionPool,
     address _admin,
     address _trustedForwarder
   ) ERC721(_name, _symbol) ERC2771Context(_trustedForwarder) {
     baseTokenURI = _baseTokenURI;
     pjManager = _pjManager;
+    contributionPool = _contributionPool;
     tokenIdTracker.increment();
-    for (uint256 i = 0; i < _contributionPools.length; i++) {
-      contributionPools.push(_contributionPools[i]);
-    }
 
     _setupRole(DEFAULT_ADMIN_ROLE, _admin);
     _setupRole(MINTER_ROLE, _admin);
     _setupRole(URIUPDATER_ROLE, _admin);
     _setupRole(BURNER_ROLE, _admin);
-    _setupRole(CONTRIBUTION_POOL_ROLE, _admin);
   }
 
   /**
@@ -213,17 +208,6 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
     }
   }
 
-  /**
-   * @dev Add contribution pool `_pool` to the board.
-   */
-  function addContributionPool(IContributionPool _pool) external {
-    require(
-      hasRole(CONTRIBUTION_POOL_ROLE, _msgSender()),
-      "Board: must have contribution pool role to add pool"
-    );
-    contributionPools.push(_pool);
-  }
-
   /// @inheritdoc IBoard
   function getBoardingMembers() external view returns (address[] memory) {
     return boardingMembers;
@@ -243,14 +227,10 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
   }
 
   /**
-   * @dev Returns contribution pool addresses associated with the board.
+   * @dev Returns contribution pool associated with the board.
    */
-  function getContributionPools()
-    external
-    view
-    returns (IContributionPool[] memory)
-  {
-    return contributionPools;
+  function getContributionPool() external view returns (IContributionPool) {
+    return contributionPool;
   }
 
   /// @dev Overridden for Board

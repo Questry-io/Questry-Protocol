@@ -40,7 +40,7 @@ contract BoardFactory is AccessControl {
     string calldata _symbol,
     string calldata _baseTokenURI,
     IPJManager _pjManager,
-    IContributionPool[] calldata _contributionPools,
+    IContributionPool _contributionPool,
     address _admin
   ) external returns (address board) {
     require(
@@ -59,7 +59,7 @@ contract BoardFactory is AccessControl {
         _symbol,
         _baseTokenURI,
         _pjManager,
-        _contributionPools,
+        _contributionPool,
         _admin,
         _trustedForwarder
       )
