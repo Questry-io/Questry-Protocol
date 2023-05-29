@@ -218,17 +218,12 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
     return boardingMembers.length > 0;
   }
 
-  /**
-   * @dev Returns if `_account` has the token, in other words, it is a boarding member.
-   * Note that only one token can be minted from the same Board contract per account.
-   */
+  /// @inheritdoc IBoard
   function isBoardingMember(address _account) external view returns (bool) {
     return onBoarding[_account];
   }
 
-  /**
-   * @dev Returns contribution pool associated with the board.
-   */
+  /// @inheritdoc IBoard
   function getContributionPool() external view returns (IContributionPool) {
     return contributionPool;
   }

@@ -6,6 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IContributionPool} from "../interface/pjmanager/IContributionPool.sol";
 import {IContributionCalculator} from "../interface/platform/IContributionCalculator.sol";
+import {IBoard} from "../interface/token/IBoard.sol";
 import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 
 /**
@@ -70,12 +71,15 @@ contract ContributionCalculator is
   {
     result.shares = new uint120[](_members.length);
     for (uint256 memberIdx = 0; memberIdx < _members.length; memberIdx++) {
-      for (uint256 poolIdx = 0; poolIdx < _args.pools.length; poolIdx++) {
-        IContributionPool c = IContributionPool(_args.pools[poolIdx]);
-        uint120 value = _args.coefs[poolIdx] *
-          c.getContribution(_members[memberIdx]);
-        result.shares[memberIdx] += value;
-        result.totalShare += value;
+      for (uint256 boardIdx = 0; boardIdx < _args.boards.length; boardIdx++) {
+        IBoard board = _args.boards[boardIdx];
+        if (board.isBoardingMember(_members[memberIdx])) {
+          IContributionPool c = board.getContributionPool();
+          uint120 value = _args.coefs[boardIdx] *
+            c.getContribution(_members[memberIdx]);
+          result.shares[memberIdx] += value;
+          result.totalShare += value;
+        }
       }
     }
   }

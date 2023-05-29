@@ -90,6 +90,16 @@ interface IPJManager {
   function getBoardingMembersProportion() external view returns (uint32);
 
   /**
+   * @dev Returns if there are any boarding members in this project.
+   */
+  function boardingMembersExist() external view returns (bool);
+
+  /**
+   * @dev Returns the list of board members across all boards in this project.
+   */
+  function getBoardingMembers() external view returns (address[] memory);
+
+  /**
    * @dev Returns token whitelists.
    */
   function getTokenWhitelists() external view returns (IERC20[] memory);

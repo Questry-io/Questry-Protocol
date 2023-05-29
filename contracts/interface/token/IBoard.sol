@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.17;
 
+import {IContributionPool} from "contracts/interface/pjmanager/IContributionPool.sol";
+
 /**
  * @title Board interface
  */
@@ -54,4 +56,15 @@ interface IBoard {
    * @dev Return all boarding members.
    */
   function getBoardingMembers() external returns (address[] memory);
+
+  /**
+   * @dev Returns if `_account` has the token, in other words, it is a boarding member.
+   * Note that only one token can be minted from the same Board contract per account.
+   */
+  function isBoardingMember(address _account) external view returns (bool);
+
+  /**
+   * @dev Returns contribution pool associated with the board.
+   */
+  function getContributionPool() external view returns (IContributionPool);
 }

@@ -296,8 +296,13 @@ contract PJManager is
   }
 
   /**
-   * @dev Returns the list of board members across all boards in this project.
+   * @dev Returns if there are any boarding members in this project.
    */
+  function boardingMembersExist() external view returns (bool) {
+    return boardingMembers.length > 0;
+  }
+
+  /// @inheritdoc IPJManager
   function getBoardingMembers() external view returns (address[] memory) {
     return boardingMembers;
   }

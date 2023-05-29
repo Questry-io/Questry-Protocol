@@ -8,14 +8,13 @@ export type AllocateArgs = {
   pjManager: string;
   paymentMode: string;
   paymentToken: string;
-  board: string;
   calculateArgs: CalculateDispatchArgs;
   updateNeededPools: string[];
   pjnonce: string;
 };
 
 export type SharesWithLinear = {
-  pools: string[];
+  boards: string[];
   coefs: number[];
 };
 
@@ -48,7 +47,7 @@ export class TestUtils {
     return {
       algorithm: TestUtils.linearAlgorithm,
       args: utils.defaultAbiCoder.encode(
-        ["(address[] pools,uint120[] coefs)"],
+        ["(address[] boards,uint120[] coefs)"],
         [args]
       ),
     };
