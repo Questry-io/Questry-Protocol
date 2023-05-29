@@ -23,7 +23,7 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
   IContributionPool private immutable contributionPool;
   string private baseTokenURI;
   address[] private boardingMembers;
-  mapping(address => bool) private isBoardingMember;
+  mapping(address => bool) private onBoarding;
   Counters.Counter private tokenIdTracker;
 
   /**
@@ -155,9 +155,9 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
       "Board: must have minter role to mint"
     );
 
-    if (!isBoardingMember[_to]) {
+    if (!onBoarding[_to]) {
       boardingMembers.push(_to);
-      isBoardingMember[_to] = true;
+      onBoarding[_to] = true;
     }
 
     uint256 tokenId = tokenIdTracker.current();
@@ -183,7 +183,7 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
 
     address owner = ownerOf(_tokenId);
     if (balanceOf(owner) == 1) {
-      isBoardingMember[owner] = false;
+      onBoarding[owner] = false;
       // XXX: too much gas cost especially when tokens bulk burned
       uint256 newIdx = 0;
       for (uint256 i = 0; i < boardingMembers.length; i++) {
@@ -222,8 +222,8 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
    * @dev Returns if `_account` has the token, in other words, it is a boarding member.
    * Note that only one token can be minted from the same Board contract per account.
    */
-  function getIsBoardingMember(address _account) external view returns (bool) {
-    return isBoardingMember[_account];
+  function isBoardingMember(address _account) external view returns (bool) {
+    return onBoarding[_account];
   }
 
   /**
