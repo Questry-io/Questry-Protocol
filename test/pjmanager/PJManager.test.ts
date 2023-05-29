@@ -948,7 +948,7 @@ describe("PJManager", function () {
     });
   });
 
-  describe("assign[resolve]BoardId", function () {
+  describe("assignBoardingMember and resolveBoardId", function () {
     let cPJManager: PJManager;
     let cMockBoard: MockCallerContract;
 
@@ -958,32 +958,41 @@ describe("PJManager", function () {
       await cPJManager.connect(admin).registerBoard(cMockBoard.address);
     });
 
-    it("[S] should assignBoardId by registered board", async function () {
+    it("[S] should assignBoardingMember by registered board", async function () {
       await TestUtils.call(
         cMockBoard,
         cPJManager,
-        "assignBoardId(address _board,uint256 _tokenId)",
-        [cMockBoard.address, 1]
+        "assignBoardingMember(address _member,address _board,uint256 _tokenId)",
+        [signer.address, cMockBoard.address, 1]
       );
       let boardId = await cPJManager.resolveBoardId(cMockBoard.address, 1);
       expect(boardId).equals(1);
+      expect(await cPJManager.getBoardingMembers()).deep.equals([
+        signer.address,
+      ]);
+      expect(await cPJManager.isBoardingMember(signer.address)).true;
 
       await TestUtils.call(
         cMockBoard,
         cPJManager,
-        "assignBoardId(address _board,uint256 _tokenId)",
-        [cMockBoard.address, 2]
+        "assignBoardingMember(address _member,address _board,uint256 _tokenId)",
+        [signer2.address, cMockBoard.address, 2]
       );
       boardId = await cPJManager.resolveBoardId(cMockBoard.address, 2);
       expect(boardId).equals(2);
+      expect(await cPJManager.getBoardingMembers()).deep.equals([
+        signer.address,
+        signer2.address,
+      ]);
+      expect(await cPJManager.isBoardingMember(signer2.address)).true;
     });
 
-    it("[R] should not assignBoardId to the same token", async function () {
+    it("[R] should not assignBoardingMember to the same token", async function () {
       await TestUtils.call(
         cMockBoard,
         cPJManager,
-        "assignBoardId(address _board,uint256 _tokenId)",
-        [cMockBoard.address, 1]
+        "assignBoardingMember(address _member,address _board,uint256 _tokenId)",
+        [ethers.constants.AddressZero, cMockBoard.address, 1]
       );
       const boardId = await cPJManager.resolveBoardId(cMockBoard.address, 1);
       expect(boardId).equals(1);
@@ -992,15 +1001,21 @@ describe("PJManager", function () {
         TestUtils.call(
           cMockBoard,
           cPJManager,
-          "assignBoardId(address _board,uint256 _tokenId)",
-          [cMockBoard.address, 1]
+          "assignBoardingMember(address _member,address _board,uint256 _tokenId)",
+          [ethers.constants.AddressZero, cMockBoard.address, 1]
         )
       ).revertedWith("PJManager: assign for existent boardId");
     });
 
     it("[R] should not registerBoardId by others", async function () {
       await expect(
-        cPJManager.connect(admin).assignBoardId(cMockBoard.address, 1)
+        cPJManager
+          .connect(admin)
+          .assignBoardingMember(
+            ethers.constants.AddressZero,
+            cMockBoard.address,
+            1
+          )
       ).revertedWith(missingRoleError(admin.address, boardIdRoleHash));
     });
   });

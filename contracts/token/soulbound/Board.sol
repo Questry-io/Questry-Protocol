@@ -164,7 +164,7 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
     _mint(_to, tokenId);
     tokenIdTracker.increment();
 
-    IPJManager(pjManager).assignBoardId(address(this), tokenId);
+    IPJManager(pjManager).assignBoardingMember(_to, address(this), tokenId);
   }
 
   /// @inheritdoc IBoard

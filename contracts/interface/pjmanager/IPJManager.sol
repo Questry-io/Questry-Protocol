@@ -39,9 +39,13 @@ interface IPJManager {
   ) external;
 
   /**
-   * @dev Assign a new board id corresponding to the `_board` and `_tokenId` pair.
+   * @dev Sets a new boarding `_member` and generate a unique board ID for the `_board` and `_tokenId` combination.
    */
-  function assignBoardId(address _board, uint256 _tokenId) external;
+  function assignBoardingMember(
+    address _member,
+    address _board,
+    uint256 _tokenId
+  ) external;
 
   /**
    * @dev Resolve unique boardId in the project from `_board` and `_tokenId` pair.

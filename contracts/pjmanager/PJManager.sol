@@ -36,6 +36,8 @@ contract PJManager is
   IBoard[] public boards;
   Counters.Counter public boardIdTracker;
   mapping(address => mapping(uint256 => uint256)) public boardIds;
+  address[] public boardingMembers;
+  mapping(address => bool) private onBoarding;
   //signature verify reply management
   mapping(bytes => bool) private _isCompVerifySignature;
 
@@ -241,18 +243,25 @@ contract PJManager is
   // DID BoardId functions
   // --------------------------------------------------
 
-  function assignBoardId(address _board, uint256 _tokenId)
-    external
-    onlyRole(LibPJManager.PJ_BOARD_ID_ROLE)
-  {
+  /// @inheritdoc IPJManager
+  function assignBoardingMember(
+    address _member,
+    address _board,
+    uint256 _tokenId
+  ) external onlyRole(LibPJManager.PJ_BOARD_ID_ROLE) {
     require(
       boardIds[_board][_tokenId] == 0,
       "PJManager: assign for existent boardId"
     );
     boardIds[_board][_tokenId] = boardIdTracker.current();
+    if (!onBoarding[_member]) {
+      onBoarding[_member] = true;
+      boardingMembers.push(_member);
+    }
     boardIdTracker.increment();
   }
 
+  /// @inheritdoc IPJManager
   function resolveBoardId(address _board, uint256 _tokenId)
     external
     view
@@ -284,6 +293,20 @@ contract PJManager is
    */
   function getBoards() external view returns (IBoard[] memory) {
     return boards;
+  }
+
+  /**
+   * @dev Returns the list of board members across all boards in this project.
+   */
+  function getBoardingMembers() external view returns (address[] memory) {
+    return boardingMembers;
+  }
+
+  /**
+   * @dev Returns if the `_account` is a boarding member in this project.
+   */
+  function isBoardingMember(address _account) external view returns (bool) {
+    return onBoarding[_account];
   }
 
   /// @inheritdoc IPJManager
