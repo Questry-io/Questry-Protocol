@@ -26,7 +26,7 @@ describe("QuestryPlatform - allocate", function () {
   let admin: SignerWithAddress;
   let poolAdmin: SignerWithAddress;
   let whitelistController: SignerWithAddress;
-  let boardMinter: SignerWithAddress;
+  let boardAdmin: SignerWithAddress;
   let contributionUpdater: SignerWithAddress;
   let businessOwner: SignerWithAddress;
   let boardingMembers: SignerWithAddress[];
@@ -69,13 +69,12 @@ describe("QuestryPlatform - allocate", function () {
       "BRD",
       "https://example.com",
       cPJManager.address,
-      boardMinter.address,
+      cContributionPool.address,
+      boardAdmin.address,
       ethers.constants.AddressZero
     );
     await cBoard.deployed();
-    cPJManager
-      .connect(admin)
-      .registerBoard({ recipient: cBoard.address, share: 1 });
+    cPJManager.connect(admin).registerBoard(cBoard.address);
 
     // deploy mock ERC20
     const cERC20 = await new RandomERC20__factory(deployer).deploy();
@@ -125,7 +124,6 @@ describe("QuestryPlatform - allocate", function () {
         { name: "pjManager", type: "address" },
         { name: "paymentMode", type: "bytes4" },
         { name: "paymentToken", type: "address" },
-        { name: "board", type: "address" },
         { name: "calculateArgs", type: "CalculateDispatchArgs" },
         { name: "updateNeededPools", type: "address[]" },
         { name: "pjnonce", type: "uint256" },
@@ -168,7 +166,7 @@ describe("QuestryPlatform - allocate", function () {
       admin,
       poolAdmin,
       whitelistController,
-      boardMinter,
+      boardAdmin,
       contributionUpdater,
       daoTreasuryPool,
       businessOwner,
@@ -256,7 +254,7 @@ describe("QuestryPlatform - allocate", function () {
       member: SignerWithAddress,
       contribution: number
     ) {
-      await cBoard.connect(boardMinter).mint(member.address);
+      await cBoard.connect(boardAdmin).mint(member.address);
       await cContributionPool
         .connect(contributionUpdater)
         .addContribution(member.address, contribution);
@@ -298,9 +296,8 @@ describe("QuestryPlatform - allocate", function () {
         pjManager: cPJManager.address,
         paymentMode,
         paymentToken,
-        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear({
-          pools: [cContributionPool.address],
+          boards: [cBoard.address],
           coefs: [1],
         }),
         updateNeededPools: [cContributionPool.address],
@@ -389,9 +386,10 @@ describe("QuestryPlatform - allocate", function () {
         for (let i = 0; i < expectedByAmounts.accounts.length; i++) {
           const account = expectedByAmounts.accounts[i];
           const byAmount = expectedByAmounts.byAmounts[i];
-          expect(await cERC20.balanceOf(account.address)).equals(
-            initialBalances[account.address] + byAmount
-          );
+          expect(
+            (await cERC20.balanceOf(account.address)).toNumber() -
+              initialBalances[account.address]
+          ).equals(byAmount);
         }
       }
     }
@@ -538,6 +536,54 @@ describe("QuestryPlatform - allocate", function () {
           64, // 97 * 2 / 3
           0, // No allocation to businessOwner when boardingMembersProportion is 10000
           1, // 97 - (32 + 64)
+        ],
+      });
+    });
+
+    it("[S] ERC20: should allocate all to businessOwners when all boards have been burned", async function () {
+      const { cPJManager, cBoard, cERC20 } = await deployPJManager(4000);
+      await setupIncrementTermSigner();
+      await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
+      await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
+      await cBoard.connect(boardAdmin).bulkBurn([1, 2]);
+      await executeERC20PaymentProtocolCategory(cPJManager, 100, cERC20);
+
+      await allocateAndVerify(cPJManager, cBoard, cERC20, erc20Mode, {
+        accounts: [
+          boardingMembers[0],
+          boardingMembers[1],
+          businessOwner,
+          daoTreasuryPool,
+        ],
+        byAmounts: [
+          0, // boardingMembers[0]'s boards have been burned.
+          0, // boardingMembers[1]'s boards have been burned.
+          38, // floor(97 * 0.4), which is originally boarding members amount.
+          0,
+        ],
+      });
+    });
+
+    it("[S] ERC20: should allocate all to DAO treasury when boardingMembersProportion is 10000 and all boards have been burned", async function () {
+      const { cPJManager, cBoard, cERC20 } = await deployPJManager(10000);
+      await setupIncrementTermSigner();
+      await addContribution(cBoard, cContributionPool, boardingMembers[0], 1);
+      await addContribution(cBoard, cContributionPool, boardingMembers[1], 2);
+      await cBoard.connect(boardAdmin).bulkBurn([1, 2]);
+      await executeERC20PaymentProtocolCategory(cPJManager, 100, cERC20);
+
+      await allocateAndVerify(cPJManager, cBoard, cERC20, erc20Mode, {
+        accounts: [
+          boardingMembers[0],
+          boardingMembers[1],
+          businessOwner,
+          daoTreasuryPool,
+        ],
+        byAmounts: [
+          0, // boardingMembers[0]'s boards have been burned.
+          0, // boardingMembers[1]'s boards have been burned.
+          0, // The business owner won't take it,
+          97, // so it all goes to the DAO treasury.
         ],
       });
     });

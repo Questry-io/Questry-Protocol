@@ -8,6 +8,7 @@ import {Counters} from "@openzeppelin/contracts/utils/Counters.sol";
 
 //interface imported
 import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
+import {IBoard} from "../interface/token/IBoard.sol";
 import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -32,9 +33,11 @@ contract PJManager is
   uint32 private _defaultThreshold = 1;
   address public immutable admin;
   address public businessOwner;
-  LibPJManager.AllocationShare[] public boards;
+  IBoard[] public boards;
   Counters.Counter public boardIdTracker;
   mapping(address => mapping(uint256 => uint256)) public boardIds;
+  address[] public boardingMembers;
+  mapping(address => bool) private onBoarding;
   //signature verify reply management
   mapping(bytes => bool) private _isCompVerifySignature;
 
@@ -93,21 +96,18 @@ contract PJManager is
    *
    * Emits a {RegisterBoard} event.
    */
-  function registerBoard(LibPJManager.AllocationShare memory _board) external {
+  function registerBoard(IBoard _board) external {
     require(
       hasRole(LibPJManager.PJ_MANAGEMENT_ROLE, _msgSender()) ||
         hasRole(LibPJManager.PJ_ADMIN_ROLE, _msgSender()),
       "Invalid executor role"
     );
     for (uint8 i = 0; i < boards.length; i++) {
-      require(
-        boards[i].recipient != _board.recipient,
-        "PJManager: board already exists"
-      );
+      require(boards[i] != _board, "PJManager: board already exists");
     }
-    _setupRole(LibPJManager.PJ_BOARD_ID_ROLE, _board.recipient);
+    _setupRole(LibPJManager.PJ_BOARD_ID_ROLE, address(_board));
     boards.push(_board);
-    emit RegisterBoard(_board.recipient, _board.share);
+    emit RegisterBoard(address(_board));
   }
 
   // --------------------------------------------------
@@ -243,18 +243,25 @@ contract PJManager is
   // DID BoardId functions
   // --------------------------------------------------
 
-  function assignBoardId(address _board, uint256 _tokenId)
-    external
-    onlyRole(LibPJManager.PJ_BOARD_ID_ROLE)
-  {
+  /// @inheritdoc IPJManager
+  function assignBoardingMember(
+    address _member,
+    address _board,
+    uint256 _tokenId
+  ) external onlyRole(LibPJManager.PJ_BOARD_ID_ROLE) {
     require(
       boardIds[_board][_tokenId] == 0,
       "PJManager: assign for existent boardId"
     );
     boardIds[_board][_tokenId] = boardIdTracker.current();
+    if (!onBoarding[_member]) {
+      onBoarding[_member] = true;
+      boardingMembers.push(_member);
+    }
     boardIdTracker.increment();
   }
 
+  /// @inheritdoc IPJManager
   function resolveBoardId(address _board, uint256 _tokenId)
     external
     view
@@ -284,12 +291,27 @@ contract PJManager is
   /**
    * @dev Returns the list of boards.
    */
-  function getBoards()
-    external
-    view
-    returns (LibPJManager.AllocationShare[] memory)
-  {
+  function getBoards() external view returns (IBoard[] memory) {
     return boards;
+  }
+
+  /**
+   * @dev Returns if there are any boarding members in this project.
+   */
+  function boardingMembersExist() external view returns (bool) {
+    return boardingMembers.length > 0;
+  }
+
+  /// @inheritdoc IPJManager
+  function getBoardingMembers() external view returns (address[] memory) {
+    return boardingMembers;
+  }
+
+  /**
+   * @dev Returns if the `_account` is a boarding member in this project.
+   */
+  function isBoardingMember(address _account) external view returns (bool) {
+    return onBoarding[_account];
   }
 
   /// @inheritdoc IPJManager

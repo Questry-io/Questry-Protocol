@@ -38,7 +38,6 @@ library LibQuestryPlatform {
     IPJManager pjManager;
     bytes4 paymentMode; // determines to allocate native or ERC20 token
     IERC20 paymentToken; // ERC20 token to allocate. Ignored if paymentMode == NATIVE_PAYMENT_MODE (TODO: Check zero-address if paymentMode == NATIVE_PAYMENT_MODE)
-    IBoard board; // allocation target board which has contributions
     CalculateDispatchArgs calculateArgs; // allocation calculation args
     IContributionPool[] updateNeededPools; // term update needed pools
     uint256 pjnonce;
@@ -67,7 +66,7 @@ library LibQuestryPlatform {
    * @dev Argments for linear allocation algorithm.
    */
   struct SharesWithLinearArgs {
-    IContributionPool[] pools;
+    IBoard[] boards;
     uint120[] coefs;
   }
 
@@ -82,7 +81,7 @@ library LibQuestryPlatform {
   // ---- EIP712 ----
   bytes32 private constant AllOCATE_TYPEHASH =
     keccak256(
-      "AllocateArgs(address pjManager,bytes4 paymentMode,address paymentToken,address board,CalculateDispatchArgs calculateArgs,address[] updateNeededPools,uint256 pjnonce)CalculateDispatchArgs(bytes4 algorithm,bytes args)"
+      "AllocateArgs(address pjManager,bytes4 paymentMode,address paymentToken,CalculateDispatchArgs calculateArgs,address[] updateNeededPools,uint256 pjnonce)CalculateDispatchArgs(bytes4 algorithm,bytes args)"
     );
 
   bytes32 private constant CALCURATEDISPATCHARGS_TYPEHASH =
@@ -110,7 +109,6 @@ library LibQuestryPlatform {
           _allocateargs.pjManager,
           _allocateargs.paymentMode,
           _allocateargs.paymentToken,
-          _allocateargs.board,
           _hashCalculateDispatchArgs(_allocateargs.calculateArgs),
           keccak256(abi.encodePacked(_allocateargs.updateNeededPools)),
           _allocateargs.pjnonce
@@ -191,11 +189,6 @@ library LibQuestryPlatform {
         "LibQuestryPlatform: Is not PJ Whitelist token"
       );
     }
-    //SBT Address validation
-    require(
-      address(_allocateargs.board) != address(0),
-      "LibQuestryPlatform: Board address is invalid"
-    );
 
     /**
      * @dev : Calcurator args is validation skip

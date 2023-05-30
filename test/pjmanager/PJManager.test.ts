@@ -38,9 +38,6 @@ describe("PJManager", function () {
   let user: SignerWithAddress;
   let cMockQuestryPlatform: MockCallerContract;
   let cCalculator: ContributionCalculator;
-  let cContributionPool: ContributionPool;
-
-  const dummyAddress = "0x90fA7809574b4f8206ec1a47aDc37eCEE57443cb";
 
   const maxBasisPoint = 10000;
 
@@ -88,17 +85,6 @@ describe("PJManager", function () {
       .connect(admin)
       .grantRole(whitelistRoleHash, whitelistController.address);
 
-    // deploy Board associated with the project.
-    const cBoard = await new Board__factory(deployer).deploy(
-      "board",
-      "BRD",
-      "https://example.com",
-      cPJManager.address,
-      boardMinter.address,
-      ethers.constants.AddressZero
-    );
-    await cBoard.deployed();
-
     // deploy mock ERC20
     const cERC20 = await new RandomERC20__factory(deployer).deploy();
     await cERC20.mint([depositer.address, admin.address]);
@@ -107,7 +93,6 @@ describe("PJManager", function () {
 
     return {
       cPJManager,
-      cBoard,
       cERC20,
     };
   }
@@ -137,15 +122,6 @@ describe("PJManager", function () {
 
     cCalculator = await new ContributionCalculator__factory(deployer).deploy();
     await cCalculator.deployed();
-
-    cContributionPool = await new ContributionPool__factory(deployer).deploy(
-      cMockQuestryPlatform.address,
-      0,
-      ethers.constants.AddressZero,
-      ethers.constants.AddressZero,
-      ethers.constants.AddressZero
-    );
-    await cContributionPool.deployed();
   });
 
   describe("constructor", function () {
@@ -173,19 +149,28 @@ describe("PJManager", function () {
     let cBoard: Board;
 
     beforeEach(async function () {
-      ({ cPJManager, cBoard } = await deployPJManager(4000));
+      ({ cPJManager } = await deployPJManager(4000));
+
+      cBoard = await new Board__factory(deployer).deploy(
+        "board",
+        "BRD",
+        "https://example.com",
+        cPJManager.address,
+        ethers.constants.AddressZero,
+        boardMinter.address,
+        ethers.constants.AddressZero
+      );
+      await cBoard.deployed();
     });
 
     it("[S] should registerBoard by stateManager", async function () {
-      const arg = { recipient: cBoard.address, share: 1 };
-      const tx = await cPJManager.connect(stateManager).registerBoard(arg);
+      const tx = await cPJManager
+        .connect(stateManager)
+        .registerBoard(cBoard.address);
       const got = await cPJManager.getBoards();
       expect(got.length).equals(1);
-      expect(got[0].recipient).equals(arg.recipient);
-      expect(got[0].share).equals(arg.share);
-      expect(tx)
-        .to.emit(cPJManager, "RegisterBoard")
-        .withArgs(arg.recipient, arg.share);
+      expect(got[0]).equals(cBoard.address);
+      expect(tx).to.emit(cPJManager, "RegisterBoard").withArgs(cBoard.address);
     });
 
     it("[S] should register multiple boards by stateManager", async function () {
@@ -194,43 +179,35 @@ describe("PJManager", function () {
         "BRD2",
         "https://example.com",
         cPJManager.address,
+        ethers.constants.AddressZero,
         boardMinter.address,
         ethers.constants.AddressZero
       );
-      const arg1 = { recipient: cBoard.address, share: 1 };
-      const arg2 = { recipient: cBoard2.address, share: 2 };
-      await cPJManager.connect(stateManager).registerBoard(arg1);
-      await cPJManager.connect(stateManager).registerBoard(arg2);
+      await cPJManager.connect(stateManager).registerBoard(cBoard.address);
+      await cPJManager.connect(stateManager).registerBoard(cBoard2.address);
       const got = await cPJManager.getBoards();
       expect(got.length).equals(2);
-      expect(got[0].recipient).equals(arg1.recipient);
-      expect(got[0].share).equals(arg1.share);
-      expect(got[1].recipient).equals(arg2.recipient);
-      expect(got[1].share).equals(arg2.share);
+      expect(got[0]).equals(cBoard.address);
+      expect(got[1]).equals(cBoard2.address);
     });
 
     it("[S] should registerBoard by admin", async function () {
-      const arg = { recipient: cBoard.address, share: 1 };
-      await cPJManager.connect(admin).registerBoard(arg);
+      await cPJManager.connect(admin).registerBoard(cBoard.address);
       const got = await cPJManager.getBoards();
       expect(got.length).equals(1);
-      expect(got[0].recipient).equals(arg.recipient);
-      expect(got[0].share).equals(arg.share);
+      expect(got[0]).equals(cBoard.address);
     });
 
     it("[R] should not registerBoard by others", async function () {
-      const arg = { recipient: cBoard.address, share: 1 };
-      await expect(cPJManager.connect(user).registerBoard(arg)).revertedWith(
-        "Invalid executor role"
-      );
+      await expect(
+        cPJManager.connect(user).registerBoard(cBoard.address)
+      ).revertedWith("Invalid executor role");
     });
 
     it("[R] should not register the same board two times", async function () {
-      const arg1 = { recipient: cBoard.address, share: 1 };
-      const arg2 = { recipient: cBoard.address, share: 2 };
-      await cPJManager.connect(stateManager).registerBoard(arg1);
+      await cPJManager.connect(stateManager).registerBoard(cBoard.address);
       await expect(
-        cPJManager.connect(stateManager).registerBoard(arg2)
+        cPJManager.connect(stateManager).registerBoard(cBoard.address)
       ).revertedWith("PJManager: board already exists");
     });
   });
@@ -238,13 +215,13 @@ describe("PJManager", function () {
   describe("verifysignature (unit test)", function () {
     let cPJManager: PJManager;
     let cERC20: RandomERC20;
-    let cDummyERC20: RandomERC20;
     let cBoard: Board;
+    let cBoard2: Board;
     let cContributionPool: ContributionPool;
     let cContributionPool2: ContributionPool;
 
     beforeEach(async function () {
-      ({ cPJManager, cERC20, cBoard } = await deployPJManager(4000));
+      ({ cPJManager, cERC20 } = await deployPJManager(4000));
 
       cContributionPool = await new ContributionPool__factory(deployer).deploy(
         cMockQuestryPlatform.address,
@@ -263,6 +240,28 @@ describe("PJManager", function () {
         signer.address
       );
       await cContributionPool2.deployed();
+
+      cBoard = await new Board__factory(deployer).deploy(
+        "board",
+        "BRD",
+        "https://example.com",
+        cPJManager.address,
+        cContributionPool.address,
+        boardMinter.address,
+        ethers.constants.AddressZero
+      );
+      await cBoard.deployed();
+
+      cBoard2 = await new Board__factory(deployer).deploy(
+        "board",
+        "BRD",
+        "https://example.com",
+        cPJManager.address,
+        cContributionPool2.address,
+        boardMinter.address,
+        ethers.constants.AddressZero
+      );
+      await cBoard2.deployed();
     });
 
     it("[S] signature verifyer success on single signature", async function () {
@@ -271,7 +270,7 @@ describe("PJManager", function () {
         await cPJManager.hasRole(SignerRoleHash, signer.address)
       ).to.be.equal(true);
       const SharesWithLinearArgs = {
-        pools: [cContributionPool.address, cContributionPool2.address],
+        boards: [cBoard.address, cBoard2.address],
         coefs: [2, 3],
       };
 
@@ -279,7 +278,6 @@ describe("PJManager", function () {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
-        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [
           cContributionPool.address,
@@ -301,7 +299,6 @@ describe("PJManager", function () {
           { name: "pjManager", type: "address" },
           { name: "paymentMode", type: "bytes4" },
           { name: "paymentToken", type: "address" },
-          { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
@@ -343,7 +340,7 @@ describe("PJManager", function () {
 
       // signeture message parameta
       const SharesWithLinearArgs = {
-        pools: [cContributionPool.address, cContributionPool2.address],
+        boards: [cBoard.address, cBoard2.address],
         coefs: [2, 3],
       };
 
@@ -351,7 +348,6 @@ describe("PJManager", function () {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
-        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [
           cContributionPool.address,
@@ -373,7 +369,6 @@ describe("PJManager", function () {
           { name: "pjManager", type: "address" },
           { name: "paymentMode", type: "bytes4" },
           { name: "paymentToken", type: "address" },
-          { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
@@ -417,7 +412,7 @@ describe("PJManager", function () {
 
       // signeture message parameta
       const SharesWithLinearArgs = {
-        pools: [cContributionPool.address, cContributionPool2.address],
+        boards: [cBoard.address, cBoard2.address],
         coefs: [2, 3],
       };
 
@@ -426,7 +421,6 @@ describe("PJManager", function () {
         pjManager: cPJManager.address,
         paymentMode: nativeMode,
         paymentToken: cERC20.address,
-        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [
           cContributionPool.address,
@@ -439,7 +433,6 @@ describe("PJManager", function () {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
-        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [
           cContributionPool.address,
@@ -461,7 +454,6 @@ describe("PJManager", function () {
           { name: "pjManager", type: "address" },
           { name: "paymentMode", type: "bytes4" },
           { name: "paymentToken", type: "address" },
-          { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
@@ -514,7 +506,7 @@ describe("PJManager", function () {
         await cPJManager.hasRole(SignerRoleHash, signer.address)
       ).to.be.equal(false);
       const SharesWithLinearArgs = {
-        pools: [cContributionPool.address, cContributionPool2.address],
+        boards: [cBoard.address, cBoard2.address],
         coefs: [2, 3],
       };
 
@@ -522,7 +514,6 @@ describe("PJManager", function () {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
-        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [
           cContributionPool.address,
@@ -544,7 +535,6 @@ describe("PJManager", function () {
           { name: "pjManager", type: "address" },
           { name: "paymentMode", type: "bytes4" },
           { name: "paymentToken", type: "address" },
-          { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
@@ -566,7 +556,7 @@ describe("PJManager", function () {
         await cPJManager.hasRole(SignerRoleHash, signer.address)
       ).to.be.equal(false);
       const SharesWithLinearArgs = {
-        pools: [cContributionPool.address, cContributionPool2.address],
+        boards: [cBoard.address, cBoard2.address],
         coefs: [2, 3],
       };
 
@@ -574,7 +564,6 @@ describe("PJManager", function () {
         pjManager: cPJManager.address,
         paymentMode: erc20Mode,
         paymentToken: cERC20.address,
-        board: cBoard.address,
         calculateArgs: TestUtils.createArgsWithLinear(SharesWithLinearArgs),
         updateNeededPools: [
           cContributionPool.address,
@@ -596,7 +585,6 @@ describe("PJManager", function () {
           { name: "pjManager", type: "address" },
           { name: "paymentMode", type: "bytes4" },
           { name: "paymentToken", type: "address" },
-          { name: "board", type: "address" },
           { name: "calculateArgs", type: "CalculateDispatchArgs" },
           { name: "updateNeededPools", type: "address[]" },
           { name: "pjnonce", type: "uint256" },
@@ -960,45 +948,51 @@ describe("PJManager", function () {
     });
   });
 
-  describe("assign[resolve]BoardId", function () {
+  describe("assignBoardingMember and resolveBoardId", function () {
     let cPJManager: PJManager;
     let cMockBoard: MockCallerContract;
 
     beforeEach(async function () {
       ({ cPJManager } = await deployDummyPJManager());
       cMockBoard = await new MockCallerContract__factory(deployer).deploy();
-      await cPJManager.connect(admin).registerBoard({
-        recipient: cMockBoard.address,
-        share: 1,
-      });
+      await cPJManager.connect(admin).registerBoard(cMockBoard.address);
     });
 
-    it("[S] should assignBoardId by registered board", async function () {
+    it("[S] should assignBoardingMember by registered board", async function () {
       await TestUtils.call(
         cMockBoard,
         cPJManager,
-        "assignBoardId(address _board,uint256 _tokenId)",
-        [cMockBoard.address, 1]
+        "assignBoardingMember(address _member,address _board,uint256 _tokenId)",
+        [signer.address, cMockBoard.address, 1]
       );
       let boardId = await cPJManager.resolveBoardId(cMockBoard.address, 1);
       expect(boardId).equals(1);
+      expect(await cPJManager.getBoardingMembers()).deep.equals([
+        signer.address,
+      ]);
+      expect(await cPJManager.isBoardingMember(signer.address)).true;
 
       await TestUtils.call(
         cMockBoard,
         cPJManager,
-        "assignBoardId(address _board,uint256 _tokenId)",
-        [cMockBoard.address, 2]
+        "assignBoardingMember(address _member,address _board,uint256 _tokenId)",
+        [signer2.address, cMockBoard.address, 2]
       );
       boardId = await cPJManager.resolveBoardId(cMockBoard.address, 2);
       expect(boardId).equals(2);
+      expect(await cPJManager.getBoardingMembers()).deep.equals([
+        signer.address,
+        signer2.address,
+      ]);
+      expect(await cPJManager.isBoardingMember(signer2.address)).true;
     });
 
-    it("[R] should not assignBoardId to the same token", async function () {
+    it("[R] should not assignBoardingMember to the same token", async function () {
       await TestUtils.call(
         cMockBoard,
         cPJManager,
-        "assignBoardId(address _board,uint256 _tokenId)",
-        [cMockBoard.address, 1]
+        "assignBoardingMember(address _member,address _board,uint256 _tokenId)",
+        [ethers.constants.AddressZero, cMockBoard.address, 1]
       );
       const boardId = await cPJManager.resolveBoardId(cMockBoard.address, 1);
       expect(boardId).equals(1);
@@ -1007,15 +1001,21 @@ describe("PJManager", function () {
         TestUtils.call(
           cMockBoard,
           cPJManager,
-          "assignBoardId(address _board,uint256 _tokenId)",
-          [cMockBoard.address, 1]
+          "assignBoardingMember(address _member,address _board,uint256 _tokenId)",
+          [ethers.constants.AddressZero, cMockBoard.address, 1]
         )
       ).revertedWith("PJManager: assign for existent boardId");
     });
 
     it("[R] should not registerBoardId by others", async function () {
       await expect(
-        cPJManager.connect(admin).assignBoardId(cMockBoard.address, 1)
+        cPJManager
+          .connect(admin)
+          .assignBoardingMember(
+            ethers.constants.AddressZero,
+            cMockBoard.address,
+            1
+          )
       ).revertedWith(missingRoleError(admin.address, boardIdRoleHash));
     });
   });

@@ -263,7 +263,6 @@ contract QuestryPlatform is
 
   /**
    * @dev Allocates tokens to business owners, boarding members and DAO treasury pool.
-   * TODO: Use PJManager.boards[].share to calculate the allocation for each board.
    */
   function allocate(
     LibQuestryPlatform.AllocateArgs calldata _args,
@@ -290,9 +289,9 @@ contract QuestryPlatform is
     uint32 boardingMembersProportion = pjManager.getBoardingMembersProportion();
     if (boardingMembersProportion > 0) {
       require(remains > 0, "QuestryPlatform: no balance to allocate");
-      if (_args.board.boardingMembersExist()) {
+      if (pjManager.boardingMembersExist()) {
         uint256 actual = _simulateBoardingMembersTransfer(
-          _args.board,
+          pjManager,
           _args.calculateArgs,
           remains
         );
@@ -549,11 +548,11 @@ contract QuestryPlatform is
    * @dev Simulate the boarding members transfer(Not actual transfer)
    */
   function _simulateBoardingMembersTransfer(
-    IBoard _board,
+    IPJManager _pjManager,
     LibQuestryPlatform.CalculateDispatchArgs memory _calculateArgs,
     uint256 _totalAmount
   ) private returns (uint256) {
-    address[] memory members = _board.getBoardingMembers();
+    address[] memory members = _pjManager.getBoardingMembers();
     LibQuestryPlatform.SharesResult memory sharesResult = contributionCalculator
       .calculateDispatch(members, _calculateArgs);
     if (sharesResult.totalShare == 0) {

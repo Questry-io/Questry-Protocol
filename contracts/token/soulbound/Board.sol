@@ -8,6 +8,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {IBoard} from "../../interface/token/IBoard.sol";
 import {IPJManager} from "../../interface/pjmanager/IPJManager.sol";
+import {IContributionPool} from "../../interface/pjmanager/IContributionPool.sol";
 
 contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
   using Counters for Counters.Counter;
@@ -19,9 +20,10 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
 
   bool public isTransfable = false;
   IPJManager public immutable pjManager;
+  IContributionPool private immutable contributionPool;
   string private baseTokenURI;
   address[] private boardingMembers;
-  mapping(address => bool) private isBoardingMember;
+  mapping(address => bool) private onBoarding;
   Counters.Counter private tokenIdTracker;
 
   /**
@@ -36,11 +38,13 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
     string memory _symbol,
     string memory _baseTokenURI,
     IPJManager _pjManager,
+    IContributionPool _contributionPool,
     address _admin,
     address _trustedForwarder
   ) ERC721(_name, _symbol) ERC2771Context(_trustedForwarder) {
     baseTokenURI = _baseTokenURI;
     pjManager = _pjManager;
+    contributionPool = _contributionPool;
     tokenIdTracker.increment();
 
     _setupRole(DEFAULT_ADMIN_ROLE, _admin);
@@ -151,16 +155,16 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
       "Board: must have minter role to mint"
     );
 
-    if (!isBoardingMember[_to]) {
+    if (!onBoarding[_to]) {
       boardingMembers.push(_to);
-      isBoardingMember[_to] = true;
+      onBoarding[_to] = true;
     }
 
     uint256 tokenId = tokenIdTracker.current();
     _mint(_to, tokenId);
     tokenIdTracker.increment();
 
-    IPJManager(pjManager).assignBoardId(address(this), tokenId);
+    IPJManager(pjManager).assignBoardingMember(_to, address(this), tokenId);
   }
 
   /// @inheritdoc IBoard
@@ -179,7 +183,7 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
 
     address owner = ownerOf(_tokenId);
     if (balanceOf(owner) == 1) {
-      isBoardingMember[owner] = false;
+      onBoarding[owner] = false;
       // XXX: too much gas cost especially when tokens bulk burned
       uint256 newIdx = 0;
       for (uint256 i = 0; i < boardingMembers.length; i++) {
@@ -214,12 +218,14 @@ contract Board is IBoard, ERC721, AccessControl, ERC2771Context {
     return boardingMembers.length > 0;
   }
 
-  /**
-   * @dev Returns if `_account` has the token, in other words, it is a boarding member.
-   * Note that only one token can be minted from the same Board contract per account.
-   */
-  function getIsBoardingMember(address _account) external view returns (bool) {
-    return isBoardingMember[_account];
+  /// @inheritdoc IBoard
+  function isBoardingMember(address _account) external view returns (bool) {
+    return onBoarding[_account];
+  }
+
+  /// @inheritdoc IBoard
+  function getContributionPool() external view returns (IContributionPool) {
+    return contributionPool;
   }
 
   /// @dev Overridden for Board

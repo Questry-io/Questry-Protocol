@@ -10,7 +10,7 @@ interface IPJManager {
   event AddBusinessOwner(address owner, uint120 share);
   event RemoveBusinessOwner(address owner);
   event UpdateBusinessOwner(address owner, uint120 share);
-  event RegisterBoard(address board, uint120 share);
+  event RegisterBoard(address board);
   event Deposit(address depositer, uint256 netAmount);
   event DepositERC20(address token, address depositer, uint256 netAmount);
   event AllowERC20(address token);
@@ -39,9 +39,13 @@ interface IPJManager {
   ) external;
 
   /**
-   * @dev Assign a new board id corresponding to the `_board` and `_tokenId` pair.
+   * @dev Sets a new boarding `_member` and generate a unique board ID for the `_board` and `_tokenId` combination.
    */
-  function assignBoardId(address _board, uint256 _tokenId) external;
+  function assignBoardingMember(
+    address _member,
+    address _board,
+    uint256 _tokenId
+  ) external;
 
   /**
    * @dev Resolve unique boardId in the project from `_board` and `_tokenId` pair.
@@ -84,6 +88,16 @@ interface IPJManager {
    * @dev Returns `boardingMembersProportion`.
    */
   function getBoardingMembersProportion() external view returns (uint32);
+
+  /**
+   * @dev Returns if there are any boarding members in this project.
+   */
+  function boardingMembersExist() external view returns (bool);
+
+  /**
+   * @dev Returns the list of board members across all boards in this project.
+   */
+  function getBoardingMembers() external view returns (address[] memory);
 
   /**
    * @dev Returns token whitelists.
