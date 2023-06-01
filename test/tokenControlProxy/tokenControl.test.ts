@@ -6,7 +6,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { RandomERC20, NFTRandom, RandomERC1155 } from "../../typechain";
 import { getMetaTx, getMetaTxAndSignForGas } from "../utils";
 
-describe("TokenControllProxy", function () {
+describe("TokenControlProxy", function () {
   let admin: SignerWithAddress;
   let executor: SignerWithAddress;
   let nonExecutor: SignerWithAddress;
@@ -95,7 +95,7 @@ describe("TokenControllProxy", function () {
         tokenControlProxy
           .connect(admin)
           .grantExecutorRoleToQuestryPlatform(nonExecutor.address)
-      ).revertedWith("TokenControllProxy: already granted");
+      ).revertedWith("TokenControlProxy: already granted");
     });
   });
 
@@ -131,7 +131,7 @@ describe("TokenControllProxy", function () {
             10
           )
       ).to.be.revertedWith(
-        "TokenControllProxy: must have executor role to exec"
+        "TokenControlProxy: must have executor role to exec"
       );
     });
 
@@ -193,7 +193,7 @@ describe("TokenControllProxy", function () {
             1
           )
       ).to.be.revertedWith(
-        "TokenControllProxy: must have executor role to exec"
+        "TokenControlProxy: must have executor role to exec"
       );
     });
 
@@ -257,7 +257,7 @@ describe("TokenControllProxy", function () {
             "0x"
           )
       ).to.be.revertedWith(
-        "TokenControllProxy: must have executor role to exec"
+        "TokenControlProxy: must have executor role to exec"
       );
     });
 

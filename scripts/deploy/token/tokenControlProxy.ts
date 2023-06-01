@@ -15,7 +15,7 @@ async function main() {
   const ethers = hre.ethers;
   const upgrades = hre.upgrades;
   const TokenControlProxy = await ethers.getContractFactory(
-    "TokenControllProxy"
+    "TokenControlProxy"
   );
   const roleManagerAddress = "";
   const forwarderAddress = "";

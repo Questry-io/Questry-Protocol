@@ -36,12 +36,12 @@ contract TokenControlProxy is
   /**
    * @dev Used instead of constructor(must be called once)
    */
-  function __TokenControlProxy_init(address _RollManager) external initializer {
+  function __TokenControlProxy_init(address _roleManager) external initializer {
     __ERC165_init();
     __AccessControl_init();
     __UUPSUpgradeable_init();
-    //set Token Controll Proxy Roll Manager(EOA)
-    _setupRole(ADMIN_ROLE, _RollManager);
+    // Set Token Control Proxy Role Manager (EOA)
+    _setupRole(ADMIN_ROLE, _roleManager);
   }
 
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
@@ -71,7 +71,7 @@ contract TokenControlProxy is
   {
     require(
       questryPlatform == address(0),
-      "TokenControllProxy: already granted"
+      "TokenControlProxy: already granted"
     );
     questryPlatform = _questryPlatform;
     _setupRole(EXECUTOR_ROLE, _questryPlatform);
@@ -142,7 +142,7 @@ contract TokenControlProxy is
   ) external {
     require(
       hasRole(EXECUTOR_ROLE, _msgSender()),
-      "TokenControllProxy: must have executor role to exec"
+      "TokenControlProxy: must have executor role to exec"
     );
     _token.transferFrom(_from, _to, _value);
   }
@@ -168,7 +168,7 @@ contract TokenControlProxy is
   ) external {
     require(
       hasRole(EXECUTOR_ROLE, _msgSender()),
-      "TokenControllProxy: must have executor role to exec"
+      "TokenControlProxy: must have executor role to exec"
     );
     _token.safeTransferFrom(_from, _to, _tokenId);
   }
@@ -198,7 +198,7 @@ contract TokenControlProxy is
   ) external {
     require(
       hasRole(EXECUTOR_ROLE, _msgSender()),
-      "TokenControllProxy: must have executor role to exec"
+      "TokenControlProxy: must have executor role to exec"
     );
     _token.safeTransferFrom(_from, _to, _tokenId, _value, _data);
   }
