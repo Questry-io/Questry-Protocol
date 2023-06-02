@@ -269,18 +269,22 @@ contract QuestryPlatform is
     bytes[] calldata _AllcatorSigns
   ) external {
     IPJManager pjManager = _args.pjManager;
-    // Step1 : Parameters and signatures checks
+
+    // Step1. Reset it before using it
+    _resetPayoutTemp();
+
+    // Step2. Parameters and signatures checks
     // Check parameters
     LibQuestryPlatform._checkParameterForAllocation(_args);
-    //signatures validation
+    // Signatures validation
     _setAndcheckVerifysignature(_AllcatorSigns);
-    //EIP712 verify signature
+    // EIP712 verify signature
     address[] memory verifiedSigners = pjManager.verifySignature(
       _args,
       _AllcatorSigns
     );
 
-    // Step2. Simulate allocation to the boarding members.
+    // Step3. Simulate allocation to the boarding members.
     uint256 remains = pjManager.getTotalBalance(
       _args.paymentMode,
       _args.paymentToken
@@ -299,7 +303,7 @@ contract QuestryPlatform is
       }
     }
 
-    // Step3. Simulate residual allocation to the business owners.
+    // Step4. Simulate residual allocation to the business owners.
     if (
       remains > 0 &&
       boardingMembersProportion <
@@ -313,14 +317,14 @@ contract QuestryPlatform is
       _registerPayout(daoTreasuryPool, remains);
     }
 
-    // Step4. Payout
+    // Step5. Payout
     _payout(pjManager, _args.paymentMode, _args.paymentToken);
     _resetPayoutTemp();
 
-    // Step5. Update the terms of the contribution pools
+    // Step6. Update the terms of the contribution pools
     _updatesTermsOfContributionPools(_args.updateNeededPools, verifiedSigners);
 
-    // Step6. Update the nonce of the pjmanager
+    // Step7. Update the nonce of the pjmanager
     _updatesNonceOfPJManager(_args.pjManager);
   }
 
