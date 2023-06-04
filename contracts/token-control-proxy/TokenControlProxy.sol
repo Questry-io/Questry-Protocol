@@ -36,12 +36,11 @@ contract TokenControlProxy is
   /**
    * @dev Used instead of constructor(must be called once)
    */
-  function __TokenControlProxy_init(address _RollManager) external initializer {
+  function __TokenControlProxy_init(address _admin) external initializer {
     __ERC165_init();
     __AccessControl_init();
     __UUPSUpgradeable_init();
-    //set Token Controll Proxy Roll Manager(EOA)
-    _setupRole(ADMIN_ROLE, _RollManager);
+    _setupRole(ADMIN_ROLE, _admin);
   }
 
   bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");

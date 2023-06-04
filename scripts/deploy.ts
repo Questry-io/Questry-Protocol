@@ -55,16 +55,18 @@ async function deployQuestryPlatform(
   forwarderAddress: string,
   contributionCalculatorAddress: string,
   daoTreasuryPoolAddress: string,
-  tokenControlProxyAddress: string
+  tokenControlProxyAddress: string,
+  adminAddress: string
 ): Promise<string> {
   if (
     forwarderAddress == "" ||
     contributionCalculatorAddress == "" ||
     daoTreasuryPoolAddress == "" ||
-    tokenControlProxyAddress == ""
+    tokenControlProxyAddress == "" ||
+    adminAddress == ""
   ) {
     throw new Error(
-      "Please set forwarderAddress, contributionCalculatorAddress, daoTreasuryPoolAddress and tokenControlProxyAddress in the script before running it"
+      "Please set forwarderAddress, contributionCalculatorAddress, daoTreasuryPoolAddress, tokenControlProxyAddress and adminAddress in the script before running it"
     );
   }
   console.log("Deploying QuestryPlatform...");
@@ -75,6 +77,7 @@ async function deployQuestryPlatform(
       contributionCalculatorAddress,
       daoTreasuryPoolAddress,
       tokenControlProxyAddress,
+      adminAddress,
     ],
     { initializer: "initialize", constructorArgs: [forwarderAddress] }
   );
@@ -192,9 +195,8 @@ async function main() {
     executorAddress
   );
 
-  const roleManagerAddress = process.env.ROLE_MANAGER_ADDRESS || "";
   const tokenControlProxyAddress = await deployTokenControlProxy(
-    roleManagerAddress,
+    adminAddress,
     questryForwarderAddress
   );
 
@@ -207,7 +209,8 @@ async function main() {
     questryForwarderAddress,
     contributionCalculatorAddress,
     daoTreasuryPoolAddress,
-    tokenControlProxyAddress
+    tokenControlProxyAddress,
+    adminAddress
   );
   const contributionPoolFactoryAddress = await deployContributionPoolFactory(
     questryPlatformAddress
