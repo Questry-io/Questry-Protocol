@@ -31,7 +31,6 @@ contract PJManager is
   /// @dev the basis points proportion of total allocation for boarding members
   uint32 public immutable boardingMembersProportion;
   uint32 private _defaultThreshold = 1;
-  address public immutable admin;
   address public businessOwner;
   IBoard[] public boards;
   Counters.Counter public boardIdTracker;
@@ -52,7 +51,6 @@ contract PJManager is
       "LibPJManager: proportion is out of range"
     );
 
-    admin = _admin;
     boardingMembersProportion = _boardingMembersProportion;
     businessOwner = _businessOwner;
     boardIdTracker.increment();

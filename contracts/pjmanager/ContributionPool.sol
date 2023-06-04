@@ -13,9 +13,6 @@ contract ContributionPool is IContributionPool, AccessControl {
   uint256 public constant DEFAULT_THRESHOLD = 1;
   IContributionPool.MutationMode public immutable mode;
   mapping(address => bool) public incrementTermSigners;
-  address public admin;
-  address public contributionUpdater;
-  address public incrementTermWhitelistAdmin;
   uint256 public threshold;
   mapping(uint256 => mapping(address => uint120)) public contributions; // term => member => value
   Counters.Counter public term;
@@ -35,19 +32,16 @@ contract ContributionPool is IContributionPool, AccessControl {
       address(_questryPlatform)
     );
 
-    contributionUpdater = _contributionUpdater;
     _setupRole(
       LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE,
-      contributionUpdater
+      _contributionUpdater
     );
 
-    incrementTermWhitelistAdmin = _incrementTermWhitelistAdmin;
     _setupRole(
       LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE,
       _incrementTermWhitelistAdmin
     );
 
-    admin = _admin;
     _setRoleAdmin(
       LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE,
       LibPJManager.POOL_ADMIN_ROLE
@@ -56,9 +50,9 @@ contract ContributionPool is IContributionPool, AccessControl {
       LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE,
       LibPJManager.POOL_ADMIN_ROLE
     );
-    _setupRole(LibPJManager.POOL_ADMIN_ROLE, admin);
-    _setupRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE, admin);
-    _setupRole(LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE, admin);
+    _setupRole(LibPJManager.POOL_ADMIN_ROLE, _admin);
+    _setupRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE, _admin);
+    _setupRole(LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE, _admin);
   }
 
   /// @inheritdoc IContributionPool
