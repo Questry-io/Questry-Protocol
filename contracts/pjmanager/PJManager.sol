@@ -55,16 +55,14 @@ contract PJManager is
     businessOwner = _businessOwner;
     boardIdTracker.increment();
 
-    //set nonce increment roll
-    _setupRole(LibPJManager.PJ_NONCE_INCREMENT_ROLE, address(_questryPlatform));
-    _setupRole(LibPJManager.PJ_DEPOSIT_ROLE, address(_questryPlatform));
-    _setupRole(LibPJManager.PJ_WITHDRAW_ROLE, address(_questryPlatform));
-
-    //set signature threshold
     _setThreshold(_defaultThreshold);
 
-    _setupRole(LibPJManager.PJ_ADMIN_ROLE, _admin);
+    _setupRole(
+      LibPJManager.PJ_PLATFORM_EXCLUSIVE_ROLE,
+      address(_questryPlatform)
+    );
 
+    _setupRole(LibPJManager.PJ_ADMIN_ROLE, _admin);
     _setRoleAdmin(LibPJManager.PJ_MANAGEMENT_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(LibPJManager.PJ_WHITELIST_ROLE, LibPJManager.PJ_ADMIN_ROLE);
     _setRoleAdmin(
@@ -103,7 +101,7 @@ contract PJManager is
     for (uint8 i = 0; i < boards.length; i++) {
       require(boards[i] != _board, "PJManager: board already exists");
     }
-    _setupRole(LibPJManager.PJ_BOARD_ID_ROLE, address(_board));
+    _setupRole(LibPJManager.PJ_BOARD_EXCLUSIVE_ROLE, address(_board));
     boards.push(_board);
     emit RegisterBoard(address(_board));
   }
@@ -118,7 +116,7 @@ contract PJManager is
     IERC20 _paymentToken,
     address _receiver,
     uint256 _amount
-  ) external onlyRole(LibPJManager.PJ_WITHDRAW_ROLE) nonReentrant {
+  ) external onlyRole(LibPJManager.PJ_PLATFORM_EXCLUSIVE_ROLE) nonReentrant {
     _withdrawForAllocation(_paymentMode, _paymentToken, _receiver, _amount);
   }
 
@@ -132,7 +130,12 @@ contract PJManager is
     IERC20 _paymentToken,
     address _from,
     uint256 _amount
-  ) external payable onlyRole(LibPJManager.PJ_DEPOSIT_ROLE) nonReentrant {
+  )
+    external
+    payable
+    onlyRole(LibPJManager.PJ_PLATFORM_EXCLUSIVE_ROLE)
+    nonReentrant
+  {
     _deposit(_paymentMode, _paymentToken, _from, _amount);
   }
 
@@ -206,7 +209,7 @@ contract PJManager is
   //PJManager Signature verifier Nonce Increment function
   function incrementNonce()
     external
-    onlyRole(LibPJManager.PJ_NONCE_INCREMENT_ROLE)
+    onlyRole(LibPJManager.PJ_PLATFORM_EXCLUSIVE_ROLE)
   {
     /**
      * todo: increment roll is questry platform fix this roll
@@ -246,7 +249,7 @@ contract PJManager is
     address _member,
     address _board,
     uint256 _tokenId
-  ) external onlyRole(LibPJManager.PJ_BOARD_ID_ROLE) {
+  ) external onlyRole(LibPJManager.PJ_BOARD_EXCLUSIVE_ROLE) {
     require(
       boardIds[_board][_tokenId] == 0,
       "PJManager: assign for existent boardId"

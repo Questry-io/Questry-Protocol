@@ -48,6 +48,9 @@ describe("QuestryPlatform - allocate", function () {
   const whitelistRoleHash = utils.keccak256(
     utils.toUtf8Bytes("PJ_WHITELIST_ROLE")
   );
+  const verifySignerRoleHash = utils.keccak256(
+    utils.toUtf8Bytes("POOL_VERIFY_SIGNER_ROLE")
+  );
 
   async function deployPJManager(_boardingMembersProportion: number) {
     const cPJManager = await new PJManager__factory(deployer).deploy(
@@ -213,6 +216,7 @@ describe("QuestryPlatform - allocate", function () {
         cCalculator.address,
         daoTreasuryPool.address,
         cTokenControlProxy.address,
+        deployer.address,
       ],
       {
         constructorArgs: [cQuestryForwarder.address],
@@ -231,21 +235,20 @@ describe("QuestryPlatform - allocate", function () {
       cQuestryPlatform.address,
       0,
       contributionUpdater.address,
-      ethers.constants.AddressZero,
       poolAdmin.address
     );
     await cContributionPool.deployed();
 
     await cContributionPool
       .connect(poolAdmin)
-      .addIncrementTermSigner(TestUtils.dummySigner);
+      .grantRole(verifySignerRoleHash, TestUtils.dummySigner);
   });
 
   describe("allocate", function () {
     async function setupIncrementTermSigner() {
       await cContributionPool
         .connect(poolAdmin)
-        .addIncrementTermSigner(admin.address);
+        .grantRole(verifySignerRoleHash, admin.address);
     }
 
     async function addContribution(
@@ -594,7 +597,7 @@ describe("QuestryPlatform - allocate", function () {
 
       await cContributionPool
         .connect(poolAdmin)
-        .addIncrementTermSigner(signers[0].address);
+        .grantRole(verifySignerRoleHash, signers[0].address);
       await expect(allocateERC20(cPJManager, cBoard, cERC20)).revertedWith(
         "ContributionPool: insufficient whitelisted signers"
       );
@@ -602,7 +605,7 @@ describe("QuestryPlatform - allocate", function () {
       await cContributionPool.connect(poolAdmin).setThreshold(2);
       await cContributionPool
         .connect(poolAdmin)
-        .addIncrementTermSigner(admin.address);
+        .grantRole(verifySignerRoleHash, admin.address);
       await expect(allocateERC20(cPJManager, cBoard, cERC20)).revertedWith(
         "ContributionPool: insufficient whitelisted signers"
       );

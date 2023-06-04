@@ -33,14 +33,12 @@ contract ContributionPoolFactory {
   function createPool(
     IContributionPool.MutationMode _mode,
     address _contributionUpdater,
-    address _incrementTermWhitelistAdmin,
     address _admin
   ) external returns (IContributionPool pool) {
     pool = new ContributionPool(
       questryPlatform,
       _mode,
       _contributionUpdater,
-      _incrementTermWhitelistAdmin,
       _admin
     );
     poolsByBusinessOwners[msg.sender].push(pool);

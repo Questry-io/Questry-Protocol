@@ -12,7 +12,6 @@ contract ContributionPool is IContributionPool, AccessControl {
 
   uint256 public constant DEFAULT_THRESHOLD = 1;
   IContributionPool.MutationMode public immutable mode;
-  mapping(address => bool) public incrementTermSigners;
   uint256 public threshold;
   mapping(uint256 => mapping(address => uint120)) public contributions; // term => member => value
   Counters.Counter public term;
@@ -21,14 +20,13 @@ contract ContributionPool is IContributionPool, AccessControl {
     IQuestryPlatform _questryPlatform,
     IContributionPool.MutationMode _mode,
     address _contributionUpdater,
-    address _incrementTermWhitelistAdmin,
     address _admin
   ) {
     mode = _mode;
     _setThreshold(DEFAULT_THRESHOLD);
 
     _setupRole(
-      LibPJManager.POOL_INCREMENT_TERM_ROLE,
+      LibPJManager.PJ_PLATFORM_EXCLUSIVE_ROLE,
       address(_questryPlatform)
     );
 
@@ -37,22 +35,16 @@ contract ContributionPool is IContributionPool, AccessControl {
       _contributionUpdater
     );
 
-    _setupRole(
-      LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE,
-      _incrementTermWhitelistAdmin
-    );
-
+    _setupRole(LibPJManager.POOL_ADMIN_ROLE, _admin);
+    _setupRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE, _admin);
     _setRoleAdmin(
       LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE,
       LibPJManager.POOL_ADMIN_ROLE
     );
     _setRoleAdmin(
-      LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE,
+      LibPJManager.POOL_VERIFY_SIGNER_ROLE,
       LibPJManager.POOL_ADMIN_ROLE
     );
-    _setupRole(LibPJManager.POOL_ADMIN_ROLE, _admin);
-    _setupRole(LibPJManager.POOL_CONTRIBUTION_UPDATER_ROLE, _admin);
-    _setupRole(LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE, _admin);
   }
 
   /// @inheritdoc IContributionPool
@@ -134,11 +126,11 @@ contract ContributionPool is IContributionPool, AccessControl {
   /// @inheritdoc IContributionPool
   function incrementTerm(address[] memory _verifiedSigners)
     external
-    onlyRole(LibPJManager.POOL_INCREMENT_TERM_ROLE)
+    onlyRole(LibPJManager.PJ_PLATFORM_EXCLUSIVE_ROLE)
   {
     uint8 verifiedCount = 0;
     for (uint256 i = 0; i < _verifiedSigners.length; i++) {
-      if (incrementTermSigners[_verifiedSigners[i]]) {
+      if (_isIncrementTermSigner(_verifiedSigners[i])) {
         verifiedCount++;
       }
     }
@@ -147,34 +139,6 @@ contract ContributionPool is IContributionPool, AccessControl {
       "ContributionPool: insufficient whitelisted signers"
     );
     term.increment();
-  }
-
-  /**
-   * @dev Adds a new increment term signer to the whitelist.
-   */
-  function addIncrementTermSigner(address _signer)
-    external
-    onlyRole(LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE)
-  {
-    require(
-      !incrementTermSigners[_signer],
-      "ContributionPool: signer already exists"
-    );
-    incrementTermSigners[_signer] = true;
-  }
-
-  /**
-   * @dev Removes the increment term signer from the whitelist.
-   */
-  function removeIncrementTermSigner(address _signer)
-    external
-    onlyRole(LibPJManager.POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE)
-  {
-    require(
-      incrementTermSigners[_signer],
-      "ContributionPool: signer doesn't exist"
-    );
-    incrementTermSigners[_signer] = false;
   }
 
   /**
@@ -205,7 +169,7 @@ contract ContributionPool is IContributionPool, AccessControl {
     view
     returns (bool)
   {
-    return incrementTermSigners[_account];
+    return _isIncrementTermSigner(_account);
   }
 
   /**
@@ -233,5 +197,15 @@ contract ContributionPool is IContributionPool, AccessControl {
 
   function _getThreshold() private view returns (uint256) {
     return threshold;
+  }
+
+  function _isIncrementTermSigner(address _account)
+    private
+    view
+    returns (bool)
+  {
+    return
+      hasRole(LibPJManager.POOL_VERIFY_SIGNER_ROLE, _account) ||
+      hasRole(LibPJManager.POOL_ADMIN_ROLE, _account);
   }
 }

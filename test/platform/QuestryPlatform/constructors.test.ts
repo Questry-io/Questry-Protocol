@@ -34,6 +34,9 @@ describe("QuestryPlatform - constructors", function () {
   const platformExecutorRoleHash = utils.keccak256(
     utils.toUtf8Bytes("PLATFORM_EXECUTOR_ROLE")
   );
+  const verifySignerRoleHash = utils.keccak256(
+    utils.toUtf8Bytes("POOL_VERIFY_SIGNER_ROLE")
+  );
 
   beforeEach(async function () {
     [
@@ -83,6 +86,7 @@ describe("QuestryPlatform - constructors", function () {
         cCalculator.address,
         daoTreasuryPool.address,
         cTokenControlProxy.address,
+        deployer.address,
       ],
       {
         constructorArgs: [cQuestryForwarder.address],
@@ -96,14 +100,13 @@ describe("QuestryPlatform - constructors", function () {
       cQuestryPlatform.address,
       0,
       contributionUpdater.address,
-      ethers.constants.AddressZero,
       poolAdmin.address
     );
     await cContributionPool.deployed();
 
     await cContributionPool
       .connect(poolAdmin)
-      .addIncrementTermSigner(TestUtils.dummySigner);
+      .grantRole(verifySignerRoleHash, TestUtils.dummySigner);
   });
 
   describe("role check", function () {

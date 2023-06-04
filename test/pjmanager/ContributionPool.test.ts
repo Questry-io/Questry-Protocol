@@ -1,6 +1,6 @@
 /* eslint-disable node/no-missing-import */
 import { ethers } from "hardhat";
-import { Contract, Signer, utils } from "ethers";
+import { Contract, utils } from "ethers";
 import { expect } from "chai";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { TestUtils } from "../testUtils";
@@ -11,7 +11,6 @@ describe("ContributionPool", function () {
   let superAdmin: SignerWithAddress;
   let updater: SignerWithAddress;
   let notUpdater: SignerWithAddress;
-  let incrementTermWhitelistAdmin: SignerWithAddress;
   let user1: SignerWithAddress;
   let user2: SignerWithAddress;
   let cQuestryPlatform: MockCallerContract;
@@ -26,14 +25,14 @@ describe("ContributionPool", function () {
   const poolAdminRoleHash = utils.keccak256(
     utils.toUtf8Bytes("POOL_ADMIN_ROLE")
   );
-  const incrementTermRoleHash = utils.keccak256(
-    utils.toUtf8Bytes("POOL_INCREMENT_TERM_ROLE")
-  );
   const updaterRoleHash = utils.keccak256(
     utils.toUtf8Bytes("POOL_CONTRIBUTION_UPDATER_ROLE")
   );
-  const incrementTermWhitelistAdminRole = utils.keccak256(
-    utils.toUtf8Bytes("POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE")
+  const verifySignerRoleHash = utils.keccak256(
+    utils.toUtf8Bytes("POOL_VERIFY_SIGNER_ROLE")
+  );
+  const platformExclusiveRoleHash = utils.keccak256(
+    utils.toUtf8Bytes("PJ_PLATFORM_EXCLUSIVE_ROLE")
   );
 
   function missingRoleError(address: string, roleHash: string) {
@@ -41,15 +40,8 @@ describe("ContributionPool", function () {
   }
 
   beforeEach(async function () {
-    [
-      deployer,
-      superAdmin,
-      updater,
-      notUpdater,
-      incrementTermWhitelistAdmin,
-      user1,
-      user2,
-    ] = await ethers.getSigners();
+    [deployer, superAdmin, updater, notUpdater, user1, user2] =
+      await ethers.getSigners();
     const cfMockQuestryPlatform = await ethers.getContractFactory(
       "MockCallerContract"
     );
@@ -59,14 +51,12 @@ describe("ContributionPool", function () {
       cQuestryPlatform.address,
       MutationMode.AddOnlyAccess,
       updater.address,
-      incrementTermWhitelistAdmin.address,
       superAdmin.address
     );
     cPoolFull = await cfPool.deploy(
       cQuestryPlatform.address,
       MutationMode.FullControl,
       updater.address,
-      incrementTermWhitelistAdmin.address,
       superAdmin.address
     );
   });
@@ -82,32 +72,9 @@ describe("ContributionPool", function () {
         .true;
     });
 
-    it("check increment term whitelist admin role for admin", async function () {
-      expect(
-        await cPoolAdd.hasRole(
-          incrementTermWhitelistAdminRole,
-          superAdmin.address
-        )
-      ).to.be.true;
-    });
-
-    it("check increment term whitelist admin role for whitelistAdmin", async function () {
-      expect(
-        await cPoolAdd.hasRole(
-          incrementTermWhitelistAdminRole,
-          incrementTermWhitelistAdmin.address
-        )
-      ).to.be.true;
-    });
-
     it("check contribution updater role for updater", async function () {
       expect(await cPoolAdd.hasRole(updaterRoleHash, updater.address)).to.be
         .true;
-    });
-
-    it("check pool admin doesn't have increment term role", async function () {
-      expect(await cPoolAdd.hasRole(incrementTermRoleHash, superAdmin.address))
-        .to.be.false;
     });
   });
 
@@ -413,43 +380,47 @@ describe("ContributionPool", function () {
     });
   });
 
-  describe("addIncrementTermSigner", function () {
-    it("[S] can addIncrementTermSigner by admin", async function () {
-      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user2.address);
-      expect(await cPoolAdd.incrementTermSigners(user2.address)).to.be.true;
+  describe("add incrementTermSigner role", function () {
+    it("[S] can add incrementTermSigner role by admin", async function () {
+      await cPoolAdd
+        .connect(superAdmin)
+        .grantRole(verifySignerRoleHash, user2.address);
+      expect(await cPoolAdd.isIncrementTermSigner(user2.address)).to.be.true;
     });
 
     it("[R] cannot addIncrementTermSigner by others", async function () {
       await expect(
-        cPoolAdd.connect(user1).addIncrementTermSigner(user2.address)
-      ).to.be.revertedWith(
-        missingRoleError(user1.address, incrementTermWhitelistAdminRole)
-      );
+        cPoolAdd.connect(user1).grantRole(verifySignerRoleHash, user2.address)
+      ).to.be.revertedWith(missingRoleError(user1.address, poolAdminRoleHash));
     });
   });
 
-  describe("removeIncrementTermSigner", function () {
-    it("[S] can removeIncrementTermSigner by admin", async function () {
-      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user2.address);
+  describe("remove incrementTermSigner role", function () {
+    it("[S] can remove incrementTermSigner role by admin", async function () {
       await cPoolAdd
         .connect(superAdmin)
-        .removeIncrementTermSigner(user2.address);
-      expect(await cPoolAdd.incrementTermSigners(user2.address)).to.be.false;
+        .grantRole(verifySignerRoleHash, user2.address);
+      await cPoolAdd
+        .connect(superAdmin)
+        .revokeRole(verifySignerRoleHash, user2.address);
+      expect(await cPoolAdd.isIncrementTermSigner(user2.address)).to.be.false;
     });
 
-    it("[R] cannot removeIncrementTermSigner by others", async function () {
-      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user2.address);
+    it("[R] cannot remove incrementTermSigner role by others", async function () {
+      await cPoolAdd
+        .connect(superAdmin)
+        .grantRole(verifySignerRoleHash, user2.address);
       await expect(
-        cPoolAdd.connect(user1).removeIncrementTermSigner(user2.address)
-      ).to.be.revertedWith(
-        missingRoleError(user1.address, incrementTermWhitelistAdminRole)
-      );
+        cPoolAdd.connect(user1).revokeRole(verifySignerRoleHash, user2.address)
+      ).to.be.revertedWith(missingRoleError(user1.address, poolAdminRoleHash));
     });
   });
 
   describe("incrementTerm", function () {
     it("[S] can incrementTerm by QuestryPlatform", async function () {
-      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user1.address);
+      await cPoolAdd
+        .connect(superAdmin)
+        .grantRole(verifySignerRoleHash, user1.address);
       await TestUtils.call(
         cQuestryPlatform,
         cPoolAdd,
@@ -467,8 +438,12 @@ describe("ContributionPool", function () {
     });
 
     it("[S] can incrementTerm for multiple signers", async function () {
-      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user1.address);
-      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user2.address);
+      await cPoolAdd
+        .connect(superAdmin)
+        .grantRole(verifySignerRoleHash, user1.address);
+      await cPoolAdd
+        .connect(superAdmin)
+        .grantRole(verifySignerRoleHash, user2.address);
       await TestUtils.call(
         cQuestryPlatform,
         cPoolAdd,
@@ -493,8 +468,12 @@ describe("ContributionPool", function () {
     });
 
     it("[S] can incrementTerm if signers length is greater than threshold", async function () {
-      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user1.address);
-      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user2.address);
+      await cPoolAdd
+        .connect(superAdmin)
+        .grantRole(verifySignerRoleHash, user1.address);
+      await cPoolAdd
+        .connect(superAdmin)
+        .grantRole(verifySignerRoleHash, user2.address);
       await cPoolAdd.connect(superAdmin).setThreshold(2);
       await TestUtils.call(
         cQuestryPlatform,
@@ -512,11 +491,17 @@ describe("ContributionPool", function () {
       expect(await cPoolAdd.getTerm()).equals(2);
     });
 
-    it("[R] cannot incrementTerm if signers length is greater than threshold", async function () {
+    it("[R] cannot incrementTerm if signers length is less than threshold", async function () {
       const extraUser = "0x90fA7809574b4f8206ec1a47aDc37eCEE57443cb";
-      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user1.address);
-      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user2.address);
-      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(extraUser);
+      await cPoolAdd
+        .connect(superAdmin)
+        .grantRole(verifySignerRoleHash, user1.address);
+      await cPoolAdd
+        .connect(superAdmin)
+        .grantRole(verifySignerRoleHash, user2.address);
+      await cPoolAdd
+        .connect(superAdmin)
+        .grantRole(verifySignerRoleHash, extraUser);
       await cPoolAdd.connect(superAdmin).setThreshold(3);
       await expect(
         TestUtils.call(
@@ -540,12 +525,11 @@ describe("ContributionPool", function () {
       );
     });
 
-    it("[R] cannot incrementTerm by others", async function () {
-      await cPoolAdd.connect(superAdmin).addIncrementTermSigner(user1.address);
+    it("[R] cannot incrementTerm by not platform even if by admin", async function () {
       await expect(
-        cPoolAdd.connect(user1).incrementTerm([user1.address])
+        cPoolAdd.connect(superAdmin).incrementTerm([user1.address])
       ).to.be.revertedWith(
-        missingRoleError(user1.address, incrementTermRoleHash)
+        missingRoleError(superAdmin.address, platformExclusiveRoleHash)
       );
     });
 

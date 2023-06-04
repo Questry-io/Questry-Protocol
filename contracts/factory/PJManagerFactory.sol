@@ -10,7 +10,7 @@ import {IPJManager} from "../interface/pjmanager/IPJManager.sol";
 import {IQuestryPlatform} from "../interface/platform/IQuestryPlatform.sol";
 
 contract PJManagerFactory is IPJManagerFactory, ERC2771Context {
-  event PJManagerCreated(address indexed businessOwner, address pjManager);
+  event PJManagerCreated(address indexed admin, address pjManager);
 
   IQuestryPlatform public immutable questryPlatform;
   mapping(address => IPJManager[]) public pjManagersByAdmin;
@@ -26,18 +26,19 @@ contract PJManagerFactory is IPJManagerFactory, ERC2771Context {
    * @dev Create a new PJManager contract.
    */
   function createPJManager(
+    address _admin,
     uint32 _boardingMembersProportion,
     address _businessOwner
   ) external returns (PJManager pjManager) {
     pjManager = new PJManager(
       questryPlatform,
-      _msgSender(),
+      _admin,
       _boardingMembersProportion,
       _businessOwner
     );
-    pjManagersByAdmin[_msgSender()].push(pjManager);
-    adminByPJManager[pjManager] = _msgSender();
-    emit PJManagerCreated(_msgSender(), address(pjManager));
+    pjManagersByAdmin[_admin].push(pjManager);
+    adminByPJManager[pjManager] = _admin;
+    emit PJManagerCreated(_admin, address(pjManager));
   }
 
   /// @inheritdoc IPJManagerFactory
@@ -50,14 +51,14 @@ contract PJManagerFactory is IPJManagerFactory, ERC2771Context {
   }
 
   /**
-   * @dev Returns PJManagers created by a business owner.
+   * @dev Returns PJManagers created by a PJManager admin.
    */
-  function getPJManagers(address _businessOwner)
+  function getPJManagers(address _admin)
     external
     view
     returns (IPJManager[] memory)
   {
-    return pjManagersByAdmin[_businessOwner];
+    return pjManagersByAdmin[_admin];
   }
 
   /**

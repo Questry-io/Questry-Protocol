@@ -141,6 +141,7 @@ describe("QuestryPlatform - executePayment", function () {
         cCalculator.address,
         daoTreasuryPool.address,
         cTokenControlProxy.address,
+        deployer.address,
       ],
       {
         constructorArgs: [cQuestryForwarder.address],
