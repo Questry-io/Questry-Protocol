@@ -18,7 +18,7 @@ import {LibQuestryPlatform} from "../library/LibQuestryPlatform.sol";
 
 /**
  * @title PJManager
- * @dev This is abstract contract that stores treasury and controls token whitelists.
+ * @dev Project treasury pool, signature verification and board registration.
  */
 contract PJManager is
   IPJManager,
