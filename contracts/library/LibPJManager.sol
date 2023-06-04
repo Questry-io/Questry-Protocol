@@ -23,12 +23,4 @@ library LibPJManager {
   bytes32 public constant POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE =
     keccak256("POOL_INCREMENT_TERM_WHITELIST_ADMIN_ROLE");
   bytes32 public constant POOL_ADMIN_ROLE = keccak256("POOL_ADMIN_ROLE");
-
-  /**
-   * @dev Allocation share for target address.
-   */
-  struct AllocationShare {
-    address recipient;
-    uint120 share;
-  }
 }

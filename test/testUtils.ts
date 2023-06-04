@@ -18,11 +18,6 @@ export type SharesWithLinear = {
   coefs: number[];
 };
 
-export type AllocationShare = {
-  recipient: string;
-  share: number;
-};
-
 export type CalculateDispatchArgs = {
   algorithm: string;
   args: string;
