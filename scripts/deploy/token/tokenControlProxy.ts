@@ -17,18 +17,18 @@ async function main() {
   const TokenControlProxy = await ethers.getContractFactory(
     "TokenControllProxy"
   );
-  const roleManagerAddress = "";
+  const adminAddress = "";
   const forwarderAddress = "";
-  if (roleManagerAddress == "" || forwarderAddress == "") {
+  if (adminAddress == "" || forwarderAddress == "") {
     throw new Error(
-      "Please set roleManagerAddress and forwarderAddress in the script before running it"
+      "Please set adminAddress and forwarderAddress in the script before running it"
     );
   }
 
   console.log("Deploying TokenControlProxy...");
   const tokenControlProxy = await upgrades.deployProxy(
     TokenControlProxy,
-    [roleManagerAddress],
+    [adminAddress],
     {
       initializer: "__TokenControlProxy_init",
       constructorArgs: [forwarderAddress],
