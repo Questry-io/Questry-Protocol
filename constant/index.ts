@@ -2,16 +2,16 @@ const GATEWAY_V1 = {
   address: {
     mumbai: {
       Proxy: {
-        QuestryPlatform: "0xcfdfb7f832e01871c8B96cc72AC291f98f23CbA9",
-        QuestryForwarder: "0x3a540d182ad5e75d010a02a6d9d83380714e1127",
-        TokenControlProxy: "0x5D3aC78aA55F92f28651D428dE402471d3C72c1a",
-        ContributionCalculator: "0x37399AF300cf28bC9a1D6CE3bC7aF31342bFe51b",
+        QuestryPlatform: "0xE297106446DFD523d3f326FE5A817D848D4d67f0",
+        QuestryForwarder: "0x915b303eAB97a4E4f213373C3987d6a180B3754D",
+        TokenControlProxy: "0x011cFC5ea9F084f74088fF1Bf76730ac38a2c886",
+        ContributionCalculator: "0x67E31847341BDb6347B85639CC7eA8AAF471c15B",
       },
       Implementation: {
-        QuestryPlatform: "0xd406d128bf892a9af9396d1284278dcef5a47a21",
+        QuestryPlatform: "0x6be9D0B180D8E30fce4b647C9442B9AC3fcF498F",
         QuestryForwarder: "0xc35501edcdbe370C537EeE5837add1a39a2C0f52",
-        TokenControlProxy: "0xe47b53C048CfF2140D9Fa4ec15f70c38FB890C60",
-        ContributionCalculator: "0x6021F0e8d5372CbBa297b5F0003dAe6cB2Db1Bc7",
+        TokenControlProxy: "0x397d622E7026BA44DcaB21206333A9792128ea85",
+        ContributionCalculator: "0xE2FEcDC33C7434b84f7B813f1Df8E75ba941C3De",
       },
     },
   },
@@ -32,9 +32,9 @@ const GATEWAY_V1 = {
 const FACTORY_V1 = {
   address: {
     mumbai: {
-      ContributionPoolFactory: "0x88B12c51F1b81c477000F8b8aBf1FcAdDf56c355",
-      PJManagerFactory: "0x5d773F22e83553035A4B7Cb89Af563C16c2226F8",
-      BoardFactory: "0x8c2354eB1E98aD210f6EDA57217935f6604a08D9",
+      ContributionPoolFactory: "0x96f0A16CF8ae65AEaE4f9aE50F1FA8b9Eb5e2e35",
+      PJManagerFactory: "0x5b5166e36A4d369383Bbe7aA78b9249d3Cedd256",
+      BoardFactory: "0x425c4B18e5C360112B19a21e9858FFd63279E705",
     },
   },
 };
