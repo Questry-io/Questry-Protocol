@@ -70,7 +70,7 @@ contract TokenControlProxy is
   {
     require(
       questryPlatform == address(0),
-      "TokenControllProxy: already granted"
+      "TokenControlProxy: already granted"
     );
     questryPlatform = _questryPlatform;
     _setupRole(EXECUTOR_ROLE, _questryPlatform);
@@ -141,7 +141,7 @@ contract TokenControlProxy is
   ) external {
     require(
       hasRole(EXECUTOR_ROLE, _msgSender()),
-      "TokenControllProxy: must have executor role to exec"
+      "TokenControlProxy: must have executor role to exec"
     );
     _token.transferFrom(_from, _to, _value);
   }
@@ -167,7 +167,7 @@ contract TokenControlProxy is
   ) external {
     require(
       hasRole(EXECUTOR_ROLE, _msgSender()),
-      "TokenControllProxy: must have executor role to exec"
+      "TokenControlProxy: must have executor role to exec"
     );
     _token.safeTransferFrom(_from, _to, _tokenId);
   }
@@ -197,7 +197,7 @@ contract TokenControlProxy is
   ) external {
     require(
       hasRole(EXECUTOR_ROLE, _msgSender()),
-      "TokenControllProxy: must have executor role to exec"
+      "TokenControlProxy: must have executor role to exec"
     );
     _token.safeTransferFrom(_from, _to, _tokenId, _value, _data);
   }
