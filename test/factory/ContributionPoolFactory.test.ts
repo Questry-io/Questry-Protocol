@@ -8,18 +8,12 @@ describe("ContributionPoolFactory", function () {
   let deployer: SignerWithAddress;
   let superAdmin: SignerWithAddress;
   let contributionUpdater: SignerWithAddress;
-  let incrementTermWhitelistAdmin: SignerWithAddress;
   let businessOwner: SignerWithAddress;
   let cPoolFactory: Contract;
 
   beforeEach(async function () {
-    [
-      deployer,
-      superAdmin,
-      contributionUpdater,
-      incrementTermWhitelistAdmin,
-      businessOwner,
-    ] = await ethers.getSigners();
+    [deployer, superAdmin, contributionUpdater, businessOwner] =
+      await ethers.getSigners();
     const cfPoolFactory = await ethers.getContractFactory(
       "ContributionPoolFactory"
     );
@@ -30,12 +24,7 @@ describe("ContributionPoolFactory", function () {
     it("[S] check ContributionPool address stored", async function () {
       await cPoolFactory
         .connect(businessOwner)
-        .createPool(
-          0,
-          contributionUpdater.address,
-          incrementTermWhitelistAdmin.address,
-          superAdmin.address
-        );
+        .createPool(0, contributionUpdater.address, superAdmin.address);
       const pools = await cPoolFactory.getPools(businessOwner.address);
       expect(pools.length).equals(1);
       expect(pools[0]).not.equals(ethers.constants.AddressZero);
@@ -44,12 +33,7 @@ describe("ContributionPoolFactory", function () {
     it("[S] check event emitted", async function () {
       const tx = await cPoolFactory
         .connect(businessOwner)
-        .createPool(
-          1,
-          contributionUpdater.address,
-          incrementTermWhitelistAdmin.address,
-          superAdmin.address
-        );
+        .createPool(1, contributionUpdater.address, superAdmin.address);
       const pools = await cPoolFactory.getPools(businessOwner.address);
       expect(tx)
         .to.emit(cPoolFactory, "PoolCreated")

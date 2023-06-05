@@ -72,7 +72,8 @@ contract QuestryPlatform is
   function initialize(
     IContributionCalculator _contributionCalculator,
     address _daoTreasuryPool,
-    ITokenControlProxy _tokenControlProxy
+    ITokenControlProxy _tokenControlProxy,
+    address _admin
   ) public initializer {
     __UUPSUpgradeable_init();
     __AccessControl_init();
@@ -91,8 +92,8 @@ contract QuestryPlatform is
       LibQuestryPlatform.PLATFORM_EXECUTOR_ROLE,
       LibQuestryPlatform.PLATFORM_ADMIN_ROLE
     );
-    _setupRole(LibQuestryPlatform.PLATFORM_ADMIN_ROLE, _msgSender());
-    _setupRole(LibQuestryPlatform.PLATFORM_EXECUTOR_ROLE, _msgSender());
+    _setupRole(LibQuestryPlatform.PLATFORM_ADMIN_ROLE, _admin);
+    _setupRole(LibQuestryPlatform.PLATFORM_EXECUTOR_ROLE, _admin);
   }
 
   /// @inheritdoc UUPSUpgradeable

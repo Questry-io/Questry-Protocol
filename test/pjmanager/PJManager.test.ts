@@ -44,22 +44,20 @@ describe("PJManager", function () {
   const nativeMode = utils.keccak256(utils.toUtf8Bytes("NATIVE")).slice(0, 10);
   const erc20Mode = utils.keccak256(utils.toUtf8Bytes("ERC20")).slice(0, 10);
 
-  const withdrawRoleHash = utils.keccak256(
-    utils.toUtf8Bytes("PJ_WITHDRAW_ROLE")
+  const platformExlusiveRoleHash = utils.keccak256(
+    utils.toUtf8Bytes("PJ_PLATFORM_EXCLUSIVE_ROLE")
   );
 
   const managementRoleHash = utils.keccak256(
     utils.toUtf8Bytes("PJ_MANAGEMENT_ROLE")
   );
 
-  const depositRoleHash = utils.keccak256(utils.toUtf8Bytes("PJ_DEPOSIT_ROLE"));
-
   const whitelistRoleHash = utils.keccak256(
     utils.toUtf8Bytes("PJ_WHITELIST_ROLE")
   );
 
-  const boardIdRoleHash = utils.keccak256(
-    utils.toUtf8Bytes("PJ_BOARD_ID_ROLE")
+  const boardExclusiveRoleHash = utils.keccak256(
+    utils.toUtf8Bytes("PJ_BOARD_EXCLUSIVE_ROLE")
   );
 
   const SignerRoleHash = utils.keccak256(utils.toUtf8Bytes("PJ_VERIFY_SIGNER"));
@@ -227,7 +225,6 @@ describe("PJManager", function () {
         cMockQuestryPlatform.address,
         0,
         ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
         signer.address
       );
       await cContributionPool.deployed();
@@ -235,7 +232,6 @@ describe("PJManager", function () {
       cContributionPool2 = await new ContributionPool__factory(deployer).deploy(
         cMockQuestryPlatform.address,
         0,
-        ethers.constants.AddressZero,
         ethers.constants.AddressZero,
         signer.address
       );
@@ -827,7 +823,7 @@ describe("PJManager", function () {
           .deposit(nativeMode, ethers.constants.AddressZero, user.address, 2, {
             value: 2,
           })
-      ).revertedWith(missingRoleError(user.address, depositRoleHash));
+      ).revertedWith(missingRoleError(user.address, platformExlusiveRoleHash));
     });
   });
 
@@ -862,7 +858,7 @@ describe("PJManager", function () {
         cPJManager
           .connect(user)
           .deposit(erc20Mode, cERC20.address, depositer.address, 2)
-      ).revertedWith(missingRoleError(user.address, depositRoleHash));
+      ).revertedWith(missingRoleError(user.address, platformExlusiveRoleHash));
     });
   });
 
@@ -920,7 +916,7 @@ describe("PJManager", function () {
         cPJManager
           .connect(user)
           .deposit(erc20Mode, ethers.constants.AddressZero, user.address, 2)
-      ).revertedWith(missingRoleError(user.address, depositRoleHash));
+      ).revertedWith(missingRoleError(user.address, platformExlusiveRoleHash));
     });
 
     it("[R] should not withdraw ERC20 token by others", async function () {
@@ -928,7 +924,7 @@ describe("PJManager", function () {
         cPJManager
           .connect(user)
           .withdrawForAllocation(erc20Mode, cERC20.address, user.address, 1)
-      ).revertedWith(missingRoleError(user.address, withdrawRoleHash));
+      ).revertedWith(missingRoleError(user.address, platformExlusiveRoleHash));
     });
 
     it("[R] should not withdraw ERC20 tokens if they are transferred directly", async function () {
@@ -1016,7 +1012,7 @@ describe("PJManager", function () {
             cMockBoard.address,
             1
           )
-      ).revertedWith(missingRoleError(admin.address, boardIdRoleHash));
+      ).revertedWith(missingRoleError(admin.address, boardExclusiveRoleHash));
     });
   });
 });

@@ -50,7 +50,11 @@ describe("PJManagerFactory", function () {
     it("[S] should createPJManager", async function () {
       const tx = await contract
         .connect(pjManagerAdmin)
-        .createPJManager(10000, ethers.constants.AddressZero);
+        .createPJManager(
+          pjManagerAdmin.address,
+          10000,
+          ethers.constants.AddressZero
+        );
       const pjManagers = await contract.getPJManagers(pjManagerAdmin.address);
       expect(pjManagers.length).to.equal(1);
       expect(pjManagers[0]).not.equal(ethers.constants.AddressZero);
@@ -68,6 +72,7 @@ describe("PJManagerFactory", function () {
       it("[S] should process the meta-transaction correctly", async function () {
         // Prepare meta-transaction
         const data = contract.interface.encodeFunctionData("createPJManager", [
+          pjManagerAdmin.address,
           10000,
           ethers.constants.AddressZero,
         ]);
@@ -124,6 +129,7 @@ describe("PJManagerFactory", function () {
 
       it("[R] should revert when the signature is invalid", async function () {
         const data = contract.interface.encodeFunctionData("createPJManager", [
+          pjManagerAdmin.address,
           10000,
           ethers.constants.AddressZero,
         ]);

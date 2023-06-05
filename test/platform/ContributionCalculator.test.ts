@@ -31,13 +31,11 @@ describe("ContributionCalculator", function () {
       ethers.constants.AddressZero,
       0,
       ethers.constants.AddressZero,
-      ethers.constants.AddressZero,
       superAdmin.address
     );
     cPool2 = await cfPool.deploy(
       ethers.constants.AddressZero,
       0,
-      ethers.constants.AddressZero,
       ethers.constants.AddressZero,
       superAdmin.address
     );

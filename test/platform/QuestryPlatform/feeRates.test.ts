@@ -73,6 +73,7 @@ describe("QuestryPlatform - feeRates", function () {
         cCalculator.address,
         daoTreasuryPool.address,
         cTokenControlProxy.address,
+        deployer.address,
       ],
       {
         constructorArgs: [cQuestryForwarder.address],

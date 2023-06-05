@@ -38,7 +38,11 @@ describe("BoardFactory", function () {
 
     await cPJManagerFactory
       .connect(pjManagerAdmin)
-      .createPJManager(10000, ethers.constants.AddressZero);
+      .createPJManager(
+        pjManagerAdmin.address,
+        10000,
+        ethers.constants.AddressZero
+      );
     pjManagerAddress = (
       await cPJManagerFactory.getPJManagers(pjManagerAdmin.address)
     )[0];
