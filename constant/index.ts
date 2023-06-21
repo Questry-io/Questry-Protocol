@@ -51,14 +51,24 @@ const FACTORY_V1 = {
       BoardFactory: "0x425c4B18e5C360112B19a21e9858FFd63279E705",
     },
     polygon: {
-      ContributionPoolFactory: '0x1f6b07749EDfc39BB32793Af7AFf08aF441D1c83',
-      PJManagerFactory: '0x6C88429d2082Cd5B8510627E72685C635291Ff93',
-      BoardFactory: '0x0dAd17339D2Db72579522cFA42cC193d3F428e55'
+      ContributionPoolFactory: "0x1f6b07749EDfc39BB32793Af7AFf08aF441D1c83",
+      PJManagerFactory: "0x6C88429d2082Cd5B8510627E72685C635291Ff93",
+      BoardFactory: "0x0dAd17339D2Db72579522cFA42cC193d3F428e55",
     },
+  },
+};
+
+const ERC20_V1 = {
+  address: {
+    mumbai: {
+      QuestryERC20: "0x733cd008c96Ced569Eb72d5d027b00e5e4BB6650",
+    },
+    polygon: {},
   },
 };
 
 module.exports = {
   GATEWAY_V1,
   FACTORY_V1,
+  ERC20_V1,
 };
