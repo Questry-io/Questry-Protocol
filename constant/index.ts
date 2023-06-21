@@ -58,7 +58,17 @@ const FACTORY_V1 = {
   },
 };
 
+const ERC20_V1 = {
+  address: {
+    mumbai: {
+      QuestryERC20: "0x733cd008c96Ced569Eb72d5d027b00e5e4BB6650",
+    },
+    polygon: {},
+  },
+};
+
 module.exports = {
   GATEWAY_V1,
   FACTORY_V1,
+  ERC20_V1,
 };
