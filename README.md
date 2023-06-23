@@ -1,4 +1,4 @@
-# KANAME-Protocol-V1.0
+# Questry-Protocol-V1.0
 
 ## this is only once　for local machine
 - `nvm` をインストールする(nodeバージョン管理用) [Link](https://github.com/nvm-sh/nvm)
@@ -105,7 +105,7 @@ derectry構成のtreeをこちらに記述する
 
 - Description of each contracts directory
    + `contracts/Factory`   List of contracts for factory generation of Questry-Protocol
-   + `contracts/interface` Contract list of Interface of each contract of KANAME-protocol
+   + `contracts/interface` Contract list of Interface of each contract of Questry-protocol
    + `contracts/library`   Library contract list for each contract of Questry-protocol
    + `contracts/mock`      Mock contract for test verification of Questry-protocol 
    + `contracts/pjmanager` Project logic and state management contract of Questry-protocol 
