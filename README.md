@@ -147,6 +147,4 @@ After downloading, it is necessary to change to ".env.txt" -> ".env"
 -  Evaluating Signature Message Reusability
 -  Transaction attack case management
 
-# deploy & Upgrade Rule
 
-![スマートコントラクトデプロイのルール](https://github.com/QuestryInc/Questry-Protocol-V1.0/blob/c36258ac1897f48a346ae9be04b4233ab0dec91c/image/Contract-development-covernance.png "")
