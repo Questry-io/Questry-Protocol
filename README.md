@@ -104,19 +104,19 @@ derectry構成のtreeをこちらに記述する
 </pre>
 
 - Description of each contracts directory
-   + `contracts/Factory`   List of contracts for factory generation of KANAME-Protocol
+   + `contracts/Factory`   List of contracts for factory generation of Questry-Protocol
    + `contracts/interface` Contract list of Interface of each contract of KANAME-protocol
-   + `contracts/library`   Library contract list for each contract of KANAME-protocol
-   + `contracts/mock`      Mock contract for test verification of KANAME-protocol 
-   + `contracts/pjmanager` Project logic and state management contract of KANAME-protocol 
-   + `contracts/token`     Token-related contract directory of KANAME-protocol
-   + `contracts/token-controll-proxy` Contract for proxy transfer of various Tokens of KANAME-protocol
+   + `contracts/library`   Library contract list for each contract of Questry-protocol
+   + `contracts/mock`      Mock contract for test verification of Questry-protocol 
+   + `contracts/pjmanager` Project logic and state management contract of Questry-protocol 
+   + `contracts/token`     Token-related contract directory of Questry-protocol
+   + `contracts/token-controll-proxy` Contract for proxy transfer of various Tokens of Questry-protocol
 
-- Description of each derectry of KANAME Protocol
-   + `test`    Test code writing directory of KANAME-Protocol
-   + `scripts` Contract operation script of KANAME-protocol
+- Description of each derectry of Questry Protocol
+   + `test`    Test code writing directory of Questry-Protocol
+   + `scripts` Contract operation script of Questry-protocol
 
-- Description of each file of KANAME Protocol
+- Description of each file of Questry Protocol
    + `hardhat.config.ts`  hardhat config file
    + `package.json`       Management files for dependent modules and CLI commands    
 
